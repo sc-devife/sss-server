@@ -34,12 +34,12 @@ public class JwtAuthenticationFilter implements Filter {
             return;
         } else {
             try {
-                //JwtValidator.validateToken(authHeader);
-                boolean isValid = AuthenticationService.validateToken(authHeader);
-                if(!isValid) {
+                JwtValidator.validateToken(authHeader);
+                //boolean isValid = AuthenticationService.validateToken(authHeader);
+               /* if(!isValid) {
                     sendErrorResponse(httpServletResponse, HttpStatus.UNAUTHORIZED, "Invalid JWT token");
                     return;
-                }
+                }*/
                 String username = JwtValidator.extractUsername(authHeader);
                 System.out.println("Authenticated user: " + username);
 
