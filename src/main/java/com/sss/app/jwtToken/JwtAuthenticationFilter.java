@@ -50,7 +50,6 @@ public class JwtAuthenticationFilter implements Filter {
         else if(!requestURI.startsWith("/sss/api/login/forgot-password") &&
                 !requestURI.startsWith("/sss/api/login/reset-password")){
             try {
-<<<<<<< Updated upstream
                 JwtValidator.validateToken(authHeader);
                 //boolean isValid = AuthenticationService.validateToken(authHeader);
                /* if(!isValid) {
