@@ -41,7 +41,7 @@ public class AuthenticationController {
     @RequestMapping(value = "/user", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> login(@RequestBody Map<String, String> loginDetails) throws Exception {
 
-        String username = loginDetails.get("username");
+        String username = loginDetails.get("email");
         String password = loginDetails.get("password");
 
         String token = "";
