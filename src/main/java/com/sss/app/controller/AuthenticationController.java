@@ -1,11 +1,14 @@
 package com.sss.app.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.sss.app.dto.ForgotPasswordRequest;
+import com.sss.app.dto.ResetPasswordRequest;
 import com.sss.app.entity.UserSession;
 import com.sss.app.jwtToken.JwtValidator;
 import com.sss.app.repository.UserSessionRepository;
 import com.sss.app.service.AuthenticationService;
 import com.sss.app.service.TestService;
+import com.sss.app.service.UserService;
 import org.json.JSONArray;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -17,7 +20,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/login")
+@RequestMapping("api/login")
 public class AuthenticationController {
     @Autowired
     AuthenticationService authServices;
@@ -26,7 +29,15 @@ public class AuthenticationController {
     @Autowired
     TestService testSer;
     @Autowired
+    private UserService userService;
+    @Autowired
     JwtValidator jwtValidator;
+
+    @GetMapping("/ping")
+    public ResponseEntity<String> ping() {
+        System.out.println("Ping endpoint hit!");
+        return ResponseEntity.ok("pong");
+    }
     @RequestMapping(value = "/user", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> login(@RequestBody Map<String, String> loginDetails) throws Exception {
 
@@ -37,7 +48,6 @@ public class AuthenticationController {
         try {
             token = authServices.authenticateAndGenerateToken(username, password);
             System.out.println("Token username: " + username);
-            System.out.println("Token generated: " + token);
             System.out.println("Token LocalDateTime: " + LocalDateTime.now());
             UserSession userSession = new UserSession(username, token, LocalDateTime.now());
             System.out.println("UserSession created: " + userSession);
@@ -70,5 +80,25 @@ public class AuthenticationController {
             return ResponseEntity.ok("Logged out");
         }
         return ResponseEntity.badRequest().body("Missing token");
+    }
+    @GetMapping("/test")
+    public ResponseEntity<String> test() {
+        System.out.println("Test endpoint hit");
+        return ResponseEntity.ok("Test successful");
+    }
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        System.out.println("Forgot password start email === " + request.getEmail());
+        userService.initiatePasswordReset(request.getEmail());
+        return ResponseEntity.ok("Reset link sent to your email.");
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordRequest request) {
+        System.out.println("start reset pass ===");
+        System.out.println("start reset new token ===" + request.getToken());
+        System.out.println("start reset new pass ===" + request.getNewPassword());
+        userService.resetPassword(request.getToken(), request.getNewPassword());
+        return ResponseEntity.ok("Password reset successfully.");
     }
 }

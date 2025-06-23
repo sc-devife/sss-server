@@ -25,18 +25,42 @@ public class JwtAuthenticationFilter implements Filter {
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws RuntimeException, ServletException, IOException {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpServletResponse = (HttpServletResponse) response;
-
+        System.out.println("DoFilter Start===");
         String requestURI = httpRequest.getRequestURI();
         String authHeader = httpRequest.getHeader("Authorization");
-        if(requestURI.startsWith("/sss/login/user")) {
+     /*   if(requestURI.startsWith("/sss/api/login/user")) {
             // Allow login requests without authentication
             chain.doFilter(request, response);
             return;
-        } else {
+        }*/
+        System.out.println("requestURI ===  " + requestURI);
+
+        // Allow unauthenticated access to public endpoints
+        if (isPublicEndpoint(requestURI)) {
+            chain.doFilter(request, response);
+            return;
+        }
+
+        if (requestURI.startsWith("/sss/api/login/user") ||
+                requestURI.startsWith("/sss/api/login/hello")) {
+            System.out.println("Inside If === ");
+            chain.doFilter(request, response);
+            return;
+        }
+        else if(!requestURI.startsWith("/sss/api/login/forgot-password") &&
+                !requestURI.startsWith("/sss/api/login/reset-password")){
             try {
+<<<<<<< Updated upstream
                 JwtValidator.validateToken(authHeader);
                 //boolean isValid = AuthenticationService.validateToken(authHeader);
                /* if(!isValid) {
+=======
+                //JwtValidator.validateToken(authHeader);
+                System.out.println("DoFilter Start Else===");
+
+                boolean isValid = AuthenticationService.validateToken(authHeader);
+                if(!isValid) {
+>>>>>>> Stashed changes
                     sendErrorResponse(httpServletResponse, HttpStatus.UNAUTHORIZED, "Invalid JWT token");
                     return;
                 }*/
@@ -61,6 +85,10 @@ public class JwtAuthenticationFilter implements Filter {
                 e.printStackTrace();
                 sendErrorResponse(httpServletResponse, HttpStatus.UNAUTHORIZED, "Invalid JWT token");
             }
+        } else {
+
+            chain.doFilter(request, response);
+            return;
         }
     }
     private void sendErrorResponse(HttpServletResponse response, HttpStatus status, String message) throws IOException {
@@ -74,4 +102,10 @@ public class JwtAuthenticationFilter implements Filter {
         response.getWriter().write(content.toString());
         response.getWriter().flush();
     }
+    private boolean isPublicEndpoint(String uri) {
+        return uri.startsWith("/sss/api/login/hello")
+                || uri.startsWith("/sss/api/login/forgot-password")
+                || uri.startsWith("/sss/api/login/reset-password");
+    }
 }
+
