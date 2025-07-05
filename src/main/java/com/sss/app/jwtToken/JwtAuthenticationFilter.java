@@ -28,22 +28,12 @@ public class JwtAuthenticationFilter implements Filter {
         System.out.println("DoFilter Start===");
         String requestURI = httpRequest.getRequestURI();
         String authHeader = httpRequest.getHeader("Authorization");
-     /*   if(requestURI.startsWith("/sss/api/login/user")) {
-            // Allow login requests without authentication
-            chain.doFilter(request, response);
-            return;
-        }*/
-        System.out.println("requestURI ===  " + requestURI);
-
-        // Allow unauthenticated access to public endpoints
         if (isPublicEndpoint(requestURI)) {
             chain.doFilter(request, response);
             return;
         }
 
-        if (requestURI.startsWith("/sss/api/login/user") ||
-                requestURI.startsWith("/sss/api/login/hello")) {
-            System.out.println("Inside If === ");
+        if (requestURI.startsWith("/sss/api/login/user")) {
             chain.doFilter(request, response);
             return;
         }
@@ -51,18 +41,7 @@ public class JwtAuthenticationFilter implements Filter {
                 !requestURI.startsWith("/sss/api/login/reset-password")){
             try {
                 JwtValidator.validateToken(authHeader);
-                //boolean isValid = AuthenticationService.validateToken(authHeader);
-               /* if(!isValid) {
-=======
-                //JwtValidator.validateToken(authHeader);
-                System.out.println("DoFilter Start Else===");
 
-                boolean isValid = AuthenticationService.validateToken(authHeader);
-                if(!isValid) {
->>>>>>> Stashed changes
-                    sendErrorResponse(httpServletResponse, HttpStatus.UNAUTHORIZED, "Invalid JWT token");
-                    return;
-                }*/
                 String username = JwtValidator.extractUsername(authHeader);
                 System.out.println("Authenticated user: " + username);
 
@@ -75,7 +54,7 @@ public class JwtAuthenticationFilter implements Filter {
 
                     // Optionally, authenticate user in Spring Security
                 } else {
-                    sendErrorResponse(httpServletResponse, HttpStatus.UNAUTHORIZED, "Invalid JWT token");
+                    sendErrorResponse(httpServletResponse, HttpStatus.UNAUTHORIZED, "Invalid or expired session");
                     //Invalid or expired session — reject
                     return;
                 }
@@ -85,7 +64,6 @@ public class JwtAuthenticationFilter implements Filter {
                 sendErrorResponse(httpServletResponse, HttpStatus.UNAUTHORIZED, "Invalid JWT token");
             }
         } else {
-
             chain.doFilter(request, response);
             return;
         }
