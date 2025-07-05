@@ -25,21 +25,23 @@ public class JwtAuthenticationFilter implements Filter {
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws RuntimeException, ServletException, IOException {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpServletResponse = (HttpServletResponse) response;
-
+        System.out.println("DoFilter Start===");
         String requestURI = httpRequest.getRequestURI();
         String authHeader = httpRequest.getHeader("Authorization");
-        if(requestURI.startsWith("/sss/login/user") || requestURI.startsWith("/sss/test/register")) {
-            // Allow login requests without authentication
+        if (isPublicEndpoint(requestURI)) {
             chain.doFilter(request, response);
             return;
-        } else {
+        }
+
+        if (requestURI.startsWith("/sss/api/login/user")) {
+            chain.doFilter(request, response);
+            return;
+        }
+        else if(!requestURI.startsWith("/sss/api/login/forgot-password") &&
+                !requestURI.startsWith("/sss/api/login/reset-password")){
             try {
-                //JwtValidator.validateToken(authHeader);
-                boolean isValid = AuthenticationService.validateToken(authHeader);
-                if(!isValid) {
-                    sendErrorResponse(httpServletResponse, HttpStatus.UNAUTHORIZED, "Invalid JWT token");
-                    return;
-                }
+                JwtValidator.validateToken(authHeader);
+
                 String username = JwtValidator.extractUsername(authHeader);
                 System.out.println("Authenticated user: " + username);
 
@@ -52,7 +54,7 @@ public class JwtAuthenticationFilter implements Filter {
 
                     // Optionally, authenticate user in Spring Security
                 } else {
-                    sendErrorResponse(httpServletResponse, HttpStatus.UNAUTHORIZED, "Invalid JWT token");
+                    sendErrorResponse(httpServletResponse, HttpStatus.UNAUTHORIZED, "Invalid or expired session");
                     //Invalid or expired session — reject
                     return;
                 }
@@ -61,6 +63,9 @@ public class JwtAuthenticationFilter implements Filter {
                 e.printStackTrace();
                 sendErrorResponse(httpServletResponse, HttpStatus.UNAUTHORIZED, "Invalid JWT token");
             }
+        } else {
+            chain.doFilter(request, response);
+            return;
         }
     }
     private void sendErrorResponse(HttpServletResponse response, HttpStatus status, String message) throws IOException {
@@ -74,4 +79,10 @@ public class JwtAuthenticationFilter implements Filter {
         response.getWriter().write(content.toString());
         response.getWriter().flush();
     }
+    private boolean isPublicEndpoint(String uri) {
+        return uri.startsWith("/sss/api/login/hello")
+                || uri.startsWith("/sss/api/login/forgot-password")
+                || uri.startsWith("/sss/api/login/reset-password");
+    }
 }
+

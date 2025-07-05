@@ -1,12 +1,12 @@
 package com.sss.app.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.sss.app.dto.ForgotPasswordRequest;
+import com.sss.app.dto.ResetPasswordRequest;
 import com.sss.app.entity.UserSession;
 import com.sss.app.jwtToken.JwtValidator;
 import com.sss.app.repository.UserSessionRepository;
 import com.sss.app.service.AuthenticationService;
-import com.sss.app.service.TestService;
-import org.json.JSONArray;
+import com.sss.app.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -17,35 +17,29 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/login")
+@RequestMapping("api/login")
 public class AuthenticationController {
     @Autowired
     AuthenticationService authServices;
     @Autowired
     private UserSessionRepository userSessionRepo;
     @Autowired
-    TestService testSer;
+    private UserService userService;
     @Autowired
     JwtValidator jwtValidator;
+
     @RequestMapping(value = "/user", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> login(@RequestBody Map<String, String> loginDetails) throws Exception {
 
-        String username = loginDetails.get("username");
+        String username = loginDetails.get("email");
         String password = loginDetails.get("password");
 
         String token = "";
         try {
             token = authServices.authenticateAndGenerateToken(username, password);
-            System.out.println("Token username: " + username);
-            System.out.println("Token generated: " + token);
-            System.out.println("Token LocalDateTime: " + LocalDateTime.now());
             UserSession userSession = new UserSession(username, token, LocalDateTime.now());
-            System.out.println("UserSession created: " + userSession);
             userSessionRepo.save(userSession);
-            System.out.println("UserSession After created: " + userSession);
-            //userSessionRepo.save(new UserSession(username, token, LocalDateTime.now()));
         } catch (Exception e) {
-            // Handle exception, e.g., log it and return an error response
             return ResponseEntity.status(401).body("Invalid credentials");
         }
         if(StringUtils.hasText(token)) {
@@ -55,12 +49,6 @@ public class AuthenticationController {
         }
     }
 
-    @RequestMapping(value = "/hello", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> hello() throws JsonProcessingException {
-        JSONArray outContent;
-        outContent = testSer.getGreeting();
-        return ResponseEntity.ok(outContent.toString());
-    }
     @RequestMapping(value = "/logout", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> logout(@RequestHeader("Authorization") String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -71,4 +59,26 @@ public class AuthenticationController {
         }
         return ResponseEntity.badRequest().body("Missing token");
     }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        try {
+            userService.initiatePasswordReset(request.getEmail());
+            return ResponseEntity.ok("Reset link sent to your email.");
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body("Invalid Request");
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordRequest request) {
+        try {
+            userService.resetPassword(request.getEmail(), request.getToken(), request.getNewPassword());
+            return ResponseEntity.ok("Password reset successfully.");
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body("Invalid Request");
+        }
+    }
 }
+
+
