@@ -10,6 +10,7 @@ public class UserMapper {
         if (user == null) return null;
         return new UserDto(
                 user.getSeqp(),
+                user.getUid(),
                 user.getName(),
                 user.getFirst_name(),
                 user.getLast_name(),

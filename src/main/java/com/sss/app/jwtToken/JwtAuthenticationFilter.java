@@ -80,9 +80,10 @@ public class JwtAuthenticationFilter implements Filter {
         response.getWriter().flush();
     }
     private boolean isPublicEndpoint(String uri) {
-        return uri.startsWith("/sss/api/login/hello")
+        /*return uri.startsWith("/sss/api/login/hello")
                 || uri.startsWith("/sss/api/login/forgot-password")
-                || uri.startsWith("/sss/api/login/reset-password");
+                || uri.startsWith("/sss/api/login/reset-password");*/
+        return true;
     }
 }
 

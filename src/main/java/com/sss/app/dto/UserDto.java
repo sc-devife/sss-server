@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UserDto {
     private Long seqp;
+    private String uid;
     private String name;
     private String first_name;
     private String last_name;
