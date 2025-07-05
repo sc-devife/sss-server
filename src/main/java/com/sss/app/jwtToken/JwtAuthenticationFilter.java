@@ -28,7 +28,7 @@ public class JwtAuthenticationFilter implements Filter {
 
         String requestURI = httpRequest.getRequestURI();
         String authHeader = httpRequest.getHeader("Authorization");
-        if(requestURI.startsWith("/sss/login/user")) {
+        if(requestURI.startsWith("/sss/login/user") || requestURI.startsWith("/sss/test/register")) {
             // Allow login requests without authentication
             chain.doFilter(request, response);
             return;
