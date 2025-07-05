@@ -1,7 +1,9 @@
 package com.sss.app.service;
 
-import com.sss.app.entity.Login;
-import com.sss.app.repository.LoginRepository;
+import com.sss.app.entity.PasswordResetToken;
+import com.sss.app.entity.UserAccount;
+import com.sss.app.repository.PasswordResetTokenRepository;
+import com.sss.app.repository.UserAccountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -15,21 +17,23 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserService {
 
-    private final LoginRepository userRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final UserAccountRepository userAccountRepository;
     private final JavaMailSender mailSender;
     private final BCryptPasswordEncoder passwordEncoder;
 
     public void initiatePasswordReset(String email) {
-        System.out.println("FindBy Email === " + email);
-        Login user = userRepository.findByEmail(email)
+        UserAccount userAccount = userAccountRepository.findByUserName(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+       PasswordResetToken passwordResetToken = new PasswordResetToken();
         String token = UUID.randomUUID().toString();
-        user.setResetToken(token);
-        user.setTokenExpiry(LocalDateTime.now().plusHours(1));
-        userRepository.save(user);
+        passwordResetToken.setEmail(email);//resetToken
+        passwordResetToken.setResetToken(token);//resetToken
+        passwordResetToken.setTokenExpiry(LocalDateTime.now().plusHours(1));
+        passwordResetTokenRepository.save(passwordResetToken);
 
-        sendEmail(user.getEmail(), token);
+        sendEmail(passwordResetToken.getEmail(), token);
     }
 
     private void sendEmail(String email, String token) {
@@ -43,18 +47,20 @@ public class UserService {
         mailSender.send(mailMessage);
     }
 
-    public void resetPassword(String token, String newPassword) {
-        Login user = userRepository.findByResetToken(token)
+    public void resetPassword(String email, String token, String newPassword) {
+        PasswordResetToken passwordResetToken = passwordResetTokenRepository.findByResetToken(token)
                 .orElseThrow(() -> new RuntimeException("Invalid token"));
 
-        if (user.getTokenExpiry().isBefore(LocalDateTime.now())) {
+        UserAccount userAccount = userAccountRepository.findByUserName(email)
+                .orElseThrow(() -> new RuntimeException("User ot found with this email"));
+        if (passwordResetToken.getTokenExpiry().isBefore(LocalDateTime.now())) {
             throw new RuntimeException("Token expired");
         }
 
-        user.setPassword(passwordEncoder.encode(newPassword));
-        user.setResetToken(null);
-        user.setTokenExpiry(null);
-        userRepository.save(user);
+        userAccount.setPasswordHash(passwordEncoder.encode(newPassword));
+        passwordResetToken.setResetToken(""); //Used data
+        passwordResetToken.setTokenExpiry(LocalDateTime.of(1970, 1, 1, 0, 0)); //Used data
+        passwordResetTokenRepository.save(passwordResetToken);
+        userAccountRepository.save(userAccount);
     }
-
 }

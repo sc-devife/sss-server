@@ -1,40 +1,43 @@
 package com.sss.app.service;
 
-import com.sss.app.entity.Login;
-import com.sss.app.repository.LoginRepository;
+import com.sss.app.entity.UserAccount;
+import com.sss.app.jwtToken.KeyProvider;
+import com.sss.app.repository.UserAccountRepository;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-import com.sss.app.jwtToken.KeyProvider;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 @Service
 public class AuthenticationService {
 
-    private static KeyProvider keyProvider = new KeyProvider();
-
-    public AuthenticationService(KeyProvider keyProvider) {
-        AuthenticationService.keyProvider = keyProvider;
-    }
     @Autowired
-    private LoginRepository loginRepository;
-    //KeyProvider keyProvider = new KeyProvider();
-    public String authenticateAndGenerateToken(String username, String password) throws Exception {
-        Optional<Login> userCredentials = loginRepository.findByUsername(username);
-        if (userCredentials.isPresent()) {
-            Login login = userCredentials.get();
+    private KeyProvider keyProvider;
 
-            if (login.getUsername().equals(username) && login.getPassword().equals(password)) {
+    @Autowired
+    private UserAccountRepository userAccountRepository;
+
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+
+    public String authenticateAndGenerateToken(String username, String password) throws Exception {
+        Optional<UserAccount> userCredentials = userAccountRepository.findByUserName(username);
+        if (userCredentials.isPresent()) {
+            UserAccount userAccount = userCredentials.get();
+
+            if (userAccount.getUserName().equals(username) &&
+                    passwordEncoder.matches(password, userAccount.getPasswordHash())) {
+
                 return Jwts.builder()
                         .setSubject(username)
                         .setIssuedAt(Timestamp.valueOf(LocalDateTime.now()))
-                        .setExpiration(Timestamp.valueOf(LocalDateTime.now().plusHours(12))) // 12 hours expiration
+                        .setExpiration(Timestamp.valueOf(LocalDateTime.now().plusHours(12)))
                         .signWith(SignatureAlgorithm.RS256, keyProvider.getPrivateKey())
                         .compact();
             } else {
@@ -53,7 +56,7 @@ public class AuthenticationService {
                 .getSubject();
     }
 
-    public static boolean validateToken(String token) {
+    public boolean validateToken(String token) {
         try {
             Jwts.parser().setSigningKey(keyProvider.getPrivateKey()).parseClaimsJws(token);
             return true;
