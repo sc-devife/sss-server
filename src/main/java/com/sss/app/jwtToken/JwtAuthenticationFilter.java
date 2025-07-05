@@ -82,6 +82,7 @@ public class JwtAuthenticationFilter implements Filter {
     private boolean isPublicEndpoint(String uri) {
         return uri.startsWith("/sss/api/login/hello")
                 || uri.startsWith("/sss/api/login/forgot-password")
+                || uri.startsWith("/sss/organizations")
                 || uri.startsWith("/sss/api/login/reset-password");
     }
 }
