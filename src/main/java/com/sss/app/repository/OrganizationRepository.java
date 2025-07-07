@@ -8,4 +8,5 @@ import java.util.Optional;
 
 public interface OrganizationRepository extends JpaRepository<Organizations, Long> {
     Optional<Organizations> findByRegisteredName(String registeredName);
+    boolean existsByRegisteredName(String registeredName);
 }

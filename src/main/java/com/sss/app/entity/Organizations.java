@@ -1,18 +1,27 @@
 package com.sss.app.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 
 @Entity
 @Table(name = "organizations")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Organizations {
     @Id
-    @Column
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "org_seq_gen")
+    @SequenceGenerator(
+            name = "org_seq_gen",               // internal name for JPA
+            sequenceName = "organizations_seqp_seq", // actual Postgres sequence name
+            allocationSize = 1                 // match DB sequence increment (usually 1)
+    )
+    @Column(name = "seqp")
     private Long seqp;
 
     @Column (name = "registered_name")

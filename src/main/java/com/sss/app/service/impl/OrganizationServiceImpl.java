@@ -24,4 +24,16 @@ public class OrganizationServiceImpl implements OrganizationsService {
         Organizations orgs = organizationsHelper.getUserByRegisteredName(orgRegName);
         return organizationMapper.toDto(orgs);
     }
+
+    @Override
+    public OrganizationsDto createOrganizations(OrganizationsDto createRequest) {
+        Organizations orgs = organizationsHelper.createOrganizations(createRequest);
+        return organizationMapper.toDto(orgs);
+    }
+
+    @Override
+    public OrganizationsDto updateOrganizations(OrganizationsDto createRequest) {
+        Organizations orgs = organizationsHelper.updateOrganizations(createRequest);
+        return organizationMapper.toDto(orgs);
+    }
 }

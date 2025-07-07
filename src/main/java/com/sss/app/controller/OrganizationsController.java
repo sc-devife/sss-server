@@ -1,12 +1,11 @@
 package com.sss.app.controller;
 
 import com.sss.app.dto.OrganizationsDto;
+import com.sss.app.dto.ResetPasswordRequest;
 import com.sss.app.dto.UserDto;
 import com.sss.app.service.OrganizationsService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/organizations")
@@ -21,5 +20,15 @@ public class OrganizationsController {
     @RequestMapping("/{registeredName}")
     private ResponseEntity<OrganizationsDto> getOrgByRegisteredName(@PathVariable String registeredName) {
         return ResponseEntity.ok(organizationsService.getUserByRegisteredName(registeredName));
+    }
+
+    @PostMapping("/create")
+    private ResponseEntity<OrganizationsDto> createOrganizations(@RequestBody OrganizationsDto request) {
+        return ResponseEntity.ok(organizationsService.createOrganizations(request));
+    }
+
+    @PutMapping("/update")
+    private ResponseEntity<OrganizationsDto> updateOrganizations(@RequestBody OrganizationsDto request) {
+        return ResponseEntity.ok(organizationsService.updateOrganizations(request));
     }
 }
