@@ -1,8 +1,8 @@
 package com.sss.app.service.impl;
 
-import com.sss.app.UsersHelper;
-import com.sss.app.dto.UserDto;
-import com.sss.app.entity.User;
+import com.sss.app.dto.users.UserCreateRequestDto;
+import com.sss.app.dto.users.UserResponseDto;
+import com.sss.app.helper.UsersHelper;
 import com.sss.app.mapper.UserMapper;
 import com.sss.app.service.UsersService;
 import org.springframework.stereotype.Service;
@@ -19,8 +19,14 @@ public class UsersServiceImpl implements UsersService {
     }
 
     @Override
-    public UserDto getUserByUid(String uid) {
-        User user = usersHelper.getUserByUid(uid);
-        return userMapper.toDto(user);
+    public UserResponseDto getUserByUid(String uid) {
+        return userMapper.toUserResponseDto(usersHelper.getUserByUid(uid));
     }
+
+    @Override
+    public UserResponseDto createUser(UserCreateRequestDto dto) {
+        return userMapper.toUserResponseDto(usersHelper.createUser(dto));
+    }
+
+
 }

@@ -1,7 +1,9 @@
 package com.sss.app.service;
 
-import com.sss.app.dto.UserDto;
+import com.sss.app.dto.users.UserCreateRequestDto;
+import com.sss.app.dto.users.UserResponseDto;
 
 public interface UsersService {
-    UserDto getUserByUid(String uid);
+    UserResponseDto getUserByUid(String uid);
+    UserResponseDto createUser(UserCreateRequestDto dto);
 }
