@@ -1,4 +1,4 @@
-package com.sss.app.Helper;
+package com.sss.app.helper;
 
 import com.sss.app.entity.users.invitations.UserInvitation;
 import com.sss.app.repository.InvitationTokenRepository;
