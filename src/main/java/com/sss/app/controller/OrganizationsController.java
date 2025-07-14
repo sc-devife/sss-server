@@ -1,8 +1,6 @@
 package com.sss.app.controller;
 
 import com.sss.app.dto.OrganizationsDto;
-import com.sss.app.dto.ResetPasswordRequest;
-import com.sss.app.dto.UserDto;
 import com.sss.app.service.OrganizationsService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

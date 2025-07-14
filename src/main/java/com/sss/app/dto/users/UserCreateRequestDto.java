@@ -4,17 +4,28 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 public class UserCreateRequestDto extends UserDto {
+    @Override
     @NotBlank(message = "Email is required")
     @Email(message = "Invalid email format")
-    private String email;
+    public String getEmail() {
+        return super.getEmail();
+    }
 
+    @Override
     @NotBlank(message = "First Name is required")
-    private String first_name;
+    public String getFirst_name() {
+        return super.getFirst_name();
+    }
 
+    @Override
     @NotBlank(message = "Last Name is required")
-    private String last_name;
+    public String getLast_name() {
+        return super.getLast_name();
+    }
 }

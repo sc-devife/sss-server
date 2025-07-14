@@ -3,6 +3,7 @@ package com.sss.app.entity;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.DynamicInsert;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.List;
 @Entity
 @Table(name = "users")
 @Data
+@DynamicInsert
 public class User {
 
     @Id
@@ -18,7 +20,6 @@ public class User {
     private Long seqp;
 
     @Column(insertable = false, updatable = false)
-
     private String uid;
 
     @Column
