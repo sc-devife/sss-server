@@ -31,7 +31,10 @@ public class JwtAuthenticationFilter implements Filter {
         System.out.println("DoFilter Start===");
         String requestURI = httpRequest.getRequestURI();
         String authHeader = httpRequest.getHeader("Authorization");
+        System.out.println("DoFilter Start requestURI ===" + requestURI);
+
         if (isPublicEndpoint(requestURI)) {
+            System.out.println("DoFilter Start If===");
             chain.doFilter(request, response);
             return;
         }
