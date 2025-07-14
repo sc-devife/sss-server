@@ -3,10 +3,10 @@ package com.sss.app.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-public class UserEmailController {
+public class InvitationEmailController {
 
     @Autowired
     private JavaMailSender mailSender;

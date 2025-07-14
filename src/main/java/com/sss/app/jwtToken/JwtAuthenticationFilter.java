@@ -28,7 +28,10 @@ public class JwtAuthenticationFilter implements Filter {
         System.out.println("DoFilter Start===");
         String requestURI = httpRequest.getRequestURI();
         String authHeader = httpRequest.getHeader("Authorization");
+        System.out.println("DoFilter Start requestURI ===" + requestURI);
+
         if (isPublicEndpoint(requestURI)) {
+            System.out.println("DoFilter Start If===");
             chain.doFilter(request, response);
             return;
         }
@@ -82,6 +85,8 @@ public class JwtAuthenticationFilter implements Filter {
     private boolean isPublicEndpoint(String uri) {
         return uri.startsWith("/sss/api/login/hello")
                 || uri.startsWith("/sss/api/login/forgot-password")
+                || uri.startsWith("/sss/newuser/invite")
+                || uri.startsWith("/sss/newuser/redirect")
                 || uri.startsWith("/sss/api/login/reset-password");
     }
 }
