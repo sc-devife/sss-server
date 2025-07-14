@@ -1,20 +1,24 @@
 package com.sss.app.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.persistence.*;
 import lombok.Data;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
 @Data
 public class User {
+
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column
     private Long seqp;
 
-    @Column
+    @Column(insertable = false, updatable = false)
+
     private String uid;
 
     @Column
@@ -31,4 +35,8 @@ public class User {
 
     @Column
     private String contact_number;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference
+    private List<UserRoleLink> roles = new ArrayList<>();
 }

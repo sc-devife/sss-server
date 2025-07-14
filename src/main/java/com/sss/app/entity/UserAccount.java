@@ -26,7 +26,7 @@ public class UserAccount {
     @Column(name = "name", nullable = false, unique = true, length = 150)
     private String userName;
 
-    @Column(name = "password", nullable = false, length = 255)
+    @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
     @Column(name = "created_on")

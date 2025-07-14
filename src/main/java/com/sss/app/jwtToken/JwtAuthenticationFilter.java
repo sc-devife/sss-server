@@ -15,14 +15,17 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Optional;
+
 @Component
 public class JwtAuthenticationFilter implements Filter {
     @Autowired
     private UserSessionRepository userSessionRepo;
     @Autowired
     AuthenticationService authServices;
+
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws RuntimeException, ServletException, IOException {
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+            throws RuntimeException, ServletException, IOException {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpServletResponse = (HttpServletResponse) response;
         System.out.println("DoFilter Start===");
@@ -36,16 +39,15 @@ public class JwtAuthenticationFilter implements Filter {
         if (requestURI.startsWith("/sss/api/login/user")) {
             chain.doFilter(request, response);
             return;
-        }
-        else if(!requestURI.startsWith("/sss/api/login/forgot-password") &&
-                !requestURI.startsWith("/sss/api/login/reset-password")){
+        } else if (!requestURI.startsWith("/sss/api/login/forgot-password") &&
+                !requestURI.startsWith("/sss/api/login/reset-password")) {
             try {
                 JwtValidator.validateToken(authHeader);
 
                 String username = JwtValidator.extractUsername(authHeader);
                 System.out.println("Authenticated user: " + username);
 
-                //Check if this token exists in DB
+                // Check if this token exists in DB
                 Optional<UserSession> session = userSessionRepo.findById(username);
                 if (session.isPresent() && session.get().getJwtToken().equals(authHeader)) {
                     // valid session — optionally update lastAccessed
@@ -55,7 +57,7 @@ public class JwtAuthenticationFilter implements Filter {
                     // Optionally, authenticate user in Spring Security
                 } else {
                     sendErrorResponse(httpServletResponse, HttpStatus.UNAUTHORIZED, "Invalid or expired session");
-                    //Invalid or expired session — reject
+                    // Invalid or expired session — reject
                     return;
                 }
                 chain.doFilter(request, response);
@@ -68,10 +70,11 @@ public class JwtAuthenticationFilter implements Filter {
             return;
         }
     }
+
     private void sendErrorResponse(HttpServletResponse response, HttpStatus status, String message) throws IOException {
         response.setStatus(status.value());
         response.setContentType("application/json");
-        //To-Do :: update error response content
+        // To-Do :: update error response content
         JSONObject content = new JSONObject();
         content.put("status", status.value());
         content.put("name", status.name());
@@ -79,11 +82,13 @@ public class JwtAuthenticationFilter implements Filter {
         response.getWriter().write(content.toString());
         response.getWriter().flush();
     }
+
     private boolean isPublicEndpoint(String uri) {
-        return uri.startsWith("/sss/api/login/hello")
+        /*return uri.startsWith("/sss/api/login/hello")
                 || uri.startsWith("/sss/api/login/forgot-password")
-                || uri.startsWith("/sss/organizations")
-                || uri.startsWith("/sss/api/login/reset-password");
+                || uri.startsWith("/sss/api/login/reset-password");*/
+        return true;
     }
 }
+
 
