@@ -1,6 +1,6 @@
 package com.sss.app.Helper;
 
-import com.sss.app.entity.UserInvitation;
+import com.sss.app.entity.users.invitations.UserInvitation;
 import com.sss.app.repository.InvitationTokenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;

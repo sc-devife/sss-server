@@ -1,6 +1,6 @@
 package com.sss.app.repository;
 
-import com.sss.app.entity.UserInvitation;
+import com.sss.app.entity.users.invitations.UserInvitation;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

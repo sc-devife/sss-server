@@ -1,4 +1,4 @@
-package com.sss.app.dto;
+package com.sss.app.dto.auth;
 
 import lombok.Data;
 

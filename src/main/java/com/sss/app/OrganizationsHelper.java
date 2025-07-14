@@ -1,11 +1,9 @@
 package com.sss.app;
 
-import com.sss.app.dto.OrganizationsDto;
-import com.sss.app.entity.Organizations;
-import com.sss.app.entity.User;
+import com.sss.app.dto.organizations.OrganizationsDto;
+import com.sss.app.entity.organizations.Organizations;
 import com.sss.app.exception.NotFoundException;
 import com.sss.app.repository.OrganizationRepository;
-import com.sss.app.repository.UserRepository;
 import org.springframework.stereotype.Component;
 
 @Component

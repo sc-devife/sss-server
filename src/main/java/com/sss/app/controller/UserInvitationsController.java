@@ -1,17 +1,9 @@
 package com.sss.app.controller;
 
-import com.sss.app.dto.UserInvitationDto;
-import com.sss.app.dto.UserRegistrationDto;
-import com.sss.app.entity.UserInvitation;
-import com.sss.app.repository.InvitationTokenRepository;
+import com.sss.app.dto.users.invitations.UserInvitationDto;
 import com.sss.app.service.UserInvitationsService;
-import com.sss.app.service.UsersService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDateTime;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/newuser")

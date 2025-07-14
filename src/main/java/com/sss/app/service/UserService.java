@@ -1,6 +1,6 @@
 package com.sss.app.service;
 
-import com.sss.app.entity.PasswordResetToken;
+import com.sss.app.entity.auth.PasswordResetToken;
 import com.sss.app.entity.UserAccount;
 import com.sss.app.repository.PasswordResetTokenRepository;
 import com.sss.app.repository.UserAccountRepository;

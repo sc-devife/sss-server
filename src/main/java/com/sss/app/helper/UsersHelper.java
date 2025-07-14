@@ -1,7 +1,7 @@
 package com.sss.app.helper;
 
 import com.sss.app.dto.users.UserCreateRequestDto;
-import com.sss.app.entity.User;
+import com.sss.app.entity.users.User;
 import com.sss.app.exception.ConflictException;
 import com.sss.app.exception.NotFoundException;
 import com.sss.app.repository.UserRepository;

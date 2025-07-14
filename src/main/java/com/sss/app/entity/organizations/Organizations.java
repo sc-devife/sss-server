@@ -1,4 +1,4 @@
-package com.sss.app.entity;
+package com.sss.app.entity.organizations;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

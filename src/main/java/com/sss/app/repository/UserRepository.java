@@ -1,6 +1,6 @@
 package com.sss.app.repository;
 
-import com.sss.app.entity.User;
+import com.sss.app.entity.users.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

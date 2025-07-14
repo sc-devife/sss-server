@@ -1,4 +1,4 @@
-package com.sss.app.entity;
+package com.sss.app.entity.users.invitations;
 
 import jakarta.persistence.*;
 

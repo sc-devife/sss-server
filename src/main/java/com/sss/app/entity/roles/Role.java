@@ -1,4 +1,4 @@
-package com.sss.app.entity;
+package com.sss.app.entity.roles;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

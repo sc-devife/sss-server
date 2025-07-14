@@ -1,7 +1,7 @@
 package com.sss.app.controller;
 
-import com.sss.app.dto.ForgotPasswordRequest;
-import com.sss.app.dto.ResetPasswordRequest;
+import com.sss.app.dto.auth.ForgotPasswordRequest;
+import com.sss.app.dto.auth.ResetPasswordRequest;
 import com.sss.app.entity.UserSession;
 import com.sss.app.jwtToken.JwtValidator;
 import com.sss.app.repository.UserSessionRepository;

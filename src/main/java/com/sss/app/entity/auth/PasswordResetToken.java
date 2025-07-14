@@ -1,4 +1,4 @@
-package com.sss.app.entity;
+package com.sss.app.entity.auth;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

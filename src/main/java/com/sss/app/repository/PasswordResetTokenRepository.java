@@ -1,6 +1,6 @@
 package com.sss.app.repository;
 
-import com.sss.app.entity.PasswordResetToken;
+import com.sss.app.entity.auth.PasswordResetToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 

@@ -1,7 +1,7 @@
 package com.sss.app.mapper;
 
-import com.sss.app.dto.OrganizationsDto;
-import com.sss.app.entity.Organizations;
+import com.sss.app.dto.organizations.OrganizationsDto;
+import com.sss.app.entity.organizations.Organizations;
 import org.springframework.stereotype.Component;
 
 @Component

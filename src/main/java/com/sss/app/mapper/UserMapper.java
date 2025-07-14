@@ -3,9 +3,9 @@ package com.sss.app.mapper;
 import com.sss.app.dto.roles.RoleResponseDto;
 import com.sss.app.dto.userrolelinks.UserRoleLinkResponseDto;
 import com.sss.app.dto.users.UserResponseDto;
-import com.sss.app.entity.Role;
-import com.sss.app.entity.User;
-import com.sss.app.entity.UserRoleLink;
+import com.sss.app.entity.roles.Role;
+import com.sss.app.entity.users.User;
+import com.sss.app.entity.userrolelinks.UserRoleLink;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-package com.sss.app.dto;
+package com.sss.app.dto.users.invitations;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

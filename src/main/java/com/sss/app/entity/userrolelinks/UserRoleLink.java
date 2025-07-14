@@ -1,6 +1,8 @@
-package com.sss.app.entity;
+package com.sss.app.entity.userrolelinks;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.sss.app.entity.roles.Role;
+import com.sss.app.entity.users.User;
 import jakarta.persistence.*;
 import lombok.Data;
 

@@ -1,6 +1,6 @@
 package com.sss.app.service;
 
-import com.sss.app.dto.OrganizationsDto;
+import com.sss.app.dto.organizations.OrganizationsDto;
 
 public interface OrganizationsService {
     OrganizationsDto getUserByRegisteredName(String orgRegName);

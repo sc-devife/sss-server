@@ -1,6 +1,7 @@
-package com.sss.app.entity;
+package com.sss.app.entity.users;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.sss.app.entity.userrolelinks.UserRoleLink;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.DynamicInsert;

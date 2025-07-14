@@ -1,8 +1,8 @@
 package com.sss.app.service.impl;
 
 import com.sss.app.OrganizationsHelper;
-import com.sss.app.dto.OrganizationsDto;
-import com.sss.app.entity.Organizations;
+import com.sss.app.dto.organizations.OrganizationsDto;
+import com.sss.app.entity.organizations.Organizations;
 import com.sss.app.mapper.OrganizationMapper;
 import com.sss.app.service.OrganizationsService;
 import org.springframework.stereotype.Service;
