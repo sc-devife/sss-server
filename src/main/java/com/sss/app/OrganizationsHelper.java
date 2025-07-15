@@ -4,6 +4,7 @@ import com.sss.app.dto.organizations.OrganizationsDto;
 import com.sss.app.entity.organizations.Organizations;
 import com.sss.app.exception.NotFoundException;
 import com.sss.app.repository.OrganizationRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -14,7 +15,7 @@ public class OrganizationsHelper {
         this.organizationRepository = organizationRepository;
     }
 
-    public Organizations getUserByRegisteredName(String orgRegName) {
+    public Organizations getOrganizationsRegisteredName(String orgRegName) {
         return organizationRepository.findByRegisteredName(orgRegName)
                 .orElseThrow(() -> new NotFoundException("Organization not found with name: " + orgRegName));
     }
@@ -42,5 +43,11 @@ public class OrganizationsHelper {
 
         return organizationRepository.save(org);
 
+    }
+    @Transactional
+    public void deleteOrganizations(String orgRegName) {
+        organizationRepository.findByRegisteredName(orgRegName)
+                .orElseThrow(() -> new NotFoundException("Organization not found with name: " + orgRegName));
+        organizationRepository.deleteByRegisteredName(orgRegName);
     }
 }

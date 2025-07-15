@@ -17,7 +17,7 @@ public class OrganizationsController {
 
     @RequestMapping("/{registeredName}")
     private ResponseEntity<OrganizationsDto> getOrgByRegisteredName(@PathVariable String registeredName) {
-        return ResponseEntity.ok(organizationsService.getUserByRegisteredName(registeredName));
+        return ResponseEntity.ok(organizationsService.getOrganizationsRegisteredName(registeredName));
     }
 
     @PostMapping("/create")
@@ -28,5 +28,11 @@ public class OrganizationsController {
     @PutMapping("/update")
     private ResponseEntity<OrganizationsDto> updateOrganizations(@RequestBody OrganizationsDto request) {
         return ResponseEntity.ok(organizationsService.updateOrganizations(request));
+    }
+
+    @DeleteMapping("/{registeredName}")
+    public ResponseEntity<String> deleteOrganization(@PathVariable String registeredName) {
+        organizationsService.deleteOrganizations(registeredName);
+        return ResponseEntity.ok("Organization deleted successfully");
     }
 }
