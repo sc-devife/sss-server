@@ -2,10 +2,13 @@ package com.sss.app.service.impl;
 
 import com.sss.app.dto.users.UserCreateRequestDto;
 import com.sss.app.dto.users.UserResponseDto;
+import com.sss.app.dto.users.UserUpdateRequestDto;
 import com.sss.app.helper.UsersHelper;
 import com.sss.app.mapper.UserMapper;
 import com.sss.app.service.UsersService;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class UsersServiceImpl implements UsersService {
@@ -28,5 +31,13 @@ public class UsersServiceImpl implements UsersService {
         return userMapper.toUserResponseDto(usersHelper.createUser(dto));
     }
 
+    @Override
+    public UserResponseDto updateUser(String uid, UserUpdateRequestDto payload) {
+        return userMapper.toUserResponseDto(usersHelper.updateUser(uid, payload));
+    }
 
+    @Override
+    public UserResponseDto reassignRoles(String uid, List<String> roles) {
+        return userMapper.toUserResponseDto(usersHelper.reassignRoles(uid, roles));
+    }
 }

@@ -1,8 +1,10 @@
 package com.sss.app.service;
 
-import com.sss.app.entity.UserAccount;
+import com.sss.app.entity.UserCredential;
+import com.sss.app.entity.users.User;
+import com.sss.app.helper.UserCredentialsHelper;
+import com.sss.app.helper.UsersHelper;
 import com.sss.app.jwtToken.KeyProvider;
-import com.sss.app.repository.UserAccountRepository;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -12,39 +14,43 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 @Service
 public class AuthenticationService {
 
     @Autowired
+    private final BCryptPasswordEncoder passwordEncoder;
+
+    @Autowired
+    private final UsersHelper usersHelper;
+
+    @Autowired
+    private final UserCredentialsHelper userCredentialsHelper;
+
+    @Autowired
     private KeyProvider keyProvider;
 
-    @Autowired
-    private UserAccountRepository userAccountRepository;
+    public AuthenticationService(BCryptPasswordEncoder passwordEncoder, UsersHelper usersHelper, UserCredentialsHelper userCredentialsHelper) {
+        this.passwordEncoder = passwordEncoder;
+        this.usersHelper = usersHelper;
+        this.userCredentialsHelper = userCredentialsHelper;
+    }
 
-    @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
+    public String authenticateAndGenerateToken(String email, String password) throws Exception {
+        User user = usersHelper.getUserByEmail(email);
+        UserCredential userCredential = userCredentialsHelper.getUserCredentialBySeqa(user.getSeqp());
 
-    public String authenticateAndGenerateToken(String username, String password) throws Exception {
-        Optional<UserAccount> userCredentials = userAccountRepository.findByUserName(username);
-        if (userCredentials.isPresent()) {
-            UserAccount userAccount = userCredentials.get();
+        if (user.getEmail().equals(email) &&
+                passwordEncoder.matches(password, userCredential.getPassword_hash())) {
 
-            if (userAccount.getUserName().equals(username) &&
-                    passwordEncoder.matches(password, userAccount.getPasswordHash())) {
-
-                return Jwts.builder()
-                        .setSubject(username)
-                        .setIssuedAt(Timestamp.valueOf(LocalDateTime.now()))
-                        .setExpiration(Timestamp.valueOf(LocalDateTime.now().plusHours(12)))
-                        .signWith(SignatureAlgorithm.RS256, keyProvider.getPrivateKey())
-                        .compact();
-            } else {
-                throw new RuntimeException("Invalid credentials");
-            }
+            return Jwts.builder()
+                    .setSubject(email)
+                    .setIssuedAt(Timestamp.valueOf(LocalDateTime.now()))
+                    .setExpiration(Timestamp.valueOf(LocalDateTime.now().plusHours(12)))
+                    .signWith(SignatureAlgorithm.RS256, keyProvider.getPrivateKey())
+                    .compact();
         } else {
-            throw new RuntimeException("User not found");
+            throw new RuntimeException("Invalid credentials");
         }
     }
 

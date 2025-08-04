@@ -22,11 +22,11 @@ public class AuthenticationController {
     @Autowired
     AuthenticationService authServices;
     @Autowired
+    JwtValidator jwtValidator;
+    @Autowired
     private UserSessionRepository userSessionRepo;
     @Autowired
     private UserService userService;
-    @Autowired
-    JwtValidator jwtValidator;
 
     @RequestMapping(value = "/user", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> login(@RequestBody Map<String, String> loginDetails) throws Exception {
@@ -42,7 +42,7 @@ public class AuthenticationController {
         } catch (Exception e) {
             return ResponseEntity.status(401).body("Invalid credentials");
         }
-        if(StringUtils.hasText(token)) {
+        if (StringUtils.hasText(token)) {
             return ResponseEntity.ok(Map.of("token", token));
         } else {
             return ResponseEntity.status(401).body("Invalid credentials");
@@ -51,8 +51,7 @@ public class AuthenticationController {
 
     @RequestMapping(value = "/logout", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> logout(@RequestHeader("Authorization") String authHeader) {
-        if (authHeader != null)
-        {
+        if (authHeader != null) {
             String username = JwtValidator.extractUsername(authHeader);
             userSessionRepo.deleteById(username); // Remove session from DB
             return ResponseEntity.ok("Logged out");
@@ -61,9 +60,9 @@ public class AuthenticationController {
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+    public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordRequest forgotPasswordDto) {
         try {
-            userService.initiatePasswordReset(request.getEmail());
+            userService.initiatePasswordReset(forgotPasswordDto);
             return ResponseEntity.ok("Reset link sent to your email.");
         } catch (Exception e) {
             return ResponseEntity.status(401).body("Invalid Request");
@@ -71,9 +70,9 @@ public class AuthenticationController {
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordRequest request) {
+    public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordRequest resetPasswordDto) {
         try {
-            userService.resetPassword(request.getEmail(), request.getToken(), request.getNewPassword());
+            userService.resetPassword(resetPasswordDto);
             return ResponseEntity.ok("Password reset successfully.");
         } catch (Exception e) {
             return ResponseEntity.status(401).body("Invalid Request");
