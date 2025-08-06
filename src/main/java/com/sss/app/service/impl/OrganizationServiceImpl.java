@@ -1,13 +1,11 @@
 package com.sss.app.service.impl;
 
-import com.sss.app.OrganizationsHelper;
 import com.sss.app.dto.organizations.OrganizationsDto;
 import com.sss.app.entity.organizations.Organizations;
-import com.sss.app.exception.NotFoundException;
+import com.sss.app.helper.OrganizationsHelper;
 import com.sss.app.mapper.OrganizationMapper;
 import com.sss.app.repository.OrganizationRepository;
 import com.sss.app.service.OrganizationsService;
-import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -34,8 +32,8 @@ public class OrganizationServiceImpl implements OrganizationsService {
     }
 
     @Override
-    public OrganizationsDto updateOrganizations(OrganizationsDto createRequest) {
-        Organizations orgs = organizationsHelper.updateOrganizations(createRequest);
+    public OrganizationsDto updateOrganizations(String uid, OrganizationsDto createRequest) {
+        Organizations orgs = organizationsHelper.updateOrganizations(uid, createRequest);
         return organizationMapper.toDto(orgs);
     }
     public void deleteOrganizations(String orgRegName) {

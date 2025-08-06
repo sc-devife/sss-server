@@ -1,7 +1,10 @@
 package com.sss.app.controller;
 
 import com.sss.app.dto.organizations.OrganizationsDto;
+import com.sss.app.dto.users.UserResponseDto;
+import com.sss.app.dto.users.UserUpdateRequestDto;
 import com.sss.app.service.OrganizationsService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,9 +28,9 @@ public class OrganizationsController {
         return ResponseEntity.ok(organizationsService.createOrganizations(request));
     }
 
-    @PutMapping("/update")
-    private ResponseEntity<OrganizationsDto> updateOrganizations(@RequestBody OrganizationsDto request) {
-        return ResponseEntity.ok(organizationsService.updateOrganizations(request));
+   @PutMapping(value = "{uid}/update", consumes = "application/json", produces = "application/json")
+    public ResponseEntity<OrganizationsDto> updateOrganizations(@PathVariable String uid, @Valid @RequestBody OrganizationsDto request) {
+        return ResponseEntity.ok(organizationsService.updateOrganizations(uid, request));
     }
 
     @DeleteMapping("/{registeredName}")

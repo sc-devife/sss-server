@@ -16,6 +16,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
@@ -32,15 +33,25 @@ public class UsersHelper {
     private final RoleRepository roleRepository;
 
     private final UserRoleLinkRepository userRoleLinkRepository;
+    private final BCryptPasswordEncoder passwordEncoder;
 
     @PersistenceContext
     private final EntityManager entityManager;
+    /*public UsersHelper(UserRepository userRepository, UserCredentialRepository userCredentialRepository,
+                       RoleRepository roleRepository,   UserRoleLinkRepository userRoleLinkRepository) {
+        this.userRepository = userRepository;
+        this.userCredentialRepository = userCredentialRepository;
+        this.roleRepository = roleRepository;
+        this.userRoleLinkRepository = userRoleLinkRepository;
+    }*/
+
 
     public User getUserByUid(String uid) {
         return userRepository.findUserWithRoles(uid).orElseThrow(() -> new NotFoundException("User not found with uid: " + uid));
     }
 
     public User getUserByEmail(String email) {
+        System.out.println("UserHelper getUserByEmail Start === ");
         return userRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found with email: " + email));
     }
 
@@ -55,7 +66,8 @@ public class UsersHelper {
         user = userRepository.save(user);
         entityManager.refresh(user);
 
-        UserCredential userCredential = UserCredential.create(user.getSeqp(), payload.getPassword());
+       // userCredential.setPassword_hash(passwordEncoder.encode(payload.getPassword()));
+        UserCredential userCredential = UserCredential.create(user.getSeqp(), passwordEncoder.encode(payload.getPassword()));
         userCredentialRepository.save(userCredential);
         entityManager.refresh(userCredential);
 
