@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 public class OrganizationServiceImpl implements OrganizationsService {
     OrganizationsHelper organizationsHelper;
     OrganizationMapper organizationMapper;
-    OrganizationRepository organizationRepository;
 
     public OrganizationServiceImpl(OrganizationsHelper organizationsHelper, OrganizationMapper organizationMapper) {
         this.organizationsHelper = organizationsHelper;
