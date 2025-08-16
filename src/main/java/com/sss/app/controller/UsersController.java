@@ -27,8 +27,6 @@ public class UsersController {
 
     @PostMapping(value = "/create", consumes = "application/json", produces = "application/json")
     public ResponseEntity<UserResponseDto> createUser(@Valid @RequestBody UserCreateRequestDto payload) {
-        System.out.println("Incoming payload: " + payload);
-        System.out.println("Incoming contact_number: " + payload.getContact_number());
         return ResponseEntity.ok(usersService.createUser(payload));
     }
 

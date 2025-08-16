@@ -25,12 +25,16 @@ public class AddressHelper {
     @PersistenceContext
     private EntityManager entityManager;
 
+    @Transactional
     public Address createOrganizationAddress(AddressDto dto) {
+        System.out.println("Create Address Helper Started Id ===" + dto.getOrganizationId());
         Organizations org = organizationRepository.findById(dto.getOrganizationId())
                 .orElseThrow(() -> new RuntimeException("Organization not found"));
+        System.out.println("Create Address Helper org === "+ org);
 
         boolean exists = addressRepository.findByOrganizationSeqpAndAddressType(
                 dto.getOrganizationId(), dto.getAddressType()) != null;
+        System.out.println("Create Address Helper exists === "+ exists);
 
         if (exists) {
             throw new RuntimeException("Address of type " + dto.getAddressType() + " already exists for this organization");
@@ -46,21 +50,30 @@ public class AddressHelper {
                 .addressType(dto.getAddressType())
                 .organization(org)
                 .build();
+        address = addressRepository.save(address);
         entityManager.flush();
-        entityManager.refresh(org);
+        entityManager.refresh(address);
         return address;
 
 //        return addressMapper.mapToDTO(addressRepository.save(address));
     }
-    public Address updateOrganizationAddress(Long addressId, AddressDto dto) {
-        Address address = addressRepository.findById(addressId)
-                .orElseThrow(() -> new RuntimeException("Address not found"));
 
+    @Transactional
+    public Address updateOrganizationAddress(String addressId, AddressDto dto) {
+        System.out.println("Calling Update Helper ==" + addressId );
+
+        Address address = addressRepository.findByUid(addressId)
+                .orElseThrow(() -> new RuntimeException("Address not found"));
         address.setStreet(dto.getStreet());
         address.setCity(dto.getCity());
         address.setState(dto.getState());
         address.setZipCode(dto.getZipCode());
         address.setCountry(dto.getCountry());
+
+        address = addressRepository.save(address);
+        entityManager.flush();
+        entityManager.refresh(address);
+
         return address;
 
     }

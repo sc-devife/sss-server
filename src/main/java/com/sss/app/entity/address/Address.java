@@ -22,6 +22,9 @@ public class Address {
     @Column
     private Long seqp;
 
+    @Column(insertable = false, updatable = false)
+    private String uid;
+
     private String street;
     private String city;
     private String state;

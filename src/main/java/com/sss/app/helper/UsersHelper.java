@@ -57,7 +57,6 @@ public class UsersHelper {
 
     @Transactional
     public User createUser(UserCreateRequestDto payload) {
-        System.out.println("Creating user with payload: " + payload);
         if (userRepository.existsByEmail(payload.getEmail())) {
             throw new ConflictException("Email is already in use");
         }

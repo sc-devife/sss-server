@@ -18,9 +18,9 @@ public class OrganizationsController {
         this.organizationsService = organizationsService;
     }
 
-    @RequestMapping("/{registeredName}")
-    private ResponseEntity<OrganizationsDto> getOrgByRegisteredName(@PathVariable String registeredName) {
-        return ResponseEntity.ok(organizationsService.getOrganizationsRegisteredName(registeredName));
+    @RequestMapping("/{uid}")
+    private ResponseEntity<OrganizationsDto> getOrgByRegisteredName(@PathVariable String uid) {
+        return ResponseEntity.ok(organizationsService.getOrganizationsByUid(uid));
     }
 
     @PostMapping("/create")

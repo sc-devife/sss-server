@@ -19,8 +19,8 @@ public class OrganizationServiceImpl implements OrganizationsService {
     }
 
     @Override
-    public OrganizationsDto getOrganizationsRegisteredName(String orgRegName) {
-        Organizations orgs = organizationsHelper.getOrganizationsRegisteredName(orgRegName);
+    public OrganizationsDto getOrganizationsByUid(String orgRegName) {
+        Organizations orgs = organizationsHelper.getOrganizationsByUid(orgRegName);
         return organizationMapper.toDto(orgs);
     }
 

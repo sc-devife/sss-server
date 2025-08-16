@@ -23,9 +23,9 @@ public class OrganizationsHelper {
                 .orElseThrow(() -> new NotFoundException("Organization not found with uid: " + uid));
 
     }
-    public Organizations getOrganizationsRegisteredName(String orgRegName) {
-        return organizationRepository.findByRegisteredName(orgRegName)
-                .orElseThrow(() -> new NotFoundException("Organization not found with name: " + orgRegName));
+    public Organizations getOrganizationsByUid(String uid) {
+        return organizationRepository.findByUid(uid)
+                .orElseThrow(() -> new NotFoundException("Organization not found with uid: " + uid));
     }
     @Transactional
     public Organizations createOrganizations(OrganizationsDto request) {

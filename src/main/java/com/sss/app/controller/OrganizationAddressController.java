@@ -18,14 +18,16 @@ public class OrganizationAddressController {
     // Create (POST)
     @PostMapping
     public ResponseEntity<AddressDto> createAddress(@RequestBody AddressDto dto) {
+        System.out.println("Create Address Started ===");
         return ResponseEntity.ok(addressService.createOrganizationAddress(dto));
     }
 
     // Update (PUT)
     @PutMapping("/{id}")
     public ResponseEntity<AddressDto> updateAddress(
-            @PathVariable Long id,
+            @PathVariable String id,
             @RequestBody AddressDto dto) {
+        System.out.println("Calling Update ==" + id );
         return ResponseEntity.ok(addressService.updateOrganizationAddress(id, dto));
     }
 
