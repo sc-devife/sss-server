@@ -2,6 +2,7 @@ package com.sss.app.service.impl;
 
 import com.sss.app.dto.address.AddressDto;
 import com.sss.app.dto.organizations.OrganizationsDto;
+import com.sss.app.dto.users.UserResponseDto;
 import com.sss.app.entity.address.Address;
 import com.sss.app.entity.organizations.Organizations;
 import com.sss.app.helper.AddressHelper;
@@ -33,13 +34,12 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     public AddressDto updateOrganizationAddress(String addressId, AddressDto createRequest) {
-        System.out.println("Calling Update Imple ==" + addressId );
-
         Address orgs = addressHelper.updateOrganizationAddress(addressId, createRequest);
 
         System.out.println("Calling Update orgs ==" + orgs );
         return addressMapper.mapToDTO(orgs);
     }
+
     @Override
     public List<AddressDto> getAddressesByOrganization(Long orgId) {
         return addressRepository.findByOrganizationSeqp(orgId)

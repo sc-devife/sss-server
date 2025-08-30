@@ -4,6 +4,7 @@ import com.sss.app.dto.address.AddressDto;
 import com.sss.app.dto.organizations.OrganizationsDto;
 import com.sss.app.entity.address.Address;
 import com.sss.app.entity.organizations.Organizations;
+import com.sss.app.entity.users.User;
 import com.sss.app.exception.NotFoundException;
 import com.sss.app.mapper.AddressMapper;
 import com.sss.app.repository.OrganizationRepository;
@@ -40,16 +41,7 @@ public class AddressHelper {
             throw new RuntimeException("Address of type " + dto.getAddressType() + " already exists for this organization");
         }
 
-        //To-Do
-        Address address = Address.builder()
-                .street(dto.getStreet())
-                .city(dto.getCity())
-                .state(dto.getState())
-                .zipCode(dto.getZipCode())
-                .country(dto.getCountry())
-                .addressType(dto.getAddressType())
-                .organization(org)
-                .build();
+        Address address = Address.create(dto, org);
         address = addressRepository.save(address);
         entityManager.flush();
         entityManager.refresh(address);
@@ -57,11 +49,19 @@ public class AddressHelper {
 
 //        return addressMapper.mapToDTO(addressRepository.save(address));
     }
-
+    public Address getAddressByUid(String uid) {
+        return addressRepository.findByUid(uid).orElseThrow(() -> new NotFoundException("Address not found with uid: " + uid));
+    }
     @Transactional
     public Address updateOrganizationAddress(String addressId, AddressDto dto) {
         System.out.println("Calling Update Helper ==" + addressId );
 
+        Address address = getAddressByUid(addressId);
+        System.out.println("updateUser user - "+ address);
+        address.update(dto);
+        System.out.println("updateUser updated user - "+ address);
+        addressRepository.save(address);
+/*
         Address address = addressRepository.findByUid(addressId)
                 .orElseThrow(() -> new RuntimeException("Address not found"));
         address.setStreet(dto.getStreet());
@@ -70,15 +70,11 @@ public class AddressHelper {
         address.setZipCode(dto.getZipCode());
         address.setCountry(dto.getCountry());
 
-        address = addressRepository.save(address);
+        address = addressRepository.save(address);*/
         entityManager.flush();
         entityManager.refresh(address);
 
         return address;
 
     }
-/*    public Address getAddressesByOrganization(Long orgId) {
-        return addressRepository.findByOrganizationId(orgId)
-                .orElseThrow(() -> new NotFoundException("Address not found with Organization id: " + orgId));
-    }*/
 }
