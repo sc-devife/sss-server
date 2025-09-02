@@ -14,8 +14,8 @@ public class AddressMapper {
                 .state(address.getState())
                 .zipCode(address.getZipCode())
                 .country(address.getCountry())
-                .addressType(address.getAddressType())
-                .organizationId(address.getOrganization().getSeqp())
+                //.addressType(address.getAddressType())
+              //  .organizationId(address.getOrganization().getSeqp())
                 .build();
     }
 }

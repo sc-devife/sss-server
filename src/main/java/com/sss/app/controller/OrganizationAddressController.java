@@ -15,25 +15,38 @@ public class OrganizationAddressController {
 
     private final AddressService addressService;
 
-    // Create (POST)
-    @PostMapping
-    public ResponseEntity<AddressDto> createAddress(@RequestBody AddressDto dto) {
+    @PostMapping(value = "/{orgId}/create", consumes = "application/json", produces = "application/json")
+    public ResponseEntity<AddressDto> createAddress(@PathVariable Long orgId, @RequestBody AddressDto dto) {
         System.out.println("Create Address Started ===");
-        return ResponseEntity.ok(addressService.createOrganizationAddress(dto));
+        return ResponseEntity.ok(addressService.createOrganizationAddress(orgId, dto));
     }
 
-    // Update (PUT)
+    @PutMapping(value = "/{orgId}/update/{addressId}", consumes = "application/json", produces = "application/json")
+    public ResponseEntity<AddressDto> updateAddress(@PathVariable Long orgId,
+                                                    @PathVariable Long addressId,
+                                                    @RequestBody AddressDto dto) {
+        System.out.println("Update Address Started ===");
+        return ResponseEntity.ok(addressService.updateOrganizationAddress(orgId, addressId, dto));
+    }
+
+    @RequestMapping("/{uid}")
+    public ResponseEntity<List<AddressDto>> getAddressesByOrg(@PathVariable String uid) {
+        List<AddressDto> addresses = addressService.getAddressesByOrganization(uid);
+        return ResponseEntity.ok(addresses);
+    }
+
+  /*  // Update (PUT)
     @PutMapping("/{id}")
     public ResponseEntity<AddressDto> updateAddress(
             @PathVariable String id,
             @RequestBody AddressDto dto) {
         System.out.println("Calling Update ==" + id );
         return ResponseEntity.ok(addressService.updateOrganizationAddress(id, dto));
-    }
+    }*/
 
     // Get all addresses for an organization
     @GetMapping("/organization/{orgId}")
-    public ResponseEntity<List<AddressDto>> getAddressesByOrganization(@PathVariable Long orgId) {
+    public ResponseEntity<List<AddressDto>> getAddressesByOrganization(@PathVariable String orgId) {
         return ResponseEntity.ok(addressService.getAddressesByOrganization(orgId));
     }
 }

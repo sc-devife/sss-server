@@ -1,12 +1,14 @@
 package com.sss.app.entity.organizations;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.sss.app.dto.organizations.OrganizationsDto;
+import com.sss.app.entity.address.AddressConstraint;
 import com.sss.app.util.CompareUtil;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Entity
@@ -37,6 +39,12 @@ public class Organizations {
 
     @Column (name = "support_ph_num")
     private String supportPhNum;
+
+    @OneToMany(mappedBy = "organization", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference // prevents infinite recursion
+    @ToString.Exclude      // prevent Lombok from recursing in toString()
+    @EqualsAndHashCode.Exclude
+    private List<AddressConstraint> addressConstraints = new ArrayList<>();
 
     public static Organizations create(OrganizationsDto dto) {
 
