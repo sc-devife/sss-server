@@ -38,7 +38,10 @@ public class AddressConstraint {
     @Column(name = "seqa_type", nullable = false) // Just a plain column
     private String seqaType;
 
-    public static AddressConstraint create(Organizations org, Address savedAddress, AddressType type) {
+    @Column(name = "is_primary", nullable = false)
+    private boolean primaryAddress;
+
+    public static AddressConstraint create(Organizations org, Address savedAddress, AddressType type, boolean isPrimary) {
 
         AddressConstraint constraint = AddressConstraint.builder()
                 .organization(org)
@@ -46,6 +49,7 @@ public class AddressConstraint {
                 .addressType(type)
                 .seqbType("Organization")   // ✅ must set
                 .seqaType("Address")
+                .primaryAddress(isPrimary)
                 .build();
 
         return constraint;

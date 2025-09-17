@@ -7,8 +7,6 @@ import java.util.List;
 
 public interface AddressService {
   List<AddressDto> getAddressesByOrganization(String uid);
-   // AddressDto createOrganizationAddress(AddressDto createRequest);
-    AddressDto updateOrganizationAddress(Long orgId, Long AddressId, AddressDto updateRequest);
-
+  AddressDto updateOrganizationAddress(Long orgId, Long AddressId, AddressDto updateRequest);
   AddressDto createOrganizationAddress(Long orgId, AddressDto dto);
 }

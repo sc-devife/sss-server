@@ -30,11 +30,20 @@ public class Address {
     @Column(insertable = false, updatable = false)
     private String uid;
 
-    private String street;
+    private String label;
     private String city;
     private String state;
-    private String zipCode;
     private String country;
+    private String zipCode;
+    private String streetFirst;
+    private String streetSecond;
+    private String landMark;
+    private String additionalDetails;
+    //private String contactNumber;
+    private String contactEmail;
+    private String tripDestination;
+
+
 
     @OneToMany(mappedBy = "address", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AddressConstraint> constraints = new ArrayList<>();
@@ -43,11 +52,17 @@ public class Address {
    public static Address create(AddressDto dto) {
 
         AddressBuilder builder = Address.builder();
-        builder.street(dto.getStreet());
+        builder.label(dto.getLabel());
         builder.city(dto.getCity());
         builder.state(dto.getState());
-        builder.zipCode(dto.getZipCode());
         builder.country(dto.getCountry());
+        builder.zipCode(dto.getZipCode());
+        builder.streetFirst(dto.getStreetFirst());
+        builder.streetSecond(dto.getStreetSecond());
+        builder.landMark(dto.getLandMark());
+        builder.additionalDetails(dto.getAdditionalDetails());
+        builder.contactEmail(dto.getContactEmail());
+        builder.tripDestination(dto.getTripDestination());
         builder.build();
         return builder.build();
 
@@ -55,29 +70,41 @@ public class Address {
 
     public void update(AddressDto dto) {
 
-        if (dto.getStreet() != null && CompareUtil.hasChanged(dto.getStreet(), this.street)) {
-            System.out.println("dto get street == " + dto.getStreet());
-            this.street = dto.getStreet();
+        if (dto.getLabel() != null && CompareUtil.hasChanged(dto.getLabel(), this.label)) {
+            this.label = dto.getLabel();
         }
-
         if (dto.getCity() != null && CompareUtil.hasChanged(dto.getCity(), this.city)) {
-            System.out.println("dto get city == " + dto.getCity());
             this.city = dto.getCity();
         }
-
         if (dto.getState() != null && CompareUtil.hasChanged(dto.getState(), this.state)) {
-            System.out.println("dto get getState == " + dto.getState());
             this.state = dto.getState();
         }
-        if (dto.getZipCode() != null && CompareUtil.hasChanged(dto.getZipCode(), this.zipCode)) {
-            System.out.println("dto get getZipCode == " + dto.getZipCode());
-            this.zipCode = dto.getZipCode();
-        }
         if (dto.getCountry() != null && CompareUtil.hasChanged(dto.getCountry(), this.country)) {
-            System.out.println("dto get getCountry == " + dto.getCountry());
             this.country = dto.getCountry();
         }
+        if (dto.getZipCode() != null && CompareUtil.hasChanged(dto.getZipCode(), this.zipCode)) {
+            this.zipCode = dto.getZipCode();
+        }
+        if (dto.getStreetFirst() != null && CompareUtil.hasChanged(dto.getStreetFirst(), this.streetFirst)) {
+            this.streetFirst = dto.getStreetFirst();
+        }
+        if (dto.getStreetSecond() != null && CompareUtil.hasChanged(dto.getStreetSecond(), this.streetSecond)) {
+            this.streetSecond = dto.getStreetSecond();
+        }
 
+        if (dto.getLandMark() != null && CompareUtil.hasChanged(dto.getLandMark(), this.landMark)) {
+            this.landMark = dto.getLandMark();
+        }
+
+        if (dto.getAdditionalDetails() != null && CompareUtil.hasChanged(dto.getAdditionalDetails(), this.additionalDetails)) {
+            this.additionalDetails = dto.getAdditionalDetails();
+        }
+        if (dto.getContactEmail() != null && CompareUtil.hasChanged(dto.getContactEmail(), this.contactEmail)) {
+            this.contactEmail = dto.getContactEmail();
+        }
+        if (dto.getTripDestination() != null && CompareUtil.hasChanged(dto.getTripDestination(), this.tripDestination)) {
+            this.tripDestination = dto.getTripDestination();
+        }
     }
 }
 

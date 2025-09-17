@@ -32,10 +32,8 @@ public class AddressHelper {
 
     @Transactional
     public Address createOrganizationAddress(Long orgId, AddressDto dto) {
-        System.out.println("Create Address Helper Started Id ===" + orgId);
         Organizations org = organizationRepository.findById(orgId)
                 .orElseThrow(() -> new RuntimeException("Organization not found"));
-        System.out.println("Create Address Helper org === "+ org);
 
         Address address = Address.create(dto);
 
@@ -43,10 +41,12 @@ public class AddressHelper {
         addressRepository.flush();
         entityManager.refresh(address);
 
-        // Create AddressConstraints for each role
         for (AddressType type : dto.getAddressTypes()) {
-
-            AddressConstraint constraint = AddressConstraint.create(org, savedAddress, type);
+            if (Boolean.TRUE.equals(dto.getPrimaryAddress())) {
+                // remove any old default of same type for this org
+                constraintRepository.clearDefaultForOrgAndType(orgId, type);
+            }
+            AddressConstraint constraint = AddressConstraint.create(org, savedAddress, type,dto.getPrimaryAddress());
             constraintRepository.save(constraint);
             entityManager.refresh(constraint);
         }
@@ -56,7 +56,6 @@ public class AddressHelper {
 
     @Transactional
     public Address updateOrganizationAddress(Long orgId, Long addressId, AddressDto dto) {
-        System.out.println("Calling Update Helper ==" + addressId );
         Organizations org = organizationRepository.findById(orgId)
                 .orElseThrow(() -> new RuntimeException("Organization not found"));
 
@@ -68,24 +67,15 @@ public class AddressHelper {
         if (dto.getAddressTypes() != null) {
             address.getConstraints().clear();
             for (AddressType type : dto.getAddressTypes()) {
-                AddressConstraint constraint = AddressConstraint.create(org, address, type);
-              //  AddressConstraint constraint = new AddressConstraint();
-                //constraint.setAddress(address);      // owning side
-                //constraint.setOrganization(org);     // owning side
-                //constraint.setAddressType(type);
+                if (Boolean.TRUE.equals(dto.getPrimaryAddress())) {
+                    constraintRepository.clearDefaultForOrgAndType(orgId, type);
+                }
+                AddressConstraint constraint = AddressConstraint.create(org, address, type, dto.getPrimaryAddress());
                 address.getConstraints().add(constraint);
             }
         }
 
         Address saved = addressRepository.save(address);
-        System.out.println("Updated Saved ==== ");
-       // entityManager.refresh(address);
-
         return saved;
-
     }
-/*    public Address getAddressesByOrganization(Long orgId) {
-        return addressRepository.findByOrganizationId(orgId)
-                .orElseThrow(() -> new NotFoundException("Address not found with Organization id: " + orgId));
-    }*/
 }

@@ -17,7 +17,6 @@ public class OrganizationAddressController {
 
     @PostMapping(value = "/{orgId}/create", consumes = "application/json", produces = "application/json")
     public ResponseEntity<AddressDto> createAddress(@PathVariable Long orgId, @RequestBody AddressDto dto) {
-        System.out.println("Create Address Started ===");
         return ResponseEntity.ok(addressService.createOrganizationAddress(orgId, dto));
     }
 
@@ -25,7 +24,6 @@ public class OrganizationAddressController {
     public ResponseEntity<AddressDto> updateAddress(@PathVariable Long orgId,
                                                     @PathVariable Long addressId,
                                                     @RequestBody AddressDto dto) {
-        System.out.println("Update Address Started ===");
         return ResponseEntity.ok(addressService.updateOrganizationAddress(orgId, addressId, dto));
     }
 
@@ -34,15 +32,6 @@ public class OrganizationAddressController {
         List<AddressDto> addresses = addressService.getAddressesByOrganization(uid);
         return ResponseEntity.ok(addresses);
     }
-
-  /*  // Update (PUT)
-    @PutMapping("/{id}")
-    public ResponseEntity<AddressDto> updateAddress(
-            @PathVariable String id,
-            @RequestBody AddressDto dto) {
-        System.out.println("Calling Update ==" + id );
-        return ResponseEntity.ok(addressService.updateOrganizationAddress(id, dto));
-    }*/
 
     // Get all addresses for an organization
     @GetMapping("/organization/{orgId}")

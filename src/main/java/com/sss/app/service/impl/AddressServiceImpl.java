@@ -30,15 +30,11 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     public AddressDto createOrganizationAddress(Long orgId, AddressDto createRequest) {
-        System.out.println("Create Address Service Impl Started ===");
-
-       // Address orgs = addressHelper.createOrganizationAddress(orgId, createRequest);
         return addressMapper.mapToDTO(addressHelper.createOrganizationAddress(orgId, createRequest));
     }
 
     @Override
     public AddressDto updateOrganizationAddress(Long orgId, Long addressId, AddressDto createRequest) {
-        System.out.println("Calling Update Imple ==" + addressId );
         return addressMapper.mapToDTO(addressHelper.updateOrganizationAddress(orgId, addressId, createRequest));
     }
     @Override
@@ -46,13 +42,20 @@ public class AddressServiceImpl implements AddressService {
 
         List<AddressConstraint> constraints = constraintRepository.findByOrganizationUid(orgId);
 
+        //To-Do
         return constraints.stream().map(c -> AddressDto.builder()
                 .id(c.getAddress().getSeqp())
-                .street(c.getAddress().getStreet())
+                .label(c.getAddress().getLabel())
                 .city(c.getAddress().getCity())
                 .state(c.getAddress().getState())
-                .zipCode(c.getAddress().getZipCode())
                 .country(c.getAddress().getCountry())
+                .zipCode(c.getAddress().getZipCode())
+                .streetFirst(c.getAddress().getStreetFirst())
+                .streetSecond(c.getAddress().getStreetSecond())
+                .landMark(c.getAddress().getLandMark())
+                .additionalDetails(c.getAddress().getAdditionalDetails())
+                .contactEmail(c.getAddress().getContactEmail())
+                .tripDestination(c.getAddress().getTripDestination())
                 .addressTypes(
                         constraints.stream()
                                 .filter(inner -> inner.getAddress().getSeqp().equals(c.getAddress().getSeqp()))
@@ -63,10 +66,4 @@ public class AddressServiceImpl implements AddressService {
                 .build()
         ).distinct().toList();
     }
-     /*   return addressRepository.findByOrganizationSeqp(orgId)
-                .stream()
-                .map(addressMapper::mapToDTO)
-                .collect(Collectors.toList());
-   */
-
 }

@@ -11,12 +11,22 @@ import java.util.List;
 public class AddressDto {
 
     private Long id;                 // optional in create, useful in response
-    private String street;
+    private String label;
     private String city;
     private String state;
-    private String zipCode;
     private String country;
+    private String zipCode;
+    private String streetFirst;
+    private String streetSecond;
+    private String landMark;
+    private String additionalDetails;
+    //private String contactNumber;
+    private String contactEmail;
+    private String tripDestination;
 
     // allows multiple roles (Billing, Contact, etc.)
     private List<AddressType> addressTypes;
+
+    private Boolean primaryAddress;
+
 }
