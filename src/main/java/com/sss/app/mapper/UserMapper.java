@@ -4,12 +4,13 @@ import com.sss.app.dto.roles.RoleResponseDto;
 import com.sss.app.dto.userrolelinks.UserRoleLinkResponseDto;
 import com.sss.app.dto.users.UserResponseDto;
 import com.sss.app.entity.roles.Role;
-import com.sss.app.entity.users.User;
 import com.sss.app.entity.userrolelinks.UserRoleLink;
+import com.sss.app.entity.users.User;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class UserMapper {
@@ -50,5 +51,11 @@ public class UserMapper {
 
         dto.setRoles(roleDTOs);
         return dto;
+    }
+
+    public List<UserResponseDto> toUserResponseDtoList(List<User> users) {
+        return users.stream()
+                .map(this::toUserResponseDto)
+                .collect(Collectors.toList());
     }
 }

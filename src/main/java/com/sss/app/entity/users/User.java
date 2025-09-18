@@ -32,6 +32,9 @@ public class User {
     private String uid;
 
     @Column
+    private Long company_id;
+
+    @Column
     private String name;
 
     @Column

@@ -19,9 +19,9 @@ public class Organizations {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "org_seq_gen")
     @SequenceGenerator(
-            name = "org_seq_gen",               // internal name for JPA
-            sequenceName = "organizations_seqp_seq", // actual Postgres sequence name
-            allocationSize = 1                 // match DB sequence increment (usually 1)
+            name = "org_seq_gen",
+            sequenceName = "organizations_seqp_seq",
+            allocationSize = 1
     )
     @Column(name = "seqp")
     private Long seqp;

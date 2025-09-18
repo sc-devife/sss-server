@@ -22,6 +22,11 @@ public class UsersServiceImpl implements UsersService {
     }
 
     @Override
+    public List<UserResponseDto> fetchAllUsers(Long companyId) {
+        return userMapper.toUserResponseDtoList(usersHelper.fetchAllUsers(companyId));
+    }
+
+    @Override
     public UserResponseDto getUserByUid(String uid) {
         return userMapper.toUserResponseDto(usersHelper.getUserByUid(uid));
     }

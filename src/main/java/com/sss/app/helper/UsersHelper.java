@@ -37,14 +37,11 @@ public class UsersHelper {
 
     @PersistenceContext
     private final EntityManager entityManager;
-    /*public UsersHelper(UserRepository userRepository, UserCredentialRepository userCredentialRepository,
-                       RoleRepository roleRepository,   UserRoleLinkRepository userRoleLinkRepository) {
-        this.userRepository = userRepository;
-        this.userCredentialRepository = userCredentialRepository;
-        this.roleRepository = roleRepository;
-        this.userRoleLinkRepository = userRoleLinkRepository;
-    }*/
 
+    public List<User> fetchAllUsers(Long companyId) {
+        System.out.println("UserHelper fetchAllUsers companyId === " + companyId);
+        return userRepository.findUsersWithRoles(companyId);
+    }
 
     public User getUserByUid(String uid) {
         return userRepository.findUserWithRoles(uid).orElseThrow(() -> new NotFoundException("User not found with uid: " + uid));
@@ -65,7 +62,7 @@ public class UsersHelper {
         user = userRepository.save(user);
         entityManager.refresh(user);
 
-       // userCredential.setPassword_hash(passwordEncoder.encode(payload.getPassword()));
+        // userCredential.setPassword_hash(passwordEncoder.encode(payload.getPassword()));
         UserCredential userCredential = UserCredential.create(user.getSeqp(), passwordEncoder.encode(payload.getPassword()));
         userCredentialRepository.save(userCredential);
         entityManager.refresh(userCredential);
@@ -92,9 +89,9 @@ public class UsersHelper {
     @Transactional
     public User updateUser(String uid, UserUpdateRequestDto payload) {
         User user = getUserByUid(uid);
-        System.out.println("updateUser user - "+ user);
+        System.out.println("updateUser user - " + user);
         user.update(payload);
-        System.out.println("updateUser updated user - "+ user);
+        System.out.println("updateUser updated user - " + user);
         userRepository.save(user);
 
         entityManager.refresh(user);
