@@ -14,6 +14,7 @@ import com.sss.app.mapper.OrganizationMapper;
 import com.sss.app.repository.address.AddressConstraintRepository;
 import com.sss.app.repository.address.AddressRepository;
 import com.sss.app.service.AddressService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -65,5 +66,10 @@ public class AddressServiceImpl implements AddressService {
                 )
                 .build()
         ).distinct().toList();
+    }
+    @Override
+    public void deleteOrganizationAddress(Long orgId, Long addressId)
+    {
+        addressHelper.deleteOrganizationAddress(orgId, addressId);
     }
 }

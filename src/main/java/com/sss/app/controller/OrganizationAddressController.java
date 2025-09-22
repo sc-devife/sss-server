@@ -38,4 +38,11 @@ public class OrganizationAddressController {
     public ResponseEntity<List<AddressDto>> getAddressesByOrganization(@PathVariable String orgId) {
         return ResponseEntity.ok(addressService.getAddressesByOrganization(orgId));
     }
+
+    @DeleteMapping("/{orgId}/address/{addressId}")
+    public ResponseEntity<Void> deleteAddress(@PathVariable Long orgId,
+                                              @PathVariable Long addressId) {
+        addressService.deleteOrganizationAddress(orgId, addressId);
+        return ResponseEntity.noContent().build(); // HTTP 204
+    }
 }

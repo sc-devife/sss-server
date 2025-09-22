@@ -9,4 +9,6 @@ public interface AddressService {
   List<AddressDto> getAddressesByOrganization(String uid);
   AddressDto updateOrganizationAddress(Long orgId, Long AddressId, AddressDto updateRequest);
   AddressDto createOrganizationAddress(Long orgId, AddressDto dto);
+  void deleteOrganizationAddress(Long orgId, Long addressId);
+
 }

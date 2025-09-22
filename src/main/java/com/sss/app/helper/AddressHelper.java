@@ -78,4 +78,22 @@ public class AddressHelper {
         Address saved = addressRepository.save(address);
         return saved;
     }
+
+    @Transactional
+    public void deleteOrganizationAddress(Long orgId, Long addressId) {
+        // verify the address belongs to the organization
+        Address address = addressRepository.findById(addressId)
+                .orElseThrow(() -> new RuntimeException("Address not found"));
+
+        if (!address.getConstraints().stream()
+                .anyMatch(c -> c.getOrganization().getSeqp().equals(orgId))) {
+            throw new RuntimeException("Address does not belong to this organization");
+        }
+
+        // 1️⃣ remove constraints first (to avoid FK violations)
+       // constraintRepository.deleteByAddressId(addressId);
+
+        // 2️⃣ then delete the address
+        addressRepository.deleteById(addressId);
+    }
 }
