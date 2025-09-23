@@ -6,4 +6,5 @@ import org.springframework.stereotype.Service;
 @Service
 public interface UserInvitationsService {
     UserInvitationDto inviteUser(String email);
+    UserInvitationDto getInvitationDetails(String uid);
 }

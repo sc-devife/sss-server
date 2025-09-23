@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface InvitationTokenRepository extends JpaRepository<UserInvitation, Long> {
     Optional<UserInvitation> findByEmail(String email);
+    Optional<UserInvitation> findByUid(String uid);
 }

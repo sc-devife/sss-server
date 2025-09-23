@@ -23,5 +23,15 @@ public class UserInvitationsServiceImpl implements UserInvitationsService {
         UserInvitation userInvitation = userInvitationHelper.inviteUser(Email);
         return userInvitationMapper.toInvitationDto(userInvitation);
     }
+
+    @Override
+    public UserInvitationDto getInvitationDetails(String uid) {
+        System.out.println("getInvitationDetails === " + uid);
+        UserInvitation userInvitation = userInvitationHelper.getInvitationDetails(uid);
+        System.out.println("userInvitation === " + userInvitation);
+
+        return userInvitationMapper.toInvitationDto(userInvitation);
+    }
+
 }
 
