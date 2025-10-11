@@ -29,57 +29,16 @@ public class BankAccountController {
 
     }
 
-  /*  @GetMapping
-    public List<BankAccountDto> listBankAccounts(@PathVariable Long orgId) {
-      //  List<OrganizationBankDetails> accounts = bankAccountService.getAccountsForOrg(orgId);
-        List<OrganizationBankDetails> accounts = bankAccountService.getAccountsForOrg(orgId);
-
-        List<BankAccountDto> dtos = new ArrayList<>();
-
-        for (OrganizationBankDetails acc : accounts) {
-            BankAccountDto dto = BankAccountDto.builder()
-                    .id(acc.getId())
-                    .bankName(acc.getBankName())
-                    .bankShortName(acc.getBankShortName())
-                    .branchName(acc.getBranchName())
-                    .ifsc(acc.getIfsc())
-                    .swiftCode(acc.getSwiftCode())
-                    .micrCode(acc.getMicrCode())
-                    .country(acc.getCountry())
-                    .branchState(acc.getBranchState())
-                    .branchCity(acc.getBranchCity())
-                    .branchAddress(acc.getBranchAddress())
-                    .accountNumber(acc.getAccountNumber())
-                    .accountName(acc.getAccountName())
-                    .currency(acc.getCurrency())
-                    .build();
-
-            dtos.add(dto);
-        }
-
-        return dtos;
+    @RequestMapping("/{orgId}")
+    public ResponseEntity<List<BankAccountDto>> getBankAccounts(@PathVariable Long orgId) {
+        List<BankAccountDto> accounts = bankAccountService.getAccountsForOrg(orgId);
+        return ResponseEntity.ok(accounts);
     }
 
-    @GetMapping
-    public List<BankAccountDto> listBankAccounts(@PathVariable Long orgId) {
-        return bankAccountService.getAccountsForOrg(orgId)
-                .stream()
-                .map(acc -> BankAccountDto.builder()
-                        .id(acc.getId())
-                        .bankName(acc.getBankName())
-                        .bankShortName(acc.getBankShortName())
-                        .branchName(acc.getBranchName())
-                        .ifsc(acc.getIfsc())
-                        .swiftCode(acc.getSwiftCode())
-                        .micrCode(acc.getMicrCode())
-                        .country(acc.getCountry())
-                        .branchState(acc.getBranchState())
-                        .branchCity(acc.getBranchCity())
-                        .branchAddress(acc.getBranchAddress())
-                        .accountNumber(acc.getAccountNumber())
-                        .accountName(acc.getAccountName())
-                        .currency(acc.getCurrency())
-                        .build())
-                .toList();
-    }*/
+    @DeleteMapping("/{orgId}/{accountId}")
+    public ResponseEntity<Void> deleteBankAccount(@PathVariable Long orgId,
+                                                  @PathVariable Long accountId) {
+        bankAccountService.deleteBankAccount(orgId, accountId);
+        return ResponseEntity.noContent().build(); // returns 204 No Content
+    }
 }

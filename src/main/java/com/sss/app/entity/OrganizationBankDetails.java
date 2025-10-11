@@ -1,5 +1,8 @@
 package com.sss.app.entity;
 
+import com.sss.app.dto.BankAccountDto;
+import com.sss.app.dto.address.AddressDto;
+import com.sss.app.entity.address.Address;
 import com.sss.app.entity.organizations.Organizations;
 import jakarta.persistence.*;
 import lombok.*;
@@ -67,4 +70,26 @@ public class OrganizationBankDetails {
     @Column(name = "seqa_type", nullable = false) // Just a plain column
     private String seqaType;
 
+
+    public static OrganizationBankDetails create(BankAccountDto dto, Organizations org) {
+        OrganizationBankDetails.OrganizationBankDetailsBuilder builder = OrganizationBankDetails.builder();
+        builder.bankName(dto.getBankName());
+        builder.bankShortName(dto.getBankShortName());
+        builder.branchName(dto.getBranchName());
+        builder.ifsc(dto.getIfsc());
+        builder.swiftCode(dto.getSwiftCode());
+        builder.micrCode(dto.getMicrCode());
+        builder.country(dto.getCountry());
+        builder.branchState(dto.getBranchState());
+        builder.branchCity(dto.getBranchCity());
+        builder.branchAddress(dto.getBranchAddress());
+        builder.accountNumber(dto.getAccountNumber());
+        builder.accountName(dto.getAccountName());
+        builder.currency(dto.getCurrency());
+        builder.seqaType("Organization");
+        builder.organization(org);
+        builder.build();
+        return builder.build();
+
+    }
 }

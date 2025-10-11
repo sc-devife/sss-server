@@ -1,46 +1,42 @@
-package com.sss.app.service.impl;
+package com.sss.app.helper;
 
 import com.sss.app.dto.BankAccountDto;
-import com.sss.app.dto.address.AddressDto;
-import com.sss.app.dto.users.UserResponseDto;
 import com.sss.app.entity.OrganizationBankDetails;
+import com.sss.app.entity.address.Address;
 import com.sss.app.entity.organizations.Organizations;
-import com.sss.app.helper.AddressHelper;
-import com.sss.app.helper.BankAccountsHelper;
-import com.sss.app.mapper.AddressMapper;
-import com.sss.app.mapper.BankAccountsMapper;
 import com.sss.app.repository.BankAccountRepository;
 import com.sss.app.repository.OrganizationRepository;
-import com.sss.app.service.BankAccountService;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Service
+@Component
 @RequiredArgsConstructor
-public class BankAccountServiceImpl implements BankAccountService {
-
-    private final BankAccountsHelper accountsHelper;
-    private final BankAccountsMapper accountsMapper;
+public class BankAccountsHelper {
 
     private final BankAccountRepository bankAccountRepository;
     private final OrganizationRepository organizationRepository;
+    @PersistenceContext
+    private EntityManager entityManager;
+    @Transactional
+    public OrganizationBankDetails createBankAccount(Long orgId, BankAccountDto dto) {
+        Organizations org = organizationRepository.findById(orgId)
+                .orElseThrow(() -> new RuntimeException("Organization not found"));
 
-    @Override
-    public BankAccountDto createBankAccount(Long orgId, BankAccountDto createRequest) {
-        return accountsMapper.mapToDTO(accountsHelper.createBankAccount(orgId, createRequest));
+        OrganizationBankDetails bankAccount = OrganizationBankDetails.create(dto, org);
+        bankAccount  = bankAccountRepository.save(bankAccount);
+        bankAccountRepository.flush();
+        entityManager.refresh(bankAccount);
+        return bankAccount;
     }
 
- /*   @Override
-    public BankAccountDto getAccountsForOrg(Long orgId) {
-        return accountsMapper.mapToDTO(accountsHelper.getAccountsForOrg(orgId));
-    }*/
-
-    @Override
-    public List<BankAccountDto> getAccountsForOrg(Long orgId) {
+   public List<BankAccountDto> getAccountsForOrg(Long orgId) {
+ //   public OrganizationBankDetails getAccountsForOrg(Long orgId) {
         List<OrganizationBankDetails> accounts = bankAccountRepository.findByOrganizationSeqp(orgId);
 
         return accounts.stream()
@@ -59,20 +55,9 @@ public class BankAccountServiceImpl implements BankAccountService {
                         .accountNumber(acc.getAccountNumber())
                         .accountName(acc.getAccountName())
                         .currency(acc.getCurrency())
-                      //  .isPrimary(acc.getIsPrimary())
+                        //  .isPrimary(acc.getIsPrimary())
                         .build())
                 .collect(Collectors.toList());
     }
-    @Transactional
-    @Override
-    public void deleteBankAccount(Long orgId, Long accountId) {
-        OrganizationBankDetails account = bankAccountRepository.findById(accountId)
-                .orElseThrow(() -> new RuntimeException("Bank account not found"));
 
-        if (!account.getOrganization().getSeqp().equals(orgId)) {
-            throw new RuntimeException("Bank account does not belong to this organization");
-        }
-
-        bankAccountRepository.delete(account);
-    }
 }
