@@ -1,6 +1,6 @@
 package com.sss.app.repository.library.escapepoint;
 
-import com.sss.app.entity.escapepoint.EscapePoint;
+import com.sss.app.entity.library.escapepoint.EscapePoint;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,5 +15,5 @@ public interface EscapePointRepository extends JpaRepository<EscapePoint, Long> 
 
     Optional<EscapePoint> findByUid(String uid);
 
-    boolean existsById(String email);
+    boolean existsById(String id);
 }

@@ -1,4 +1,4 @@
-package com.sss.app.entity.escapepoint;
+package com.sss.app.entity.library.inclusionexclusion;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -9,17 +9,20 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 @Entity
-@Table(name = "escape_points")
+@Table(name = "inclusion_exclusion_items")
 @Data
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @DynamicInsert
 @DynamicUpdate
-public class EscapePoint {
+public class InclusionExclusion {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column
     private Long seqp;
+
+    @Column
+    private Long sort_order;
 
     @Column
     private Long company_id;
@@ -28,38 +31,14 @@ public class EscapePoint {
     private String uid;
 
     @Column
-    private String id;
-
-    @Column
     private String name;
 
     @Column
-    private String nick_name;
+    private String type;
 
     @Column
-    private String city;
+    private String description;
 
     @Column
-    private String province;
-
-    @Column
-    private String country;
-
-    @Column
-    private String region;
-
-    @Column
-    private String nearest_airport;
-
-    @Column
-    private String currency;
-
-    @Column
-    private String time_zone;
-
-    @Column
-    private String tags;
-
-    @Column
-    private String remarks;
+    private Boolean is_active;
 }

@@ -2,7 +2,7 @@ package com.sss.app.helper.library.escapepoint;
 
 import com.sss.app.dto.library.escapepoint.EscapePointCreateRequestDto;
 import com.sss.app.dto.library.escapepoint.EscapePointUpdateRequestDto;
-import com.sss.app.entity.escapepoint.EscapePoint;
+import com.sss.app.entity.library.escapepoint.EscapePoint;
 import com.sss.app.exception.ConflictException;
 import com.sss.app.exception.NotFoundException;
 import com.sss.app.mapper.library.escapepoint.EscapePointMapper;
