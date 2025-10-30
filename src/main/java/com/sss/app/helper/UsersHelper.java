@@ -48,7 +48,6 @@ public class UsersHelper {
     }
 
     public User getUserByEmail(String email) {
-        System.out.println("UserHelper getUserByEmail Start === ");
         return userRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found with email: " + email));
     }
 

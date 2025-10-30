@@ -9,13 +9,19 @@ public class AddressMapper {
     public AddressDto mapToDTO(Address address) {
         return AddressDto.builder()
                 .id(address.getSeqp())
-                .street(address.getStreet())
+                .label(address.getLabel())
                 .city(address.getCity())
                 .state(address.getState())
-                .zipCode(address.getZipCode())
                 .country(address.getCountry())
-                .addressType(address.getAddressType())
-                .organizationId(address.getOrganization().getSeqp())
+                .zipCode(address.getZipCode())
+                .streetFirst(address.getStreetFirst())
+                .streetSecond(address.getStreetSecond())
+                .landMark(address.getLandMark())
+                .additionalDetails(address.getAdditionalDetails())
+                .contactEmail(address.getContactEmail())
+                .tripDestination(address.getTripDestination())
+                //.addressType(address.getAddressType())
+              //  .organizationId(address.getOrganization().getSeqp())
                 .build();
     }
 }

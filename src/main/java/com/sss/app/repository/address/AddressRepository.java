@@ -9,7 +9,7 @@ import java.util.Optional;
 
 public interface AddressRepository extends JpaRepository<Address, Long>{
     Optional<Address> findByUid(String uid);
-    List<Address> findByOrganizationSeqp(Long organizationId);
+   // List<Address> findByOrganizationSeqp(Long organizationId);
    // Address findByOrganizationIdAndAddressType(Long organizationId, AddressType addressType);
-    Address findByOrganizationSeqpAndAddressType(Long organizationId, AddressType addressType);
+  //  Address findByOrganizationSeqpAndAddressType(Long organizationId, AddressType addressType);
 }

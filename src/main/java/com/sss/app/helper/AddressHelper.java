@@ -1,12 +1,16 @@
 package com.sss.app.helper;
 
+import com.sss.app.AddressType;
 import com.sss.app.dto.address.AddressDto;
 import com.sss.app.dto.organizations.OrganizationsDto;
 import com.sss.app.entity.address.Address;
+import com.sss.app.entity.address.AddressConstraint;
 import com.sss.app.entity.organizations.Organizations;
+import com.sss.app.entity.users.User;
 import com.sss.app.exception.NotFoundException;
 import com.sss.app.mapper.AddressMapper;
 import com.sss.app.repository.OrganizationRepository;
+import com.sss.app.repository.address.AddressConstraintRepository;
 import com.sss.app.repository.address.AddressRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -21,64 +25,75 @@ import java.util.stream.Collectors;
 public class AddressHelper {
     private final AddressRepository addressRepository;
     private final OrganizationRepository organizationRepository;
+    private final AddressConstraintRepository constraintRepository;
     private final AddressMapper addressMapper;
     @PersistenceContext
     private EntityManager entityManager;
 
     @Transactional
-    public Address createOrganizationAddress(AddressDto dto) {
-        System.out.println("Create Address Helper Started Id ===" + dto.getOrganizationId());
-        Organizations org = organizationRepository.findById(dto.getOrganizationId())
+    public Address createOrganizationAddress(Long orgId, AddressDto dto) {
+        Organizations org = organizationRepository.findById(orgId)
                 .orElseThrow(() -> new RuntimeException("Organization not found"));
-        System.out.println("Create Address Helper org === "+ org);
 
-        boolean exists = addressRepository.findByOrganizationSeqpAndAddressType(
-                dto.getOrganizationId(), dto.getAddressType()) != null;
-        System.out.println("Create Address Helper exists === "+ exists);
+        Address address = Address.create(dto);
 
-        if (exists) {
-            throw new RuntimeException("Address of type " + dto.getAddressType() + " already exists for this organization");
-        }
-
-        //To-Do
-        Address address = Address.builder()
-                .street(dto.getStreet())
-                .city(dto.getCity())
-                .state(dto.getState())
-                .zipCode(dto.getZipCode())
-                .country(dto.getCountry())
-                .addressType(dto.getAddressType())
-                .organization(org)
-                .build();
-        address = addressRepository.save(address);
-        entityManager.flush();
+        Address savedAddress = addressRepository.save(address);
+        addressRepository.flush();
         entityManager.refresh(address);
-        return address;
 
-//        return addressMapper.mapToDTO(addressRepository.save(address));
+        for (AddressType type : dto.getAddressTypes()) {
+            if (Boolean.TRUE.equals(dto.getPrimaryAddress())) {
+                // remove any old default of same type for this org
+                constraintRepository.clearDefaultForOrgAndType(orgId, type);
+            }
+            AddressConstraint constraint = AddressConstraint.create(org, savedAddress, type,dto.getPrimaryAddress());
+            constraintRepository.save(constraint);
+            entityManager.refresh(constraint);
+        }
+        dto.setId(savedAddress.getSeqp());
+        return address;
     }
 
     @Transactional
-    public Address updateOrganizationAddress(String addressId, AddressDto dto) {
-        System.out.println("Calling Update Helper ==" + addressId );
+    public Address updateOrganizationAddress(Long orgId, Long addressId, AddressDto dto) {
+        Organizations org = organizationRepository.findById(orgId)
+                .orElseThrow(() -> new RuntimeException("Organization not found"));
 
-        Address address = addressRepository.findByUid(addressId)
+        Address address = addressRepository.findById(addressId)
                 .orElseThrow(() -> new RuntimeException("Address not found"));
-        address.setStreet(dto.getStreet());
-        address.setCity(dto.getCity());
-        address.setState(dto.getState());
-        address.setZipCode(dto.getZipCode());
-        address.setCountry(dto.getCountry());
 
-        address = addressRepository.save(address);
-        entityManager.flush();
-        entityManager.refresh(address);
+        address.update(dto);
+        // update constraints
+        if (dto.getAddressTypes() != null) {
+            address.getConstraints().clear();
+            for (AddressType type : dto.getAddressTypes()) {
+                if (Boolean.TRUE.equals(dto.getPrimaryAddress())) {
+                    constraintRepository.clearDefaultForOrgAndType(orgId, type);
+                }
+                AddressConstraint constraint = AddressConstraint.create(org, address, type, dto.getPrimaryAddress());
+                address.getConstraints().add(constraint);
+            }
+        }
 
-        return address;
-
+        Address saved = addressRepository.save(address);
+        return saved;
     }
-/*    public Address getAddressesByOrganization(Long orgId) {
-        return addressRepository.findByOrganizationId(orgId)
-                .orElseThrow(() -> new NotFoundException("Address not found with Organization id: " + orgId));
-    }*/
+
+    @Transactional
+    public void deleteOrganizationAddress(Long orgId, Long addressId) {
+        // verify the address belongs to the organization
+        Address address = addressRepository.findById(addressId)
+                .orElseThrow(() -> new RuntimeException("Address not found"));
+
+        if (!address.getConstraints().stream()
+                .anyMatch(c -> c.getOrganization().getSeqp().equals(orgId))) {
+            throw new RuntimeException("Address does not belong to this organization");
+        }
+
+        // 1️⃣ remove constraints first (to avoid FK violations)
+       // constraintRepository.deleteByAddressId(addressId);
+
+        // 2️⃣ then delete the address
+        addressRepository.deleteById(addressId);
+    }
 }
