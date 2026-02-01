@@ -1,0 +1,12 @@
+package com.sss.app.repository.escape;
+
+import com.sss.app.entity.escape.Escape;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+
+public interface EscapeRepository extends JpaRepository<Escape, Long> {
+    @EntityGraph(attributePaths = {"lead", "travellers", "destinations"})
+    Optional<Escape> findBySeqp(Long seqp);
+}
