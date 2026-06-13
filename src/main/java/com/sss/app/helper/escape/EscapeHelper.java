@@ -1,19 +1,18 @@
 package com.sss.app.helper.escape;
 
 import com.sss.app.dto.escape.EscapeCreateRequestDTO;
-import com.sss.app.dto.escape.EscapeResponseDTO;
 import com.sss.app.dto.escape.EscapeUpdateRequestDTO;
-import com.sss.app.dto.traveller.TravellerCreateRequestDTO;
 import com.sss.app.entity.escape.Escape;
 import com.sss.app.entity.lead.Lead;
 import com.sss.app.entity.library.escapepoint.EscapePoint;
+import com.sss.app.entity.library.escapesource.EscapeSource;
 import com.sss.app.entity.traveller.Traveller;
-import com.sss.app.exception.ConflictException;
 import com.sss.app.exception.NotFoundException;
 import com.sss.app.mapper.escape.EscapeMapper;
 import com.sss.app.repository.escape.EscapeRepository;
 import com.sss.app.repository.lead.LeadRepository;
 import com.sss.app.repository.library.escapepoint.EscapePointRepository;
+import com.sss.app.repository.library.escapesource.EscapeSourceRepository;
 import com.sss.app.repository.traveller.TravellerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -30,18 +29,20 @@ public class EscapeHelper {
     private final LeadRepository leadRepository;
     private final TravellerRepository travellerRepository;
     private final EscapePointRepository destinationRepository;
+    private final EscapeSourceRepository sourceRepository;
 
     public Escape createEscape(EscapeCreateRequestDTO request) {
 
         Lead lead = leadRepository.findById(request.getLeadId())
                 .orElseThrow(() -> new NotFoundException("Lead not found"));
 
+        EscapeSource source = sourceRepository.findById(request.getSourceId())
+                .orElseThrow(() -> new NotFoundException("Source not found"));
+
         Escape trip = escapeMapper.toEntityCreate(request);
 
         trip.setLead(lead);
-       // trip.setTravellers(travellerRepository.findAllById(request.getTravellerIds()));
-      //  trip.setDestinations(destinationRepository.findAllById(request.getDestinationIds()));
-
+        trip.setSource(source);
         trip.setTravellers(
                 new HashSet<>(travellerRepository.findAllById(request.getTravellerIds()))
         );
@@ -60,13 +61,17 @@ public class EscapeHelper {
     public Escape updateEscape(Long seqp, EscapeUpdateRequestDTO request) {
         //Fetch existing trip
         Escape escape = escapeRepository.findBySeqp(seqp)
-                .orElseThrow(() -> new RuntimeException("Trip not found"));
+                .orElseThrow(() -> new RuntimeException("Escape not found"));
 
         //Update Lead
         Lead lead = leadRepository.findById(request.getLeadId())
                 .orElseThrow(() -> new RuntimeException("Lead not found"));
 
+        EscapeSource source = sourceRepository.findById(request.getSourceId())
+                .orElseThrow(() -> new NotFoundException("Source not found"));
+
         escape.setLead(lead);
+        escape.setSource(source);
 
         //Update Travellers (Overwrite old ones)
         if (request.getTravellerIds() != null) {

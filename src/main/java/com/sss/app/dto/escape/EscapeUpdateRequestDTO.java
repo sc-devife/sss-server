@@ -13,6 +13,7 @@ public class EscapeUpdateRequestDTO extends EscapeDTO {
 
     @NotNull(message = "Lead ID is required")
     private Long leadId;
+    private Long sourceId;
 
     private List<Long> travellerIds;
 

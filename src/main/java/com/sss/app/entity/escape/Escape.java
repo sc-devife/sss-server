@@ -2,6 +2,7 @@ package com.sss.app.entity.escape;
 
 import com.sss.app.entity.lead.Lead;
 import com.sss.app.entity.library.escapepoint.EscapePoint;
+import com.sss.app.entity.library.escapesource.EscapeSource;
 import com.sss.app.entity.traveller.Traveller;
 import jakarta.persistence.*;
 import lombok.*;
@@ -27,6 +28,10 @@ public class Escape {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lead_id", nullable = false) //rename
     private Lead lead;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "source_id")
+    private EscapeSource source;
 
     @ManyToMany
     @JoinTable(

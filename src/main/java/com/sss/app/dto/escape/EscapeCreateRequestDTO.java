@@ -8,7 +8,7 @@ import lombok.Data;
 public class EscapeCreateRequestDTO extends EscapeDTO {
     @NotNull
     private Long leadId;
-
+    private Long sourceId;
     @NotEmpty
     private java.util.List<Long> travellerIds;
 
