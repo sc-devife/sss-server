@@ -38,6 +38,7 @@ public class AuthenticationService {
 
     public String authenticateAndGenerateToken(String email, String password) throws Exception {
         User user = usersHelper.getUserByEmail(email);
+
         UserCredential userCredential = userCredentialsHelper.getUserCredentialBySeqa(user.getSeqp());
 
         if (user.getEmail().equals(email) &&
@@ -69,5 +70,9 @@ public class AuthenticationService {
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
+    }
+
+    public String generatePasswordHash(String plainPassword) {
+        return passwordEncoder.encode(plainPassword);
     }
 }

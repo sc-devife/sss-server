@@ -78,6 +78,11 @@ public class AuthenticationController {
             return ResponseEntity.status(401).body("Invalid Request");
         }
     }
+
+    @GetMapping("/generate")
+    public String generatePasswordHash(@RequestParam String password) {
+        return authServices.generatePasswordHash(password);
+    }
 }
 
 
