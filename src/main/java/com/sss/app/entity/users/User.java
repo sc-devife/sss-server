@@ -10,6 +10,7 @@ import lombok.*;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,6 +31,12 @@ public class User {
 
     @Column(insertable = false, updatable = false)
     private String uid;
+
+    @Column(name = "user_id", unique = true)
+    private String userId;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
     @Column
     private Long company_id;

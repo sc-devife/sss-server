@@ -1,6 +1,7 @@
 package com.sss.app.controller;
 
 import com.sss.app.dto.auth.ForgotPasswordRequest;
+import com.sss.app.dto.auth.LoginResponse;
 import com.sss.app.dto.auth.ResetPasswordRequest;
 import com.sss.app.entity.UserSession;
 import com.sss.app.jwtToken.JwtValidator;
@@ -34,16 +35,16 @@ public class AuthenticationController {
         String username = loginDetails.get("email");
         String password = loginDetails.get("password");
 
-        String token = "";
+        LoginResponse loginResponse;
         try {
-            token = authServices.authenticateAndGenerateToken(username, password);
-            UserSession userSession = new UserSession(username, token, LocalDateTime.now());
+            loginResponse = authServices.authenticateAndGenerateToken(username, password);
+            UserSession userSession = new UserSession(username, loginResponse.getToken(), LocalDateTime.now());
             userSessionRepo.save(userSession);
         } catch (Exception e) {
             return ResponseEntity.status(401).body("Invalid credentials");
         }
-        if (StringUtils.hasText(token)) {
-            return ResponseEntity.ok(Map.of("token", token));
+        if (StringUtils.hasText(loginResponse.getToken())) {
+            return ResponseEntity.ok(loginResponse);
         } else {
             return ResponseEntity.status(401).body("Invalid credentials");
         }

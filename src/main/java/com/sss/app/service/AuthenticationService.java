@@ -1,5 +1,6 @@
 package com.sss.app.service;
 
+import com.sss.app.dto.auth.LoginResponse;
 import com.sss.app.entity.UserCredential;
 import com.sss.app.entity.users.User;
 import com.sss.app.helper.UserCredentialsHelper;
@@ -36,7 +37,7 @@ public class AuthenticationService {
         this.userCredentialsHelper = userCredentialsHelper;
     }
 
-    public String authenticateAndGenerateToken(String email, String password) throws Exception {
+    public LoginResponse authenticateAndGenerateToken(String email, String password) throws Exception {
         User user = usersHelper.getUserByEmail(email);
 
         UserCredential userCredential = userCredentialsHelper.getUserCredentialBySeqa(user.getSeqp());
@@ -44,12 +45,14 @@ public class AuthenticationService {
         if (user.getEmail().equals(email) &&
                 passwordEncoder.matches(password, userCredential.getPassword_hash())) {
 
-            return Jwts.builder()
+            String token = Jwts.builder()
                     .setSubject(email)
                     .setIssuedAt(Timestamp.valueOf(LocalDateTime.now()))
                     .setExpiration(Timestamp.valueOf(LocalDateTime.now().plusHours(12)))
                     .signWith(SignatureAlgorithm.RS256, keyProvider.getPrivateKey())
                     .compact();
+
+            return new LoginResponse(token, user.getUserId(), user.getName());
         } else {
             throw new RuntimeException("Invalid credentials");
         }

@@ -30,4 +30,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findUsersWithRoles(@Param("companyId") Long companyId);
 
     boolean existsByEmail(String email);
+
+    boolean existsByUserId(String userId);
+
+    @Query("""
+            SELECT u FROM User u
+            WHERE u.email = :email OR u.contact_number = :mobileNumber
+            ORDER BY u.createdAt DESC
+            """)
+    List<User> findByEmailOrContactNumberOrderByCreatedAtDesc(@Param("email") String email, @Param("mobileNumber") String mobileNumber);
 }
