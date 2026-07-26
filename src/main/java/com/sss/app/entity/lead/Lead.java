@@ -19,6 +19,7 @@ public class Lead {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long seqp;
+    private Long orgId;
     private String name;
     private String email;
     private String phone;

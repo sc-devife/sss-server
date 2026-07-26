@@ -1,8 +1,5 @@
 package com.sss.app.jwtToken;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import org.springframework.stereotype.Component;
 
@@ -14,16 +11,6 @@ public class JwtValidator {
         JwtValidator.keyProvider = keyProvider;
     }
 
-    public static void validateToken(String token) {
-        try {
-            Jws<Claims> claims = Jwts.parserBuilder()
-                    .setSigningKey(keyProvider.getPublicKey())
-                    .build()
-                    .parseClaimsJws(token);
-        } catch (JwtException e) {
-            e.printStackTrace();
-        }
-    }
     public static String extractUsername(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(keyProvider.getPublicKey()).build()

@@ -39,7 +39,7 @@ public class User {
     private LocalDateTime createdAt;
 
     @Column
-    private Long company_id;
+    private Long orgId;
 
     @Column
     private String name;

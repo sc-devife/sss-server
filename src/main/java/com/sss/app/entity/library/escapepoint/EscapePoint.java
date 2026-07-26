@@ -1,5 +1,6 @@
 package com.sss.app.entity.library.escapepoint;
 
+import com.sss.app.entity.library.hotel.Hotel;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -7,6 +8,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
+
+import java.util.List;
 
 @Entity
 @Table(name = "escape_points")
@@ -22,7 +25,7 @@ public class EscapePoint {
     private Long seqp;
 
     @Column
-    private Long company_id;
+    private Long orgId;
 
     @Column(insertable = false, updatable = false)
     private String uid;
@@ -62,4 +65,7 @@ public class EscapePoint {
 
     @Column
     private String remarks;
+
+    @ManyToMany(mappedBy = "escapePoints")
+    private List<Hotel> hotels;
 }

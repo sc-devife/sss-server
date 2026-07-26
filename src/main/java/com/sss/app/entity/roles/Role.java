@@ -18,6 +18,10 @@ public class Role {
     @Column
     private String uid;
 
+    // Null = platform-level role (visible/assignable across all organizations).
+    @Column
+    private Long orgId;
+
     @Column
     private String name;
 

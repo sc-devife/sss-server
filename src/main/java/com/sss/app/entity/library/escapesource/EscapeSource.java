@@ -20,6 +20,9 @@ public class EscapeSource {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long seqp;
 
+    @Column(name = "org_id")
+    private Long orgId;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "source_type", nullable = false)
     private EscapeSourceType sourceType;

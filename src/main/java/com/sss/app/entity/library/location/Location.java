@@ -31,6 +31,8 @@ public class Location {
     @Column(nullable = false, unique = true, updatable = false)
     private UUID uid;
 
+    private Long orgId;
+
     @Column(nullable = false)
     private String city;
 
@@ -44,6 +46,12 @@ public class Location {
     @Builder.Default
     @Column(nullable = false)
     private Boolean isActive = true;
+
+    // Ground-truth geography for whatever sits here (Hotel, Activity, Transport, ServiceProvider) —
+    // used for pricing/tax/scheduling, unlike the destination's representative currency/timezone.
+    private String currencyCode;
+
+    private String timeZone;
 
     @OneToMany(mappedBy = "location")
     private List<Hotel> hotels;

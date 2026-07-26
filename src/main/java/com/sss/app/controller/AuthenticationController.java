@@ -52,8 +52,9 @@ public class AuthenticationController {
 
     @RequestMapping(value = "/logout", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> logout(@RequestHeader("Authorization") String authHeader) {
-        if (authHeader != null) {
-            String username = JwtValidator.extractUsername(authHeader);
+        if (StringUtils.hasText(authHeader) && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring("Bearer ".length());
+            String username = JwtValidator.extractUsername(token);
             userSessionRepo.deleteById(username); // Remove session from DB
             return ResponseEntity.ok("Logged out");
         }

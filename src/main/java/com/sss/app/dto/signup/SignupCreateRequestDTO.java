@@ -8,8 +8,11 @@ import lombok.Data;
 @Data
 public class SignupCreateRequestDTO {
 
-    @NotBlank(message = "Name is required")
-    private String name;
+    @NotBlank(message = "First name is required")
+    private String first_name;
+
+    @NotBlank(message = "Last name is required")
+    private String last_name;
 
     @NotBlank(message = "User ID is required")
     @Pattern(

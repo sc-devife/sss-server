@@ -1,83 +1,114 @@
 package com.sss.app.jwtToken;
 
 import com.sss.app.entity.UserSession;
+import com.sss.app.entity.roles.Role;
+import com.sss.app.entity.users.User;
+import com.sss.app.repository.UserRepository;
 import com.sss.app.repository.UserSessionRepository;
-import com.sss.app.service.AuthenticationService;
-import jakarta.servlet.*;
 import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 public class JwtAuthenticationFilter implements Filter {
+
+    private static final String BEARER_PREFIX = "Bearer ";
+
+    // Public per Section 3 of the kickoff spec: invite-based auth means only
+    // the login/reset/signup entry points are reachable without a token.
+    // Everything else — including the dev password-hash generator and the
+    // invite-creation endpoint (an admin action) — requires authentication.
+    private static final List<String> PUBLIC_PATHS = List.of(
+            "/sss/api/login/user",
+            "/sss/api/login/forgot-password",
+            "/sss/api/login/reset-password",
+            "/sss/api/signup",
+            // So a genuine server error renders as its real status instead of being masked
+            // by this filter rejecting the container's internal /error forward.
+            "/sss/error"
+    );
+
     @Autowired
     private UserSessionRepository userSessionRepo;
     @Autowired
-    AuthenticationService authServices;
+    private UserRepository userRepository;
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-            throws RuntimeException, ServletException, IOException {
+            throws ServletException, IOException {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
-        HttpServletResponse httpServletResponse = (HttpServletResponse) response;
-        System.out.println("DoFilter Start===");
+        HttpServletResponse httpResponse = (HttpServletResponse) response;
         String requestURI = httpRequest.getRequestURI();
-        String authHeader = httpRequest.getHeader("Authorization");
-        System.out.println("DoFilter Start requestURI ===" + requestURI);
 
         if (isPublicEndpoint(requestURI)) {
-            System.out.println("DoFilter Start If===");
             chain.doFilter(request, response);
             return;
         }
 
-        if (requestURI.startsWith("/sss/api/login/user")) {
-            chain.doFilter(request, response);
+        String authHeader = httpRequest.getHeader("Authorization");
+        if (!StringUtils.hasText(authHeader) || !authHeader.startsWith(BEARER_PREFIX)) {
+            sendErrorResponse(httpResponse, HttpStatus.UNAUTHORIZED, "Missing or malformed Authorization header");
             return;
-        } else if (!requestURI.startsWith("/sss/api/login/forgot-password") &&
-                !requestURI.startsWith("/sss/api/login/reset-password")) {
-            try {
-                JwtValidator.validateToken(authHeader);
+        }
+        String token = authHeader.substring(BEARER_PREFIX.length());
 
-                String username = JwtValidator.extractUsername(authHeader);
-                System.out.println("Authenticated user: " + username);
+        try {
+            String username = JwtValidator.extractUsername(token);
 
-                // Check if this token exists in DB
-                Optional<UserSession> session = userSessionRepo.findById(username);
-                if (session.isPresent() && session.get().getJwtToken().equals(authHeader)) {
-                    // valid session — optionally update lastAccessed
-                    session.get().setLastAccessed(LocalDateTime.now());
-                    userSessionRepo.save(session.get());
-
-                    // Optionally, authenticate user in Spring Security
-                } else {
-                    sendErrorResponse(httpServletResponse, HttpStatus.UNAUTHORIZED, "Invalid or expired session");
-                    // Invalid or expired session — reject
-                    return;
-                }
-                chain.doFilter(request, response);
-            } catch (Exception e) {
-                e.printStackTrace();
-                sendErrorResponse(httpServletResponse, HttpStatus.UNAUTHORIZED, "Invalid JWT token");
+            Optional<UserSession> session = userSessionRepo.findById(username);
+            if (session.isEmpty() || !token.equals(session.get().getJwtToken())) {
+                sendErrorResponse(httpResponse, HttpStatus.UNAUTHORIZED, "Invalid or expired session");
+                return;
             }
-        } else {
+            session.get().setLastAccessed(LocalDateTime.now());
+            userSessionRepo.save(session.get());
+
+            User user = userRepository.findByEmailWithRoles(username).orElse(null);
+            if (user == null) {
+                sendErrorResponse(httpResponse, HttpStatus.UNAUTHORIZED, "Unknown user");
+                return;
+            }
+
+            List<GrantedAuthority> authorities = user.getRoles().stream()
+                    .map(link -> link.getRole())
+                    .filter(Objects::nonNull)
+                    .map(Role::getName)
+                    .filter(Objects::nonNull)
+                    .map(name -> (GrantedAuthority) new SimpleGrantedAuthority("ROLE_" + name.toUpperCase()))
+                    .collect(Collectors.toList());
+
+            SecurityContextHolder.getContext()
+                    .setAuthentication(new UsernamePasswordAuthenticationToken(user, null, authorities));
+
             chain.doFilter(request, response);
-            return;
+        } catch (Exception e) {
+            sendErrorResponse(httpResponse, HttpStatus.UNAUTHORIZED, "Invalid JWT token");
         }
     }
 
     private void sendErrorResponse(HttpServletResponse response, HttpStatus status, String message) throws IOException {
         response.setStatus(status.value());
         response.setContentType("application/json");
-        // To-Do :: update error response content
         JSONObject content = new JSONObject();
         content.put("status", status.value());
         content.put("name", status.name());
@@ -87,11 +118,6 @@ public class JwtAuthenticationFilter implements Filter {
     }
 
     private boolean isPublicEndpoint(String uri) {
-        /*return uri.startsWith("/sss/api/login/hello")
-                || uri.startsWith("/sss/api/login/forgot-password")
-                || uri.startsWith("/sss/api/login/reset-password");*/
-        return true;
+        return PUBLIC_PATHS.stream().anyMatch(uri::startsWith);
     }
 }
-
-

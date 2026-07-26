@@ -10,6 +10,7 @@ import org.mapstruct.Mapping;
 public interface SignupMapper {
 
     @Mapping(target = "contact_number", source = "mobileNumber")
+    @Mapping(target = "name", source = "email")
     User toEntity(SignupCreateRequestDTO dto);
 
     @Mapping(target = "mobileNumber", source = "contact_number")

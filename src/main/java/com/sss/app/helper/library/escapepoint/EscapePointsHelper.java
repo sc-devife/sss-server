@@ -28,7 +28,7 @@ public class EscapePointsHelper {
 
     public List<EscapePoint> fetchAllEscapePoints(Long companyId) {
         System.out.println("EscapePointsHelper fetchAllEscapePoints companyId === " + companyId);
-        return escapePointRepository.findEscapePointsByCompanyId(companyId);
+        return escapePointRepository.findEscapePointsByOrgId(companyId);
     }
 
     public EscapePoint getEscapePointByUid(String uid) {

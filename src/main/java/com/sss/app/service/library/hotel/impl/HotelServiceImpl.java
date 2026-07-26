@@ -33,7 +33,7 @@ public class HotelServiceImpl implements HotelService {
         hotelHelper.applyRelations(
                 hotel,
                 dto.getLocationId(),
-                dto.getDestinationIds(),
+                dto.getEscapePointIds(),
                 dto.getMealPlanIds(),
                 dto.getRoomTypeIds()
         );
@@ -68,7 +68,7 @@ public class HotelServiceImpl implements HotelService {
         hotelHelper.applyRelations(
                 hotel,
                 dto.getLocationId(),
-                dto.getDestinationIds(),
+                dto.getEscapePointIds(),
                 dto.getMealPlanIds(),
                 dto.getRoomTypeIds()
         );

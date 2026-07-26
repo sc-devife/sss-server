@@ -18,6 +18,8 @@ public class Traveller {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long seqp;
 
+    private Long orgId;
+
     private String type;
 
     private String salutation;

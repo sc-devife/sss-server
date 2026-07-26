@@ -25,9 +25,17 @@ public interface UserRepository extends JpaRepository<User, Long> {
             SELECT DISTINCT u FROM User u
             LEFT JOIN FETCH u.roles r
             LEFT JOIN FETCH r.role
-            WHERE u.company_id = :companyId
+            WHERE u.orgId = :orgId
             """)
-    List<User> findUsersWithRoles(@Param("companyId") Long companyId);
+    List<User> findUsersWithRoles(@Param("orgId") Long orgId);
+
+    @Query("""
+            SELECT DISTINCT u FROM User u
+            LEFT JOIN FETCH u.roles r
+            LEFT JOIN FETCH r.role
+            WHERE u.email = :email
+            """)
+    Optional<User> findByEmailWithRoles(@Param("email") String email);
 
     boolean existsByEmail(String email);
 

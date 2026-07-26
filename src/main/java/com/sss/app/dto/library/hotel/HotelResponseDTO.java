@@ -1,7 +1,7 @@
 package com.sss.app.dto.library.hotel;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.sss.app.dto.library.destination.DestinationResponseDTO;
+import com.sss.app.dto.library.escapepoint.EscapePointResponseDto;
 import com.sss.app.dto.library.location.LocationResponseDTO;
 import com.sss.app.dto.library.mealplan.MealPlanResponseDTO;
 import com.sss.app.dto.library.roomtype.RoomTypeResponseDTO;
@@ -24,7 +24,7 @@ public class HotelResponseDTO {
     // ✅ Full nested objects
     private LocationResponseDTO location;
 
-    private Set<DestinationResponseDTO> destinations;
+    private Set<EscapePointResponseDto> escapePoints;
 
     private Set<MealPlanResponseDTO> mealPlans;
 

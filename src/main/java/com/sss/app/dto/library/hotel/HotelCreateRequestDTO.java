@@ -20,7 +20,7 @@ public class HotelCreateRequestDTO {
     @NotNull(message = "Location is required")
     private UUID locationId;
 
-    private Set<UUID> destinationIds;
+    private Set<String> escapePointIds;
 
     private Set<UUID> mealPlanIds;
 

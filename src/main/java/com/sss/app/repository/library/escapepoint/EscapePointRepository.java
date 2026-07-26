@@ -7,13 +7,16 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 
 public interface EscapePointRepository extends JpaRepository<EscapePoint, Long> {
-    @Query("SELECT e FROM EscapePoint e WHERE e.company_id = :companyId")
-    List<EscapePoint> findEscapePointsByCompanyId(@Param("companyId") Long companyId);
+    @Query("SELECT e FROM EscapePoint e WHERE e.orgId = :orgId")
+    List<EscapePoint> findEscapePointsByOrgId(@Param("orgId") Long orgId);
 
     Optional<EscapePoint> findByUid(String uid);
+
+    List<EscapePoint> findAllByUidIn(Set<String> uids);
 
     boolean existsById(String id);
 }

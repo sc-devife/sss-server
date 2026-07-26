@@ -25,6 +25,8 @@ public class Escape {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long seqp;
 
+    private Long orgId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lead_id", nullable = false) //rename
     private Lead lead;

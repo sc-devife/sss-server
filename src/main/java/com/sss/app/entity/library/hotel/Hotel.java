@@ -1,6 +1,6 @@
 package com.sss.app.entity.library.hotel;
 
-import com.sss.app.entity.library.destination.Destination;
+import com.sss.app.entity.library.escapepoint.EscapePoint;
 import com.sss.app.entity.library.location.Location;
 import com.sss.app.entity.library.mealplan.MealPlan;
 import com.sss.app.entity.library.roomtype.RoomType;
@@ -32,6 +32,8 @@ public class Hotel {
     @Column(nullable = false, unique = true, updatable = false)
     private UUID uid;
 
+    private Long orgId;
+
     @Column(nullable = false)
     private String name;
 
@@ -42,15 +44,17 @@ public class Hotel {
     @JoinColumn(name = "location_id", nullable = false)
     private Location location;
 
-    // ----- Trip Destinations: ManyToMany -----
+    // ----- Escape Points (Destinations): ManyToMany. The destination this hotel is
+    // grouped under for itinerary planning — may be the nearest one, not necessarily
+    // the hotel's own city (see Location for that). -----
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
-            name = "hotel_destinations",
+            name = "hotel_escape_points",
             joinColumns = @JoinColumn(name = "hotel_id"),
-            inverseJoinColumns = @JoinColumn(name = "destination_id")
+            inverseJoinColumns = @JoinColumn(name = "escape_point_id")
     )
     @Builder.Default
-    private Set<Destination> destinations = new HashSet<>();
+    private Set<EscapePoint> escapePoints = new HashSet<>();
 
     // ----- Meal Plans: ManyToMany -----
     @ManyToMany(fetch = FetchType.LAZY)

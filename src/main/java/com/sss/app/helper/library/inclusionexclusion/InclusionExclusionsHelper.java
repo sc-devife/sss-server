@@ -28,17 +28,17 @@ public class InclusionExclusionsHelper {
 
     public List<InclusionExclusion> fetchAllInclusionExclusions(Long companyId) {
         System.out.println("EscapePointsHelper fetchAllEscapePoints companyId === " + companyId);
-        return inclusionExclusionRepository.findInclusionExclusionsByCompanyId(companyId);
+        return inclusionExclusionRepository.findInclusionExclusionsByOrgId(companyId);
     }
 
     public List<InclusionExclusion> fetchAllInclusions(Long companyId) {
         System.out.println("EscapePointsHelper fetchAllEscapePoints companyId === " + companyId);
-        return inclusionExclusionRepository.findInclusionsByCompanyId(companyId);
+        return inclusionExclusionRepository.findInclusionsByOrgId(companyId);
     }
 
     public List<InclusionExclusion> fetchAllExclusions(Long companyId) {
         System.out.println("EscapePointsHelper fetchAllEscapePoints companyId === " + companyId);
-        return inclusionExclusionRepository.findExclusionsByCompanyId(companyId);
+        return inclusionExclusionRepository.findExclusionsByOrgId(companyId);
     }
 
     public InclusionExclusion getInclusionExclusionByUid(String uid) {

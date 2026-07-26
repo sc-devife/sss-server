@@ -25,7 +25,7 @@ public class InclusionExclusion {
     private Long sort_order;
 
     @Column
-    private Long company_id;
+    private Long orgId;
 
     @Column(insertable = false, updatable = false)
     private String uid;

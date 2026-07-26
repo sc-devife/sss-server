@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Local dev artifacts ###
+global-bundle.pem
+run-output.log

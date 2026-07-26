@@ -11,7 +11,7 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 
 /**
- * Note: locationId / destinationIds / mealPlanIds / roomTypeIds are NOT mapped here.
+ * Note: locationId / escapePointIds / mealPlanIds / roomTypeIds are NOT mapped here.
  * MapStruct can't resolve IDs to entities without a DB lookup, so those associations
  * are wired manually in HotelHelper before/after this mapper runs.
  */
@@ -19,14 +19,14 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 public interface HotelMapper {
 
     @Mapping(target = "location", ignore = true)
-    @Mapping(target = "destinations", ignore = true)
+    @Mapping(target = "escapePoints", ignore = true)
     @Mapping(target = "mealPlans", ignore = true)
     @Mapping(target = "roomTypes", ignore = true)
     Hotel toEntityCreate(HotelCreateRequestDTO dto);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "location", ignore = true)
-    @Mapping(target = "destinations", ignore = true)
+    @Mapping(target = "escapePoints", ignore = true)
     @Mapping(target = "mealPlans", ignore = true)
     @Mapping(target = "roomTypes", ignore = true)
     void updateEntityFromDto(HotelUpdateRequestDTO dto, @MappingTarget Hotel entity);

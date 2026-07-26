@@ -8,6 +8,8 @@ import java.time.LocalDateTime;
 public class SignupResponseDTO {
     private String uid;
     private String name;
+    private String first_name;
+    private String last_name;
     private String userId;
     private String email;
     private String mobileNumber;

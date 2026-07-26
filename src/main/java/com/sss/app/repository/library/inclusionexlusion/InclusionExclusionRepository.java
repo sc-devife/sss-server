@@ -10,14 +10,14 @@ import java.util.Optional;
 
 
 public interface InclusionExclusionRepository extends JpaRepository<InclusionExclusion, Long> {
-    @Query("SELECT e FROM InclusionExclusion e WHERE e.company_id = :companyId")
-    List<InclusionExclusion> findInclusionExclusionsByCompanyId(@Param("companyId") Long companyId);
+    @Query("SELECT e FROM InclusionExclusion e WHERE e.orgId = :orgId")
+    List<InclusionExclusion> findInclusionExclusionsByOrgId(@Param("orgId") Long orgId);
 
-    @Query("SELECT e FROM InclusionExclusion e WHERE e.company_id = :companyId and e.type = 'INCLUSION'")
-    List<InclusionExclusion> findInclusionsByCompanyId(@Param("companyId") Long companyId);
+    @Query("SELECT e FROM InclusionExclusion e WHERE e.orgId = :orgId and e.type = 'INCLUSION'")
+    List<InclusionExclusion> findInclusionsByOrgId(@Param("orgId") Long orgId);
 
-    @Query("SELECT e FROM InclusionExclusion e WHERE e.company_id = :companyId and e.type = 'EXCLUSION'")
-    List<InclusionExclusion> findExclusionsByCompanyId(@Param("companyId") Long companyId);
+    @Query("SELECT e FROM InclusionExclusion e WHERE e.orgId = :orgId and e.type = 'EXCLUSION'")
+    List<InclusionExclusion> findExclusionsByOrgId(@Param("orgId") Long orgId);
 
     Optional<InclusionExclusion> findByUid(String uid);
 
