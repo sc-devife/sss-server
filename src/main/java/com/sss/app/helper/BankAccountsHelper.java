@@ -6,6 +6,7 @@ import com.sss.app.entity.address.Address;
 import com.sss.app.entity.organizations.Organizations;
 import com.sss.app.repository.BankAccountRepository;
 import com.sss.app.repository.OrganizationRepository;
+import com.sss.app.security.OrgAccessGuard;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
@@ -21,10 +22,12 @@ public class BankAccountsHelper {
 
     private final BankAccountRepository bankAccountRepository;
     private final OrganizationRepository organizationRepository;
+    private final OrgAccessGuard orgAccessGuard;
     @PersistenceContext
     private EntityManager entityManager;
     @Transactional
     public OrganizationBankDetails createBankAccount(Long orgId, BankAccountDto dto) {
+        orgAccessGuard.requireAccessToOrg(orgId);
         Organizations org = organizationRepository.findById(orgId)
                 .orElseThrow(() -> new RuntimeException("Organization not found"));
 
@@ -36,6 +39,7 @@ public class BankAccountsHelper {
     }
 
    public List<BankAccountDto> getAccountsForOrg(Long orgId) {
+       orgAccessGuard.requireAccessToOrg(orgId);
  //   public OrganizationBankDetails getAccountsForOrg(Long orgId) {
         List<OrganizationBankDetails> accounts = bankAccountRepository.findByOrganizationSeqp(orgId);
 

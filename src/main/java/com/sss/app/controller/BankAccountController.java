@@ -1,13 +1,12 @@
 package com.sss.app.controller;
 
 import com.sss.app.dto.BankAccountDto;
-import com.sss.app.entity.OrganizationBankDetails;
 import com.sss.app.service.BankAccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -17,6 +16,7 @@ public class BankAccountController {
 
     private final BankAccountService bankAccountService;
 
+    @PreAuthorize("@permissionService.hasPermission('bank_accounts.write')")
     @PostMapping(value = "/{orgId}/create", consumes = "application/json", produces = "application/json")
     public ResponseEntity<BankAccountDto> createBankAccount(
             @PathVariable Long orgId,
@@ -29,12 +29,14 @@ public class BankAccountController {
 
     }
 
-    @RequestMapping("/{orgId}")
+    @PreAuthorize("@permissionService.hasPermission('bank_accounts.read')")
+    @GetMapping("/{orgId}")
     public ResponseEntity<List<BankAccountDto>> getBankAccounts(@PathVariable Long orgId) {
         List<BankAccountDto> accounts = bankAccountService.getAccountsForOrg(orgId);
         return ResponseEntity.ok(accounts);
     }
 
+    @PreAuthorize("@permissionService.hasPermission('bank_accounts.write')")
     @DeleteMapping("/{orgId}/{accountId}")
     public ResponseEntity<Void> deleteBankAccount(@PathVariable Long orgId,
                                                   @PathVariable Long accountId) {

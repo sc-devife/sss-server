@@ -12,10 +12,12 @@ import com.sss.app.repository.RoleRepository;
 import com.sss.app.repository.UserCredentialRepository;
 import com.sss.app.repository.UserRepository;
 import com.sss.app.repository.UserRoleLinkRepository;
+import com.sss.app.security.OrgAccessGuard;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -34,17 +36,24 @@ public class UsersHelper {
 
     private final UserRoleLinkRepository userRoleLinkRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final OrgAccessGuard orgAccessGuard;
 
     @PersistenceContext
     private final EntityManager entityManager;
 
-    public List<User> fetchAllUsers(Long companyId) {
-        System.out.println("UserHelper fetchAllUsers companyId === " + companyId);
-        return userRepository.findUsersWithRoles(companyId);
+    private User currentUser() {
+        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    }
+
+    /** Users in the caller's own organization (Super Admins see the org they pass explicitly — not wired here yet). */
+    public List<User> fetchAllUsers(Long ignoredLegacyParam) {
+        return userRepository.findUsersWithRoles(currentUser().getOrgId());
     }
 
     public User getUserByUid(String uid) {
-        return userRepository.findUserWithRoles(uid).orElseThrow(() -> new NotFoundException("User not found with uid: " + uid));
+        User user = userRepository.findUserWithRoles(uid).orElseThrow(() -> new NotFoundException("User not found with uid: " + uid));
+        orgAccessGuard.requireAccessToOrg(user.getOrgId());
+        return user;
     }
 
     public User getUserByEmail(String email) {
@@ -58,6 +67,8 @@ public class UsersHelper {
         }
 
         User user = User.create(payload);
+        user.setOrgId(currentUser().getOrgId());
+        user.setInvitedBy(currentUser().getSeqp());
         user = userRepository.save(user);
         entityManager.refresh(user);
 
@@ -88,9 +99,7 @@ public class UsersHelper {
     @Transactional
     public User updateUser(String uid, UserUpdateRequestDto payload) {
         User user = getUserByUid(uid);
-        System.out.println("updateUser user - " + user);
         user.update(payload);
-        System.out.println("updateUser updated user - " + user);
         userRepository.save(user);
 
         entityManager.refresh(user);
