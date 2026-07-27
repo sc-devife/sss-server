@@ -48,7 +48,10 @@ public class JwtAuthenticationFilter implements Filter {
             "/sss/error",
             // Uploaded images (library items, org logos) are read back via plain
             // <img src> requests, which carry no Authorization header.
-            "/sss/files/"
+            "/sss/files/",
+            // Public, unauthenticated webhook intake — secured by a per-org
+            // shared secret (see WebhookLeadController), not a JWT.
+            "/sss/api/integrations/webhook/"
     );
 
     @Autowired

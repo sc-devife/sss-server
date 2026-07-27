@@ -14,6 +14,9 @@ public class LeadDTO {
     private Integer durationDays;
     private Double budget;
     private String status;
-    //private LeadSource source;
+    private String sourceCode;
+    private String sourceRefId;
+    private String destinationId; // EscapePoint uid, resolved manually (see LeadsHelper)
+    private Boolean isPriority;
     private String notes;
 }

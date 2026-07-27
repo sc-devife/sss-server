@@ -53,7 +53,8 @@ public class SecurityConfig {
                                 "/api/login/reset-password",
                                 "/api/signup",
                                 "/error",
-                                "/files/**"
+                                "/files/**",
+                                "/api/integrations/webhook/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

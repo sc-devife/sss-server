@@ -59,6 +59,20 @@ public class User {
     @Column
     private String contact_number;
 
+    // Section 15 / Lead Assignment Engine (Section 5) fields.
+    @Column(name = "is_specialist")
+    private Boolean isSpecialist;
+
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.ARRAY)
+    @Column(name = "specialist_destinations", columnDefinition = "bigint[]")
+    private List<Long> specialistDestinations;
+
+    @Column(name = "max_concurrent_assignments")
+    private Integer maxConcurrentAssignments;
+
+    @Column(name = "eligible_for_priority_leads")
+    private Boolean eligibleForPriorityLeads;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference
     @ToString.Exclude
