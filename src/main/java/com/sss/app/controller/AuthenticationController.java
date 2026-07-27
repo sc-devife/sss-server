@@ -63,12 +63,11 @@ public class AuthenticationController {
 
     @PostMapping("/forgot-password")
     public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordRequest forgotPasswordDto) {
-        try {
-            userService.initiatePasswordReset(forgotPasswordDto);
-            return ResponseEntity.ok("Reset link sent to your email.");
-        } catch (Exception e) {
-            return ResponseEntity.status(401).body("Invalid Request");
-        }
+        // Always the same response whether or not the email is registered —
+        // initiatePasswordReset silently no-ops for an unknown email — so this
+        // can't be used to enumerate which addresses have accounts.
+        userService.initiatePasswordReset(forgotPasswordDto);
+        return ResponseEntity.ok("If that email is registered, a reset link has been sent.");
     }
 
     @PostMapping("/reset-password")
@@ -77,7 +76,7 @@ public class AuthenticationController {
             userService.resetPassword(resetPasswordDto);
             return ResponseEntity.ok("Password reset successfully.");
         } catch (Exception e) {
-            return ResponseEntity.status(401).body("Invalid Request");
+            return ResponseEntity.status(409).body(e.getMessage());
         }
     }
 
