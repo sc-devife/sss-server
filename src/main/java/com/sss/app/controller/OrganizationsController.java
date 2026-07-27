@@ -1,11 +1,10 @@
 package com.sss.app.controller;
 
 import com.sss.app.dto.organizations.OrganizationsDto;
-import com.sss.app.dto.users.UserResponseDto;
-import com.sss.app.dto.users.UserUpdateRequestDto;
 import com.sss.app.service.OrganizationsService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,21 +17,29 @@ public class OrganizationsController {
         this.organizationsService = organizationsService;
     }
 
-    @RequestMapping("/{uid}")
-    private ResponseEntity<OrganizationsDto> getOrgByRegisteredName(@PathVariable String uid) {
+    @GetMapping("/mine")
+    public ResponseEntity<OrganizationsDto> getMyOrganization() {
+        return ResponseEntity.ok(organizationsService.getMyOrganization());
+    }
+
+    @GetMapping("/{uid}")
+    public ResponseEntity<OrganizationsDto> getOrgByUid(@PathVariable String uid) {
         return ResponseEntity.ok(organizationsService.getOrganizationsByUid(uid));
     }
 
+    @PreAuthorize("@permissionService.hasPermission('organizations.write')")
     @PostMapping("/create")
-    private ResponseEntity<OrganizationsDto> createOrganizations(@RequestBody OrganizationsDto request) {
+    public ResponseEntity<OrganizationsDto> createOrganizations(@RequestBody OrganizationsDto request) {
         return ResponseEntity.ok(organizationsService.createOrganizations(request));
     }
 
-   @PutMapping(value = "{uid}/update", consumes = "application/json", produces = "application/json")
+    @PreAuthorize("@permissionService.hasPermission('organizations.write')")
+    @PutMapping(value = "{uid}/update", consumes = "application/json", produces = "application/json")
     public ResponseEntity<OrganizationsDto> updateOrganizations(@PathVariable String uid, @Valid @RequestBody OrganizationsDto request) {
         return ResponseEntity.ok(organizationsService.updateOrganizations(uid, request));
     }
 
+    @PreAuthorize("@permissionService.hasPermission('organizations.write')")
     @DeleteMapping("/{registeredName}")
     public ResponseEntity<String> deleteOrganization(@PathVariable String registeredName) {
         organizationsService.deleteOrganizations(registeredName);

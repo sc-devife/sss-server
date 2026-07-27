@@ -7,6 +7,8 @@ import com.sss.app.dto.users.UserUpdateRequestDto;
 import java.util.List;
 
 public interface UsersService {
+    UserResponseDto getCurrentUser();
+
     List<UserResponseDto> fetchAllUsers(Long companyId);
 
     UserResponseDto getUserByUid(String uid);

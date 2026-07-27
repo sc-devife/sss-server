@@ -3,8 +3,11 @@ package com.sss.app.helper.signup;
 import com.sss.app.dto.signup.SignupCreateRequestDTO;
 import com.sss.app.entity.UserCredential;
 import com.sss.app.entity.users.User;
+import com.sss.app.entity.users.invitations.UserInvitation;
 import com.sss.app.exception.ConflictException;
+import com.sss.app.exception.NotFoundException;
 import com.sss.app.mapper.signup.SignupMapper;
+import com.sss.app.repository.InvitationTokenRepository;
 import com.sss.app.repository.UserCredentialRepository;
 import com.sss.app.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -25,9 +28,23 @@ public class SignupHelper {
     private final BCryptPasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final UserCredentialRepository userCredentialRepository;
+    private final InvitationTokenRepository invitationTokenRepository;
 
     @Transactional
     public User createSignup(SignupCreateRequestDTO payload) {
+        UserInvitation invitation = invitationTokenRepository.findByUid(payload.getInvitationToken())
+                .orElseThrow(() -> new NotFoundException("Invalid invitation"));
+
+        if (invitation.is_used()) {
+            throw new ConflictException("This invitation has already been used");
+        }
+        if (invitation.getExpires_set().isBefore(LocalDateTime.now())) {
+            throw new ConflictException("This invitation has expired");
+        }
+        if (!invitation.getEmail().equalsIgnoreCase(payload.getEmail())) {
+            throw new ConflictException("This invitation was issued for a different email address");
+        }
+
         if (userRepository.existsByUserId(payload.getUserId())) {
             throw new ConflictException("User ID is already registered");
         }
@@ -49,10 +66,15 @@ public class SignupHelper {
 
         User user = signupMapper.toEntity(payload);
         user.setCreatedAt(LocalDateTime.now());
+        user.setOrgId(invitation.getOrgId());
+        user.setInvitedBy(invitation.getInvitedBy());
         user = userRepository.save(user);
 
         UserCredential userCredential = UserCredential.create(user.getSeqp(), passwordHash);
         userCredentialRepository.save(userCredential);
+
+        invitation.set_used(true);
+        invitationTokenRepository.save(invitation);
 
         return user;
     }

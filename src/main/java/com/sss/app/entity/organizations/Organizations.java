@@ -6,9 +6,16 @@ import com.sss.app.entity.address.AddressConstraint;
 import com.sss.app.util.CompareUtil;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 
 @Entity
@@ -17,6 +24,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EntityListeners(AuditingEntityListener.class)
 public class Organizations {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "org_seq_gen")
@@ -40,6 +48,35 @@ public class Organizations {
     @Column (name = "support_ph_num")
     private String supportPhNum;
 
+    private String countryCode;
+
+    private String defaultCurrencyCode;
+
+    private String logoFile;
+
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private OrganizationStatus status = OrganizationStatus.ACTIVE;
+
+    // Templates don't exist as their own tables yet (Phase 5/6) — these are
+    // forward-looking columns only, no FK until that table is built.
+    private UUID quoteTemplateId;
+    private UUID invoiceTemplateId;
+
+    @CreatedDate
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    private LocalDateTime updatedAt;
+
+    @CreatedBy
+    @Column(updatable = false)
+    private Long createdBy;
+
+    @LastModifiedBy
+    private Long updatedBy;
+
     @OneToMany(mappedBy = "organization", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference // prevents infinite recursion
     @ToString.Exclude      // prevent Lombok from recursing in toString()
@@ -52,6 +89,9 @@ public class Organizations {
         builder.registeredName(dto.getRegistered_name());
         builder.displayName(dto.getDisplay_name());
         builder.supportPhNum(dto.getSupport_ph_num());
+        builder.countryCode(dto.getCountry_code());
+        builder.defaultCurrencyCode(dto.getDefault_currency_code());
+        builder.logoFile(dto.getLogo_file());
 
         return builder.build();
     }
@@ -65,11 +105,17 @@ public class Organizations {
         if (CompareUtil.hasChanged(dto.getDisplay_name(), this.displayName)) {
             this.displayName = dto.getDisplay_name();
         }
-        System.out.println("dto.getSupport_ph_num() == " + dto.getSupport_ph_num());
-        System.out.println("this ph number == " + this.getSupportPhNum());
         if (CompareUtil.hasChanged(dto.getSupport_ph_num(), this.getSupportPhNum())) {
-            System.out.println("Setting ph number == " + this.getSupportPhNum());
             this.supportPhNum = dto.getSupport_ph_num();
+        }
+        if (CompareUtil.hasChanged(dto.getCountry_code(), this.countryCode)) {
+            this.countryCode = dto.getCountry_code();
+        }
+        if (CompareUtil.hasChanged(dto.getDefault_currency_code(), this.defaultCurrencyCode)) {
+            this.defaultCurrencyCode = dto.getDefault_currency_code();
+        }
+        if (CompareUtil.hasChanged(dto.getLogo_file(), this.logoFile)) {
+            this.logoFile = dto.getLogo_file();
         }
     }
 }

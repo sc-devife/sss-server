@@ -4,6 +4,7 @@ import com.sss.app.dto.organizations.OrganizationsDto;
 
 public interface OrganizationsService {
     //OrganizationsDto getOrganizationsRegisteredName(String uid);
+    OrganizationsDto getMyOrganization();
     OrganizationsDto getOrganizationsByUid(String uid);
     OrganizationsDto createOrganizations(OrganizationsDto createRequest);
     OrganizationsDto updateOrganizations(String uid, OrganizationsDto createRequest);

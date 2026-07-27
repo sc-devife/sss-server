@@ -8,6 +8,9 @@ import lombok.Data;
 @Data
 public class SignupCreateRequestDTO {
 
+    @NotBlank(message = "Invitation token is required")
+    private String invitationToken;
+
     @NotBlank(message = "First name is required")
     private String first_name;
 

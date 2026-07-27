@@ -2,11 +2,13 @@ package com.sss.app.helper;
 
 import com.sss.app.dto.organizations.OrganizationsDto;
 import com.sss.app.entity.organizations.Organizations;
+import com.sss.app.entity.users.User;
 import com.sss.app.exception.NotFoundException;
 import com.sss.app.repository.OrganizationRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -18,6 +20,16 @@ public class OrganizationsHelper {
     public OrganizationsHelper(OrganizationRepository organizationRepository) {
         this.organizationRepository = organizationRepository;
     }
+
+    public Organizations getMyOrganization() {
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (user.getOrgId() == null) {
+            throw new NotFoundException("You are not associated with an organization yet");
+        }
+        return organizationRepository.findById(user.getOrgId())
+                .orElseThrow(() -> new NotFoundException("Organization not found"));
+    }
+
     public Organizations getOrganizationByUid(String uid) {
         return organizationRepository.findByUid(uid)
                 .orElseThrow(() -> new NotFoundException("Organization not found with uid: " + uid));

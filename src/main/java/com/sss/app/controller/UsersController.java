@@ -7,6 +7,7 @@ import com.sss.app.service.UsersService;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +22,11 @@ public class UsersController {
         this.usersService = usersService;
     }
 
+    @GetMapping(value = "/me", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UserResponseDto> getCurrentUser() {
+        return ResponseEntity.ok(usersService.getCurrentUser());
+    }
+
     @RequestMapping(value = "/all", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<UserResponseDto>> fetchAllUsers() {
         return ResponseEntity.ok(usersService.fetchAllUsers(123456L));
@@ -31,21 +37,21 @@ public class UsersController {
         return ResponseEntity.ok(usersService.getUserByUid(uid));
     }
 
+    @PreAuthorize("@permissionService.hasPermission('users.write')")
     @PostMapping(value = "/create", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<UserResponseDto> createUser(@Valid @RequestBody UserCreateRequestDto payload) {
         return ResponseEntity.ok(usersService.createUser(payload));
     }
 
+    @PreAuthorize("@permissionService.hasPermission('users.write')")
     @PutMapping(value = "{uid}/update", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<UserResponseDto> updateUser(@PathVariable String uid, @Valid @RequestBody UserUpdateRequestDto payload) {
-        System.out.println("Incoming payload: " + payload);
-        System.out.println("Incoming contact_number: " + payload.getContact_number());
         return ResponseEntity.ok(usersService.updateUser(uid, payload));
     }
 
+    @PreAuthorize("@permissionService.hasPermission('users.write')")
     @PutMapping(value = "{uid}/assign/roles", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<UserResponseDto> reassignRoles(@PathVariable String uid, @Valid @RequestBody List<String> roles) {
-        System.out.println("Incoming roles: " + roles);
         return ResponseEntity.ok(usersService.reassignRoles(uid, roles));
     }
 }

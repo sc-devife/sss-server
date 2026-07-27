@@ -22,6 +22,9 @@ public class UserInvitation {
     private Long orgId;
 
     @Column
+    private Long invitedBy;
+
+    @Column
     private String email;
 
     @Column

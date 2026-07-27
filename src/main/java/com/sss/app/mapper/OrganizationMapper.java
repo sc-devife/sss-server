@@ -8,10 +8,20 @@ import org.springframework.stereotype.Component;
 public class OrganizationMapper {
     public OrganizationsDto toDto(Organizations orgs) {
         if (orgs == null) return null;
-        return new OrganizationsDto(
-                orgs.getSeqp(),
-                orgs.getRegisteredName(),
-                orgs.getDisplayName(),
-                orgs.getSupportPhNum());
+        OrganizationsDto dto = new OrganizationsDto();
+        dto.setSeqp(orgs.getSeqp());
+        dto.setUid(orgs.getUid());
+        dto.setRegistered_name(orgs.getRegisteredName());
+        dto.setDisplay_name(orgs.getDisplayName());
+        dto.setSupport_ph_num(orgs.getSupportPhNum());
+        dto.setCountry_code(orgs.getCountryCode());
+        dto.setDefault_currency_code(orgs.getDefaultCurrencyCode());
+        dto.setLogo_file(orgs.getLogoFile());
+        dto.setStatus(orgs.getStatus());
+        dto.setQuote_template_id(orgs.getQuoteTemplateId());
+        dto.setInvoice_template_id(orgs.getInvoiceTemplateId());
+        dto.setCreated_at(orgs.getCreatedAt());
+        dto.setUpdated_at(orgs.getUpdatedAt());
+        return dto;
     }
 }

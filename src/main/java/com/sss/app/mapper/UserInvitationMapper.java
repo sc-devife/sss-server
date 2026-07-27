@@ -11,7 +11,7 @@ public class UserInvitationMapper {
         return new UserInvitationDto(
                 userInvitation.getSeqp(),
                 userInvitation.getUid(),
-                userInvitation.getEmail());
-        //userInvitation.getExpires);
+                userInvitation.getEmail(),
+                userInvitation.getExpires_set());
     }
 }

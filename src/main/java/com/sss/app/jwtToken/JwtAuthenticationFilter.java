@@ -72,6 +72,11 @@ public class JwtAuthenticationFilter implements Filter {
         }
         String token = authHeader.substring(BEARER_PREFIX.length());
 
+        // Only JWT/session/user resolution is guarded — chain.doFilter() must run
+        // outside this try, otherwise an exception from downstream (the controller,
+        // or an outer filter's post-processing after the response is already
+        // written) gets misreported as "invalid JWT" and this filter then tries to
+        // write a second response onto an already-committed one.
         try {
             String username = JwtValidator.extractUsername(token);
 
@@ -99,11 +104,12 @@ public class JwtAuthenticationFilter implements Filter {
 
             SecurityContextHolder.getContext()
                     .setAuthentication(new UsernamePasswordAuthenticationToken(user, null, authorities));
-
-            chain.doFilter(request, response);
         } catch (Exception e) {
             sendErrorResponse(httpResponse, HttpStatus.UNAUTHORIZED, "Invalid JWT token");
+            return;
         }
+
+        chain.doFilter(request, response);
     }
 
     private void sendErrorResponse(HttpServletResponse response, HttpStatus status, String message) throws IOException {

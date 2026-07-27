@@ -3,9 +3,11 @@ package com.sss.app.service.impl;
 import com.sss.app.dto.users.UserCreateRequestDto;
 import com.sss.app.dto.users.UserResponseDto;
 import com.sss.app.dto.users.UserUpdateRequestDto;
+import com.sss.app.entity.users.User;
 import com.sss.app.helper.UsersHelper;
 import com.sss.app.mapper.UserMapper;
 import com.sss.app.service.UsersService;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,6 +21,12 @@ public class UsersServiceImpl implements UsersService {
     public UsersServiceImpl(UsersHelper usersHelper, UserMapper userMapper) {
         this.usersHelper = usersHelper;
         this.userMapper = userMapper;
+    }
+
+    @Override
+    public UserResponseDto getCurrentUser() {
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return userMapper.toUserResponseDto(user);
     }
 
     @Override

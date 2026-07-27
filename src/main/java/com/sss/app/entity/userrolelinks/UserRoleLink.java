@@ -42,6 +42,8 @@ public class UserRoleLink {
     @ManyToOne
     @JoinColumn(name = "seqa")
     @JsonBackReference
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private User user;
 
     @ManyToOne

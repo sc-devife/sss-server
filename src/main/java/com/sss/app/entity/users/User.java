@@ -42,6 +42,9 @@ public class User {
     private Long orgId;
 
     @Column
+    private Long invitedBy;
+
+    @Column
     private String name;
 
     @Column
@@ -58,6 +61,8 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private List<UserRoleLink> roles = new ArrayList<>();
 
     public static User create(UserCreateRequestDto dto) {
