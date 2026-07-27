@@ -52,7 +52,8 @@ public class SecurityConfig {
                                 "/api/login/forgot-password",
                                 "/api/login/reset-password",
                                 "/api/signup",
-                                "/error"
+                                "/error",
+                                "/files/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

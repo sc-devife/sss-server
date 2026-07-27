@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.time.LocalTime;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -15,6 +16,8 @@ public class HotelUpdateRequestDTO {
     private Integer stars;
 
     private UUID locationId;
+
+    private String destinationId;
 
     private Set<String> escapePointIds;
 
@@ -31,4 +34,14 @@ public class HotelUpdateRequestDTO {
     private String childAgeForExtraBed;
 
     private Boolean isActive;
+
+    private String address;
+
+    private String contactInfo;
+
+    private List<String> images;
+
+    private List<String> amenities;
+
+    private String status;
 }

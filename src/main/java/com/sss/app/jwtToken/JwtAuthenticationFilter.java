@@ -45,7 +45,10 @@ public class JwtAuthenticationFilter implements Filter {
             "/sss/api/signup",
             // So a genuine server error renders as its real status instead of being masked
             // by this filter rejecting the container's internal /error forward.
-            "/sss/error"
+            "/sss/error",
+            // Uploaded images (library items, org logos) are read back via plain
+            // <img src> requests, which carry no Authorization header.
+            "/sss/files/"
     );
 
     @Autowired

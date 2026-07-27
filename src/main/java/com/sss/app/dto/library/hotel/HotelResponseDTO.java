@@ -9,6 +9,7 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -23,6 +24,8 @@ public class HotelResponseDTO {
 
     // ✅ Full nested objects
     private LocationResponseDTO location;
+
+    private EscapePointResponseDto destination;
 
     private Set<EscapePointResponseDto> escapePoints;
 
@@ -39,6 +42,16 @@ public class HotelResponseDTO {
     private String childAgeForExtraBed;
 
     private Boolean isActive;
+
+    private String address;
+
+    private String contactInfo;
+
+    private List<String> images;
+
+    private List<String> amenities;
+
+    private String status;
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;

@@ -36,6 +36,11 @@ public class HotelHelper {
                 .orElseThrow(() -> new ResourceNotFoundException("Location", locationId));
     }
 
+    public EscapePoint resolveDestination(String destinationUid) {
+        return escapePointRepository.findByUid(destinationUid)
+                .orElseThrow(() -> new ResourceNotFoundException("Destination", destinationUid));
+    }
+
     public Set<EscapePoint> resolveEscapePoints(Set<String> escapePointIds) {
         if (escapePointIds == null || escapePointIds.isEmpty()) {
             return new HashSet<>();
@@ -69,11 +74,15 @@ public class HotelHelper {
      */
     public void applyRelations(Hotel hotel,
                                 UUID locationId,
+                                String destinationId,
                                 Set<String> escapePointIds,
                                 Set<UUID> mealPlanIds,
                                 Set<UUID> roomTypeIds) {
         if (locationId != null) {
             hotel.setLocation(resolveLocation(locationId));
+        }
+        if (destinationId != null) {
+            hotel.setDestination(resolveDestination(destinationId));
         }
         if (escapePointIds != null) {
             hotel.setEscapePoints(resolveEscapePoints(escapePointIds));

@@ -5,7 +5,9 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -53,6 +55,10 @@ public class Location {
 
     private String timeZone;
 
+    // Excluded: Hotel.location -> Location.hotels -> Hotel -> ... would
+    // otherwise recurse indefinitely (see Hotel.java's note on this pattern).
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @OneToMany(mappedBy = "location")
     private List<Hotel> hotels;
 

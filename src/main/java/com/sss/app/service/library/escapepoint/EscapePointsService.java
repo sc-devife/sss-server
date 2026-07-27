@@ -7,12 +7,14 @@ import com.sss.app.dto.library.escapepoint.EscapePointUpdateRequestDto;
 import java.util.List;
 
 public interface EscapePointsService {
-    List<EscapePointResponseDto> fetchAllEscapePoints(Long companyId);
+    List<EscapePointResponseDto> fetchAllEscapePoints();
 
     EscapePointResponseDto getEscapePointByUid(String uid);
 
     EscapePointResponseDto createEscapePoint(EscapePointCreateRequestDto payload);
 
     EscapePointResponseDto updateEscapePoint(String uid, EscapePointUpdateRequestDto payload);
+
+    void deleteEscapePoint(String uid);
 
 }

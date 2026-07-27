@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.time.LocalTime;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -20,6 +21,10 @@ public class HotelCreateRequestDTO {
     @NotNull(message = "Location is required")
     private UUID locationId;
 
+    // Dictionary-aligned single destination (see Hotel.destination) — the uid
+    // of an EscapePoint, resolved to the entity in HotelHelper like locationId.
+    private String destinationId;
+
     private Set<String> escapePointIds;
 
     private Set<UUID> mealPlanIds;
@@ -33,4 +38,14 @@ public class HotelCreateRequestDTO {
     private LocalTime checkOutTime;
 
     private String childAgeForExtraBed;
+
+    private String address;
+
+    private String contactInfo;
+
+    private List<String> images;
+
+    private List<String> amenities;
+
+    private String status;
 }

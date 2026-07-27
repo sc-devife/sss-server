@@ -22,8 +22,8 @@ public class EscapePointsServiceImpl implements EscapePointsService {
     }
 
     @Override
-    public List<EscapePointResponseDto> fetchAllEscapePoints(Long companyId) {
-        return escapePointMapper.toDtoList(escapePointsHelper.fetchAllEscapePoints(companyId));
+    public List<EscapePointResponseDto> fetchAllEscapePoints() {
+        return escapePointMapper.toDtoList(escapePointsHelper.fetchAllEscapePoints());
     }
 
     @Override
@@ -39,5 +39,10 @@ public class EscapePointsServiceImpl implements EscapePointsService {
     @Override
     public EscapePointResponseDto updateEscapePoint(String uid, EscapePointUpdateRequestDto payload) {
         return escapePointMapper.toDto(escapePointsHelper.updateEscapePoint(uid, payload));
+    }
+
+    @Override
+    public void deleteEscapePoint(String uid) {
+        escapePointsHelper.deleteEscapePoint(uid);
     }
 }

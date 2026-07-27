@@ -19,6 +19,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 public interface HotelMapper {
 
     @Mapping(target = "location", ignore = true)
+    @Mapping(target = "destination", ignore = true)
     @Mapping(target = "escapePoints", ignore = true)
     @Mapping(target = "mealPlans", ignore = true)
     @Mapping(target = "roomTypes", ignore = true)
@@ -26,6 +27,7 @@ public interface HotelMapper {
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "location", ignore = true)
+    @Mapping(target = "destination", ignore = true)
     @Mapping(target = "escapePoints", ignore = true)
     @Mapping(target = "mealPlans", ignore = true)
     @Mapping(target = "roomTypes", ignore = true)

@@ -5,7 +5,9 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -40,6 +42,9 @@ public class RoomType {
     @Column(nullable = false)
     private Boolean isActive = true;
 
+    // Excluded: same Hotel<->back-reference recursion risk as Location.hotels.
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @ManyToMany(mappedBy = "roomTypes")
     private List<Hotel> hotels;
 

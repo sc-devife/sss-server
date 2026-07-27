@@ -1,5 +1,6 @@
 package com.sss.app.entity.library.hotel;
 
+import com.sss.app.entity.common.Auditable;
 import com.sss.app.entity.library.escapepoint.EscapePoint;
 import com.sss.app.entity.library.location.Location;
 import com.sss.app.entity.library.mealplan.MealPlan;
@@ -8,21 +9,26 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 @Entity
 @Table(name = "hotels")
 @Data
+@EqualsAndHashCode(callSuper = false)
+@ToString(callSuper = true)
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Hotel {
+public class Hotel extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,13 +46,31 @@ public class Hotel {
     private Integer stars;
 
     // ----- Location: ManyToOne (Hotel belongs to one Location) -----
+    // Excluded from toString/equals/hashCode: Location.hotels is the inverse
+    // side of this same relation, so a plain @Data on both would recurse
+    // Hotel -> Location -> hotels -> Hotel -> ... until StackOverflowError
+    // (the exact bug already found & fixed for User<->UserRoleLink in Phase 1).
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "location_id", nullable = false)
     private Location location;
 
-    // ----- Escape Points (Destinations): ManyToMany. The destination this hotel is
-    // grouped under for itinerary planning — may be the nearest one, not necessarily
-    // the hotel's own city (see Location for that). -----
+    // ----- Destination: ManyToOne, per the data dictionary. Added alongside
+    // the older escapePoints M2M below rather than replacing it — see V9
+    // migration notes for why a clean 1:1 backfill wasn't possible for every
+    // row. New code should read/write this field going forward. -----
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "destination_id")
+    private EscapePoint destination;
+
+    // ----- Escape Points (Destinations): ManyToMany, kept for backward
+    // compatibility with pre-existing multi-destination hotel data (see
+    // `destination` above for the dictionary-aligned single-FK field). -----
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "hotel_escape_points",
@@ -57,6 +81,8 @@ public class Hotel {
     private Set<EscapePoint> escapePoints = new HashSet<>();
 
     // ----- Meal Plans: ManyToMany -----
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "hotel_meal_plans",
@@ -67,6 +93,8 @@ public class Hotel {
     private Set<MealPlan> mealPlans = new HashSet<>();
 
     // ----- Room Types: ManyToMany (shared master data) -----
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "hotel_room_types",
@@ -87,22 +115,31 @@ public class Hotel {
     @Column(nullable = false)
     private Boolean isActive = true;
 
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    // ----- Data dictionary fields (Section 15) -----
+    @Column
+    private String address;
 
-    private LocalDateTime updatedAt;
+    @Column(name = "contact_info")
+    private String contactInfo;
+
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.ARRAY)
+    @Column(columnDefinition = "text[]")
+    private List<String> images;
+
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.ARRAY)
+    @Column(columnDefinition = "text[]")
+    private List<String> amenities;
+
+    @Column
+    private String status;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     @PrePersist
     protected void onCreate() {
         if (this.uid == null) {
             this.uid = UUID.randomUUID();
         }
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
     }
 }

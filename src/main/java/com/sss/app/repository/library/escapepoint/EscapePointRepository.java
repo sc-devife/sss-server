@@ -11,7 +11,7 @@ import java.util.Set;
 
 
 public interface EscapePointRepository extends JpaRepository<EscapePoint, Long> {
-    @Query("SELECT e FROM EscapePoint e WHERE e.orgId = :orgId")
+    @Query("SELECT e FROM EscapePoint e WHERE e.orgId = :orgId AND e.deletedAt IS NULL")
     List<EscapePoint> findEscapePointsByOrgId(@Param("orgId") Long orgId);
 
     Optional<EscapePoint> findByUid(String uid);

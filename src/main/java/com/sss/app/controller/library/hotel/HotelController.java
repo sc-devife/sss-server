@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,27 +21,32 @@ public class HotelController {
 
     private final HotelService hotelService;
 
+    @PreAuthorize("@permissionService.hasPermission('library.write')")
     @PostMapping
     public ResponseEntity<HotelResponseDTO> create(@Valid @RequestBody HotelCreateRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(hotelService.create(dto));
     }
 
+    @PreAuthorize("@permissionService.hasPermission('library.read')")
     @GetMapping("/{id}")
     public ResponseEntity<HotelResponseDTO> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(hotelService.getById(id));
     }
 
+    @PreAuthorize("@permissionService.hasPermission('library.read')")
     @GetMapping
     public ResponseEntity<List<HotelResponseDTO>> getAll() {
         return ResponseEntity.ok(hotelService.getAll());
     }
 
+    @PreAuthorize("@permissionService.hasPermission('library.write')")
     @PutMapping("/{id}")
     public ResponseEntity<HotelResponseDTO> update(@PathVariable UUID id,
                                                      @RequestBody HotelUpdateRequestDTO dto) {
         return ResponseEntity.ok(hotelService.update(id, dto));
     }
 
+    @PreAuthorize("@permissionService.hasPermission('library.write')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         hotelService.delete(id);
