@@ -117,5 +117,11 @@ public class Organizations {
         if (CompareUtil.hasChanged(dto.getLogo_file(), this.logoFile)) {
             this.logoFile = dto.getLogo_file();
         }
+        // quote_template_id was on this DTO from the start (Section 15) but
+        // never actually applied here — dead until Phase 5's template
+        // registry gave it something real to reference.
+        if (dto.getQuote_template_id() != null && CompareUtil.hasChanged(dto.getQuote_template_id(), this.quoteTemplateId)) {
+            this.quoteTemplateId = dto.getQuote_template_id();
+        }
     }
 }

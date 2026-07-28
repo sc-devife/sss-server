@@ -1,8 +1,11 @@
 package com.sss.app.controller.quote;
 
+import com.sss.app.dto.quote.QuoteComputeRequestDTO;
+import com.sss.app.dto.quote.QuoteComputeResponseDTO;
 import com.sss.app.dto.quote.QuoteCreateRequestDTO;
 import com.sss.app.dto.quote.QuoteResponseDTO;
 import com.sss.app.dto.quote.QuoteUpdateRequestDTO;
+import com.sss.app.service.quote.QuoteComputationService;
 import com.sss.app.service.quote.QuoteService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +23,7 @@ import java.util.UUID;
 public class QuoteController {
 
     private final QuoteService quoteService;
+    private final QuoteComputationService quoteComputationService;
 
     @PreAuthorize("@permissionService.hasPermission('trips.write')")
     @PostMapping
@@ -56,5 +60,11 @@ public class QuoteController {
     @PostMapping("/{uid}/revise")
     public ResponseEntity<QuoteResponseDTO> createRevision(@PathVariable UUID uid) {
         return ResponseEntity.status(HttpStatus.CREATED).body(quoteService.createRevision(uid));
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('trips.write')")
+    @PostMapping("/{uid}/compute")
+    public ResponseEntity<QuoteComputeResponseDTO> compute(@PathVariable UUID uid, @RequestBody QuoteComputeRequestDTO request) {
+        return ResponseEntity.ok(quoteComputationService.compute(uid, request));
     }
 }
