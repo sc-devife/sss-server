@@ -123,5 +123,8 @@ public class Organizations {
         if (dto.getQuote_template_id() != null && CompareUtil.hasChanged(dto.getQuote_template_id(), this.quoteTemplateId)) {
             this.quoteTemplateId = dto.getQuote_template_id();
         }
+        if (dto.getInvoice_template_id() != null && CompareUtil.hasChanged(dto.getInvoice_template_id(), this.invoiceTemplateId)) {
+            this.invoiceTemplateId = dto.getInvoice_template_id();
+        }
     }
 }

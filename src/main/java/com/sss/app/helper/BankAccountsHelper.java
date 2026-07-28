@@ -59,9 +59,25 @@ public class BankAccountsHelper {
                         .accountNumber(acc.getAccountNumber())
                         .accountName(acc.getAccountName())
                         .currency(acc.getCurrency())
+                        .status(acc.getStatus())
                         //  .isPrimary(acc.getIsPrimary())
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public OrganizationBankDetails deactivateBankAccount(Long orgId, Long accountId) {
+        orgAccessGuard.requireAccessToOrg(orgId);
+
+        OrganizationBankDetails account = bankAccountRepository.findById(accountId)
+                .orElseThrow(() -> new RuntimeException("Bank account not found"));
+
+        if (!account.getOrganization().getSeqp().equals(orgId)) {
+            throw new RuntimeException("Bank account does not belong to this organization");
+        }
+
+        account.setStatus("inactive");
+        return bankAccountRepository.save(account);
     }
 
 }

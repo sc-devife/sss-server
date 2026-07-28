@@ -62,6 +62,10 @@ public class OrganizationBankDetails {
     @Column(name = "currency", nullable = false)
     private String currency;
 
+    @Builder.Default
+    @Column(name = "status", nullable = false)
+    private String status = "active";
+
     // Organization link
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seqa", nullable = false)
@@ -86,6 +90,7 @@ public class OrganizationBankDetails {
         builder.accountNumber(dto.getAccountNumber());
         builder.accountName(dto.getAccountName());
         builder.currency(dto.getCurrency());
+        builder.status("active");
         builder.seqaType("Organization");
         builder.organization(org);
         builder.build();

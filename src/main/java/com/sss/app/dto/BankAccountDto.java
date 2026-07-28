@@ -22,4 +22,5 @@ public class BankAccountDto {
     private String accountNumber;
     private String accountName;
     private String currency;
+    private String status;
 }

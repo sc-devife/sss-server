@@ -1,0 +1,77 @@
+package com.sss.app.entity.payment;
+
+import com.sss.app.entity.common.Auditable;
+import com.sss.app.entity.deal.Deal;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Entity
+@Table(name = "payment_milestones")
+@Data
+@EqualsAndHashCode(callSuper = false)
+@ToString(callSuper = true)
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class PaymentMilestone extends Auditable {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long seqp;
+
+    @Column(nullable = false, unique = true, updatable = false)
+    private UUID uid;
+
+    private Long orgId;
+
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "deal_id", nullable = false)
+    private Deal deal;
+
+    @Column(nullable = false)
+    private String label;
+
+    @Column(name = "due_date", nullable = false)
+    private LocalDate dueDate;
+
+    @Column(name = "amount_usd", nullable = false, precision = 14, scale = 2)
+    private BigDecimal amountUsd;
+
+    @Column(name = "amount_paid_usd", nullable = false, precision = 14, scale = 2)
+    private BigDecimal amountPaidUsd;
+
+    // pending / partially_paid / paid / overdue
+    @Column(nullable = false)
+    private String status;
+
+    @Column(name = "marked_paid_by")
+    private Long markedPaidBy;
+
+    @Column(name = "marked_paid_at")
+    private LocalDateTime markedPaidAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.uid == null) {
+            this.uid = UUID.randomUUID();
+        }
+        if (this.status == null) {
+            this.status = "pending";
+        }
+        if (this.amountPaidUsd == null) {
+            this.amountPaidUsd = BigDecimal.ZERO;
+        }
+    }
+}

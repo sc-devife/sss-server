@@ -37,10 +37,9 @@ public class BankAccountController {
     }
 
     @PreAuthorize("@permissionService.hasPermission('bank_accounts.write')")
-    @DeleteMapping("/{orgId}/{accountId}")
-    public ResponseEntity<Void> deleteBankAccount(@PathVariable Long orgId,
-                                                  @PathVariable Long accountId) {
-        bankAccountService.deleteBankAccount(orgId, accountId);
-        return ResponseEntity.noContent().build(); // returns 204 No Content
+    @PatchMapping("/{orgId}/{accountId}/deactivate")
+    public ResponseEntity<BankAccountDto> deactivateBankAccount(@PathVariable Long orgId,
+                                                                 @PathVariable Long accountId) {
+        return ResponseEntity.ok(bankAccountService.deactivateBankAccount(orgId, accountId));
     }
 }

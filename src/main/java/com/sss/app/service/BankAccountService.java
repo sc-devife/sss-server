@@ -9,6 +9,6 @@ public interface BankAccountService {
 
    List<BankAccountDto> getAccountsForOrg(Long orgId);
    BankAccountDto createBankAccount(Long orgId, BankAccountDto dto);
-   void deleteBankAccount(Long orgId, Long accountId);
+   BankAccountDto deactivateBankAccount(Long orgId, Long accountId);
 
 }
