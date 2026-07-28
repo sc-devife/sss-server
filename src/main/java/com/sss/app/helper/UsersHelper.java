@@ -1,5 +1,6 @@
 package com.sss.app.helper;
 
+import com.sss.app.dto.users.UserAssignmentSettingsUpdateRequestDto;
 import com.sss.app.dto.users.UserCreateRequestDto;
 import com.sss.app.dto.users.UserUpdateRequestDto;
 import com.sss.app.entity.UserCredential;
@@ -100,6 +101,30 @@ public class UsersHelper {
     public User updateUser(String uid, UserUpdateRequestDto payload) {
         User user = getUserByUid(uid);
         user.update(payload);
+        userRepository.save(user);
+
+        entityManager.refresh(user);
+        return user;
+    }
+
+    @Transactional
+    public User updateAssignmentSettings(String uid, UserAssignmentSettingsUpdateRequestDto payload) {
+        User user = getUserByUid(uid);
+        if (payload.getIsSpecialist() != null) {
+            user.setIsSpecialist(payload.getIsSpecialist());
+        }
+        if (payload.getSpecialistDestinations() != null) {
+            user.setSpecialistDestinations(payload.getSpecialistDestinations());
+        }
+        if (payload.getMaxConcurrentAssignments() != null) {
+            user.setMaxConcurrentAssignments(payload.getMaxConcurrentAssignments());
+        }
+        if (payload.getEligibleForPriorityLeads() != null) {
+            user.setEligibleForPriorityLeads(payload.getEligibleForPriorityLeads());
+        }
+        if (payload.getAcceptingLeads() != null) {
+            user.setAcceptingLeads(payload.getAcceptingLeads());
+        }
         userRepository.save(user);
 
         entityManager.refresh(user);

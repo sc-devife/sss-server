@@ -16,4 +16,11 @@ public class UserResponseDto extends UserDto {
     private String uid;
     private String name;
     private List<UserRoleLinkResponseDto> roles;
+
+    // Section 5 assignment-engine settings — see UserAssignmentSettingsUpdateRequestDto.
+    private Boolean isSpecialist;
+    private List<Long> specialistDestinations;
+    private Integer maxConcurrentAssignments;
+    private Boolean eligibleForPriorityLeads;
+    private Boolean acceptingLeads;
 }

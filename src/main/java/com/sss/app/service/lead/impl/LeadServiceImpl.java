@@ -3,8 +3,10 @@ package com.sss.app.service.lead.impl;
 import com.sss.app.dto.lead.LeadCreateRequestDTO;
 import com.sss.app.dto.lead.LeadResponseDTO;
 import com.sss.app.entity.lead.Lead;
+import com.sss.app.entity.organizations.Organizations;
 import com.sss.app.helper.lead.LeadsHelper;
 import com.sss.app.mapper.lead.LeadMapper;
+import com.sss.app.repository.OrganizationRepository;
 import com.sss.app.service.assignment.LeadAssignmentService;
 import com.sss.app.service.integration.NormalizedLeadPayload;
 import com.sss.app.service.lead.LeadService;
@@ -21,13 +23,12 @@ public class LeadServiceImpl implements LeadService {
     private final LeadMapper leadMapper;
     private final LeadsHelper leadHelper;
     private final LeadAssignmentService leadAssignmentService;
+    private final OrganizationRepository organizationRepository;
 
     @Override
     public LeadResponseDTO createLead(LeadCreateRequestDTO payload) {
         Lead lead = leadHelper.createLead(payload);
-        // Section 5: auto-assignment runs at creation time; leaves the lead
-        // unassigned (not an error) if no eligible agent is found.
-        leadAssignmentService.autoAssign(lead);
+        autoAssignIfEnabled(lead);
         return leadMapper.toResponse(lead);
     }
 
@@ -36,8 +37,22 @@ public class LeadServiceImpl implements LeadService {
         Lead lead = leadHelper.createLeadFromChannel(orgId, channelCode, payload.getSourceRefId(),
                 payload.getName(), payload.getEmail(), payload.getPhone(), payload.getDestinationHint(),
                 payload.getTravelDate(), payload.getNumberOfPeople(), payload.getDurationDays());
-        leadAssignmentService.autoAssign(lead);
+        autoAssignIfEnabled(lead);
         return leadMapper.toResponse(lead);
+    }
+
+    /**
+     * Section 5: "auto-assignment runs when a lead is created if the org has
+     * it enabled; otherwise leads land in an unassigned queue." Leaves the
+     * lead unassigned (not an error) if disabled, or if enabled but no
+     * eligible agent is found.
+     */
+    private void autoAssignIfEnabled(Lead lead) {
+        Organizations org = organizationRepository.findById(lead.getOrgId()).orElse(null);
+        if (org != null && Boolean.FALSE.equals(org.getAutoAssignEnabled())) {
+            return;
+        }
+        leadAssignmentService.autoAssign(lead);
     }
 
     @Override

@@ -16,4 +16,7 @@ public interface LeadLifecycleService {
     LeadResponseDTO markLost(Long leadId, String reason);
     LeadResponseDTO markDuplicate(Long leadId, String reason);
     EscapeResponseDTO convertToEscape(Long leadId, EscapeCreateRequestDTO request);
+
+    /** Excel writeup: manual "Mark as Priority Lead" override, available regardless of auto-detection. */
+    LeadResponseDTO togglePriority(Long leadId);
 }

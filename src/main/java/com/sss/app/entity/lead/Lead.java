@@ -61,6 +61,14 @@ public class Lead extends Auditable {
     @Column(name = "is_priority")
     private Boolean isPriority;
 
+    // Section 5's fuller priority-detection rules (metro-city origin,
+    // honeymoon/family + vacation season) — see LeadAssignmentServiceImpl.
+    @Column(name = "origin_city")
+    private String originCity;
+
+    @Column(name = "travel_type")
+    private String travelType; // honeymoon/family/friends/solo/business/other
+
     @Column(length = 500)
     private String notes;
 }

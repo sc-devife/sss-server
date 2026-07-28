@@ -1,5 +1,6 @@
 package com.sss.app.service.impl;
 
+import com.sss.app.dto.users.UserAssignmentSettingsUpdateRequestDto;
 import com.sss.app.dto.users.UserCreateRequestDto;
 import com.sss.app.dto.users.UserResponseDto;
 import com.sss.app.dto.users.UserUpdateRequestDto;
@@ -47,6 +48,11 @@ public class UsersServiceImpl implements UsersService {
     @Override
     public UserResponseDto updateUser(String uid, UserUpdateRequestDto payload) {
         return userMapper.toUserResponseDto(usersHelper.updateUser(uid, payload));
+    }
+
+    @Override
+    public UserResponseDto updateAssignmentSettings(String uid, UserAssignmentSettingsUpdateRequestDto payload) {
+        return userMapper.toUserResponseDto(usersHelper.updateAssignmentSettings(uid, payload));
     }
 
     @Override

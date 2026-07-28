@@ -88,6 +88,12 @@ public class LeadController {
         return ResponseEntity.ok(leadLifecycleService.convertToEscape(id, request));
     }
 
+    @PreAuthorize("@permissionService.hasPermission('leads.write')")
+    @PostMapping(value = "/{id}/actions/toggle-priority", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<LeadResponseDTO> togglePriority(@PathVariable Long id) {
+        return ResponseEntity.ok(leadLifecycleService.togglePriority(id));
+    }
+
     @PreAuthorize("@permissionService.hasPermission('leads.assign')")
     @PostMapping(value = "/{id}/assign", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<LeadResponseDTO> assign(@PathVariable Long id, @Valid @RequestBody LeadAssignRequestDTO body) {

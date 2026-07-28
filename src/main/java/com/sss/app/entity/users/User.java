@@ -73,6 +73,11 @@ public class User {
     @Column(name = "eligible_for_priority_leads")
     private Boolean eligibleForPriorityLeads;
 
+    // Section 5 Excel writeup: "Enable/Disable receiving leads temporarily."
+    @Builder.Default
+    @Column(name = "accepting_leads")
+    private Boolean acceptingLeads = true;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference
     @ToString.Exclude

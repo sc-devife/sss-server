@@ -42,6 +42,11 @@ public class UserMapper {
         dto.setFirst_name(user.getFirst_name());
         dto.setLast_name(user.getLast_name());
         dto.setContact_number(user.getContact_number());
+        dto.setIsSpecialist(user.getIsSpecialist());
+        dto.setSpecialistDestinations(user.getSpecialistDestinations());
+        dto.setMaxConcurrentAssignments(user.getMaxConcurrentAssignments());
+        dto.setEligibleForPriorityLeads(user.getEligibleForPriorityLeads());
+        dto.setAcceptingLeads(user.getAcceptingLeads());
 
         List<UserRoleLinkResponseDto> roleDTOs = new ArrayList<>();
         for (UserRoleLink link : user.getRoles()) {

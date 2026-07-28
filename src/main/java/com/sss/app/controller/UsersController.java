@@ -1,5 +1,6 @@
 package com.sss.app.controller;
 
+import com.sss.app.dto.users.UserAssignmentSettingsUpdateRequestDto;
 import com.sss.app.dto.users.UserCreateRequestDto;
 import com.sss.app.dto.users.UserResponseDto;
 import com.sss.app.dto.users.UserUpdateRequestDto;
@@ -47,6 +48,12 @@ public class UsersController {
     @PutMapping(value = "{uid}/update", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<UserResponseDto> updateUser(@PathVariable String uid, @Valid @RequestBody UserUpdateRequestDto payload) {
         return ResponseEntity.ok(usersService.updateUser(uid, payload));
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('users.write')")
+    @PutMapping(value = "{uid}/assignment-settings", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UserResponseDto> updateAssignmentSettings(@PathVariable String uid, @Valid @RequestBody UserAssignmentSettingsUpdateRequestDto payload) {
+        return ResponseEntity.ok(usersService.updateAssignmentSettings(uid, payload));
     }
 
     @PreAuthorize("@permissionService.hasPermission('users.write')")

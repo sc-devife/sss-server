@@ -1,5 +1,6 @@
 package com.sss.app.service;
 
+import com.sss.app.dto.users.UserAssignmentSettingsUpdateRequestDto;
 import com.sss.app.dto.users.UserCreateRequestDto;
 import com.sss.app.dto.users.UserResponseDto;
 import com.sss.app.dto.users.UserUpdateRequestDto;
@@ -16,6 +17,8 @@ public interface UsersService {
     UserResponseDto createUser(UserCreateRequestDto payload);
 
     UserResponseDto updateUser(String uid, UserUpdateRequestDto payload);
+
+    UserResponseDto updateAssignmentSettings(String uid, UserAssignmentSettingsUpdateRequestDto payload);
 
     UserResponseDto reassignRoles(String uid, List<String> roles);
 }

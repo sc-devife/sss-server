@@ -20,6 +20,7 @@ public class OrganizationMapper {
         dto.setStatus(orgs.getStatus());
         dto.setQuote_template_id(orgs.getQuoteTemplateId());
         dto.setInvoice_template_id(orgs.getInvoiceTemplateId());
+        dto.setAuto_assign_enabled(orgs.getAutoAssignEnabled());
         dto.setCreated_at(orgs.getCreatedAt());
         dto.setUpdated_at(orgs.getUpdatedAt());
         return dto;

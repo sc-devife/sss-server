@@ -23,6 +23,7 @@ public class OrganizationsDto {
     private OrganizationStatus status;
     private UUID quote_template_id;
     private UUID invoice_template_id;
+    private Boolean auto_assign_enabled;
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
 }

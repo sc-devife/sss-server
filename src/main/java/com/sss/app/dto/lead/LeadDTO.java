@@ -18,5 +18,7 @@ public class LeadDTO {
     private String sourceRefId;
     private String destinationId; // EscapePoint uid, resolved manually (see LeadsHelper)
     private Boolean isPriority;
+    private String originCity;
+    private String travelType;
     private String notes;
 }

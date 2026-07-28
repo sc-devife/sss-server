@@ -63,6 +63,11 @@ public class Organizations {
     private UUID quoteTemplateId;
     private UUID invoiceTemplateId;
 
+    // Section 5: "auto-assignment runs when a lead is created if the org
+    // has it enabled; otherwise leads land in an unassigned queue."
+    @Builder.Default
+    private Boolean autoAssignEnabled = true;
+
     @CreatedDate
     @Column(updatable = false)
     private LocalDateTime createdAt;
@@ -125,6 +130,9 @@ public class Organizations {
         }
         if (dto.getInvoice_template_id() != null && CompareUtil.hasChanged(dto.getInvoice_template_id(), this.invoiceTemplateId)) {
             this.invoiceTemplateId = dto.getInvoice_template_id();
+        }
+        if (dto.getAuto_assign_enabled() != null && CompareUtil.hasChanged(dto.getAuto_assign_enabled(), this.autoAssignEnabled)) {
+            this.autoAssignEnabled = dto.getAuto_assign_enabled();
         }
     }
 }

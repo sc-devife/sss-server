@@ -83,6 +83,16 @@ public class LeadLifecycleServiceImpl implements LeadLifecycleService {
         return escape;
     }
 
+    @Override
+    public LeadResponseDTO togglePriority(Long leadId) {
+        Lead lead = leadsHelper.getLeadById(leadId);
+        boolean newValue = !Boolean.TRUE.equals(lead.getIsPriority());
+        lead.setIsPriority(newValue);
+        Lead saved = leadRepository.save(lead);
+        auditLogService.record(ENTITY_TYPE, leadId, "PRIORITY_TOGGLED", String.valueOf(!newValue), String.valueOf(newValue));
+        return leadMapper.toResponse(saved);
+    }
+
     private LeadResponseDTO transition(Lead lead, String newStatus, String action, String reason) {
         String previousStatus = lead.getStatus();
         lead.setStatus(newStatus);

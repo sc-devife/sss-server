@@ -11,6 +11,8 @@ import com.sss.app.mapper.lead.LeadMapper;
 import com.sss.app.repository.UserRepository;
 import com.sss.app.repository.lead.LeadRepository;
 import com.sss.app.service.assignment.LeadAssignmentService;
+import com.sss.app.service.assignment.MetroCities;
+import com.sss.app.service.assignment.PriorityCalendarService;
 import com.sss.app.service.audit.AuditLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,14 +21,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
- * v1 scope, flagged: priority auto-detection only checks trip duration
- * (Section 15's durationDays >= 4, per the user's "minimum 4 nights" rule).
- * The fuller metro-city-origin / honeymoon-season / vacation-calendar rules
- * from the requirements doc need an admin-configurable priority calendar UI
- * that isn't built yet — manual "mark as priority" override (already wired
- * via Lead.isPriority on create) covers that gap for now.
+ * Section 5 / the user's Excel writeup — priority auto-detection combines:
+ * trip duration >= 4 nights, origin is a metro city, or (honeymoon/family
+ * travel type + travel date falls inside an admin-configured vacation
+ * season). Manual "mark as priority" override still wins outright (set at
+ * creation via Lead.isPriority, or toggled later via the lead action).
  */
 @Service
 @RequiredArgsConstructor
@@ -34,17 +36,18 @@ import java.util.Optional;
 public class LeadAssignmentServiceImpl implements LeadAssignmentService {
 
     private static final int PRIORITY_MIN_DURATION_DAYS = 4;
+    private static final Set<String> SEASONAL_PRIORITY_TRAVEL_TYPES = Set.of("honeymoon", "family");
 
     private final LeadRepository leadRepository;
     private final UserRepository userRepository;
     private final LeadsHelper leadsHelper;
     private final LeadMapper leadMapper;
     private final AuditLogService auditLogService;
+    private final PriorityCalendarService priorityCalendarService;
 
     @Override
     public void autoAssign(Lead lead) {
-        boolean alreadyMarkedPriority = Boolean.TRUE.equals(lead.getIsPriority());
-        if (!alreadyMarkedPriority && lead.getDurationDays() != null && lead.getDurationDays() >= PRIORITY_MIN_DURATION_DAYS) {
+        if (!Boolean.TRUE.equals(lead.getIsPriority()) && computesAsPriority(lead)) {
             lead.setIsPriority(true);
         }
 
@@ -52,6 +55,7 @@ public class LeadAssignmentServiceImpl implements LeadAssignmentService {
 
         boolean isPriority = Boolean.TRUE.equals(lead.getIsPriority());
         List<User> eligible = candidates.stream()
+                .filter(u -> !Boolean.FALSE.equals(u.getAcceptingLeads()))
                 .filter(u -> !isPriority || Boolean.TRUE.equals(u.getEligibleForPriorityLeads()))
                 .toList();
 
@@ -104,6 +108,22 @@ public class LeadAssignmentServiceImpl implements LeadAssignmentService {
         auditLogService.record("Lead", leadId, "MANUALLY_ASSIGNED", previousAssignee, user.getSeqp());
 
         return leadMapper.toResponse(saved);
+    }
+
+    private boolean computesAsPriority(Lead lead) {
+        if (lead.getDurationDays() != null && lead.getDurationDays() >= PRIORITY_MIN_DURATION_DAYS) {
+            return true;
+        }
+        if (MetroCities.isMetro(lead.getOriginCity())) {
+            return true;
+        }
+        if (lead.getTravelType() != null
+                && SEASONAL_PRIORITY_TRAVEL_TYPES.contains(lead.getTravelType().trim().toLowerCase())
+                && lead.getTravelDate() != null
+                && priorityCalendarService.isDateInSeason(lead.getOrgId(), lead.getTravelDate())) {
+            return true;
+        }
+        return false;
     }
 
     private boolean withinCapacity(User user) {
