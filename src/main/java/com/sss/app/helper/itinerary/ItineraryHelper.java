@@ -4,10 +4,12 @@ import com.sss.app.dto.itinerary.ItineraryCreateRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryUpdateRequestDTO;
 import com.sss.app.entity.escape.Escape;
 import com.sss.app.entity.itinerary.Itinerary;
+import com.sss.app.entity.itinerary.ItineraryContentItem;
 import com.sss.app.entity.itinerary.ItineraryItem;
 import com.sss.app.entity.users.User;
 import com.sss.app.exception.NotFoundException;
 import com.sss.app.helper.escape.EscapeHelper;
+import com.sss.app.repository.itinerary.ItineraryContentItemRepository;
 import com.sss.app.repository.itinerary.ItineraryItemRepository;
 import com.sss.app.repository.itinerary.ItineraryRepository;
 import com.sss.app.security.OrgAccessGuard;
@@ -25,6 +27,7 @@ public class ItineraryHelper {
 
     private final ItineraryRepository itineraryRepository;
     private final ItineraryItemRepository itineraryItemRepository;
+    private final ItineraryContentItemRepository itineraryContentItemRepository;
     private final EscapeHelper escapeHelper;
     private final OrgAccessGuard orgAccessGuard;
 
@@ -108,6 +111,21 @@ public class ItineraryHelper {
                         .build())
                 .toList();
         itineraryItemRepository.saveAll(clonedItems);
+
+        List<ItineraryContentItem> sourceContentItems = itineraryContentItemRepository
+                .findAllByItinerary_SeqpOrderByTypeAscSortOrderAsc(source.getSeqp());
+        List<ItineraryContentItem> clonedContentItems = sourceContentItems.stream()
+                .map(item -> ItineraryContentItem.builder()
+                        .orgId(item.getOrgId())
+                        .itinerary(finalNewVersion)
+                        .type(item.getType())
+                        .sourceItemId(item.getSourceItemId())
+                        .name(item.getName())
+                        .contentHtml(item.getContentHtml())
+                        .sortOrder(item.getSortOrder())
+                        .build())
+                .toList();
+        itineraryContentItemRepository.saveAll(clonedContentItems);
 
         source.setStatus("superseded");
         itineraryRepository.save(source);

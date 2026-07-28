@@ -5,49 +5,56 @@ import com.sss.app.dto.library.inclusionexclusion.InclusionExclusionResponseDto;
 import com.sss.app.dto.library.inclusionexclusion.InclusionExclusionUpdateRequestDto;
 import com.sss.app.service.library.inclusionexclusion.InclusionExclusionsService;
 import jakarta.validation.Valid;
-import org.springframework.http.MediaType;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
-@RequestMapping("/library/inclusionexclusions")
+@RequestMapping("/api/v1/inclusion-exclusions")
+@RequiredArgsConstructor
 public class InclusionExclusionController {
+
     private final InclusionExclusionsService inclusionExclusionsService;
 
-    public InclusionExclusionController(InclusionExclusionsService inclusionExclusionsService) {
-        this.inclusionExclusionsService = inclusionExclusionsService;
+    @PreAuthorize("@permissionService.hasPermission('library.read')")
+    @GetMapping
+    public ResponseEntity<List<InclusionExclusionResponseDto>> getAll(@RequestParam(required = false) String type) {
+        return ResponseEntity.ok(inclusionExclusionsService.fetchAllForOrg(type));
     }
 
-    @RequestMapping(value = "/all", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<InclusionExclusionResponseDto>> fetchAllInclusionExclusions() {
-        return ResponseEntity.ok(inclusionExclusionsService.fetchAllInclusionExclusions(123456L));
+    @PreAuthorize("@permissionService.hasPermission('library.read')")
+    @GetMapping("/selectable")
+    public ResponseEntity<List<InclusionExclusionResponseDto>> getSelectableForItinerary(
+            @RequestParam UUID itineraryUid, @RequestParam String type) {
+        return ResponseEntity.ok(inclusionExclusionsService.getSelectableForItinerary(itineraryUid, type));
     }
 
-    @RequestMapping(value = "/inclusions/all", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<InclusionExclusionResponseDto>> fetchAllInclusions() {
-        return ResponseEntity.ok(inclusionExclusionsService.fetchAllInclusions(123456L));
+    @PreAuthorize("@permissionService.hasPermission('library.read')")
+    @GetMapping("/{uid}")
+    public ResponseEntity<InclusionExclusionResponseDto> getByUid(@PathVariable String uid) {
+        return ResponseEntity.ok(inclusionExclusionsService.getByUid(uid));
     }
 
-    @RequestMapping(value = "/exclusions/all", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<InclusionExclusionResponseDto>> fetchAllExclusions() {
-        return ResponseEntity.ok(inclusionExclusionsService.fetchAllExclusions(123456L));
+    @PreAuthorize("@permissionService.hasPermission('library.write')")
+    @PostMapping
+    public ResponseEntity<InclusionExclusionResponseDto> create(@Valid @RequestBody InclusionExclusionCreateRequestDto payload) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(inclusionExclusionsService.create(payload));
     }
 
-    @RequestMapping(value = "/{uid}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<InclusionExclusionResponseDto> getInclusionExclusionByUid(@PathVariable String uid) {
-        return ResponseEntity.ok(inclusionExclusionsService.getInclusionExclusionByUid(uid));
+    @PreAuthorize("@permissionService.hasPermission('library.write')")
+    @PutMapping("/{uid}")
+    public ResponseEntity<InclusionExclusionResponseDto> update(@PathVariable String uid, @Valid @RequestBody InclusionExclusionUpdateRequestDto payload) {
+        return ResponseEntity.ok(inclusionExclusionsService.update(uid, payload));
     }
 
-    @PostMapping(value = "/create", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<InclusionExclusionResponseDto> createInclusionExclusion(@Valid @RequestBody InclusionExclusionCreateRequestDto payload) {
-        return ResponseEntity.ok(inclusionExclusionsService.createInclusionExclusion(payload));
-    }
-
-    @PutMapping(value = "{uid}/update", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<InclusionExclusionResponseDto> updateInclusionExclusion(@PathVariable String uid, @Valid @RequestBody InclusionExclusionUpdateRequestDto payload) {
-        System.out.println("Incoming payload: " + payload);
-        return ResponseEntity.ok(inclusionExclusionsService.updateInclusionExclusion(uid, payload));
+    @PreAuthorize("@permissionService.hasPermission('library.write')")
+    @PatchMapping("/{uid}/deactivate")
+    public ResponseEntity<InclusionExclusionResponseDto> deactivate(@PathVariable String uid) {
+        return ResponseEntity.ok(inclusionExclusionsService.deactivate(uid));
     }
 }

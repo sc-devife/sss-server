@@ -14,4 +14,10 @@ public class InclusionExclusionUpdateRequestDto extends InclusionExclusionDto {
     public String getName() {
         return super.getName();
     }
+
+    @Override
+    @NotBlank(message = "Type is required")
+    public String getType() {
+        return super.getType();
+    }
 }

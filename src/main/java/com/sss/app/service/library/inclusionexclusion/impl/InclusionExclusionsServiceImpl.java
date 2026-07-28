@@ -6,48 +6,46 @@ import com.sss.app.dto.library.inclusionexclusion.InclusionExclusionUpdateReques
 import com.sss.app.helper.library.inclusionexclusion.InclusionExclusionsHelper;
 import com.sss.app.mapper.library.inclusionexclusion.InclusionExclusionMapper;
 import com.sss.app.service.library.inclusionexclusion.InclusionExclusionsService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class InclusionExclusionsServiceImpl implements InclusionExclusionsService {
 
     private final InclusionExclusionsHelper inclusionExclusionsHelper;
     private final InclusionExclusionMapper inclusionExclusionMapper;
 
-    public InclusionExclusionsServiceImpl(InclusionExclusionsHelper inclusionExclusionsHelper, InclusionExclusionMapper inclusionExclusionMapper) {
-        this.inclusionExclusionsHelper = inclusionExclusionsHelper;
-        this.inclusionExclusionMapper = inclusionExclusionMapper;
+    @Override
+    public List<InclusionExclusionResponseDto> fetchAllForOrg(String type) {
+        return inclusionExclusionMapper.toDtoList(inclusionExclusionsHelper.fetchAllForOrg(type));
     }
 
     @Override
-    public List<InclusionExclusionResponseDto> fetchAllInclusionExclusions(Long companyId) {
-        return inclusionExclusionMapper.toDtoList(inclusionExclusionsHelper.fetchAllInclusionExclusions(companyId));
+    public InclusionExclusionResponseDto getByUid(String uid) {
+        return inclusionExclusionMapper.toDto(inclusionExclusionsHelper.getByUid(uid));
     }
 
     @Override
-    public List<InclusionExclusionResponseDto> fetchAllInclusions(Long companyId) {
-        return inclusionExclusionMapper.toDtoList(inclusionExclusionsHelper.fetchAllInclusions(companyId));
+    public InclusionExclusionResponseDto create(InclusionExclusionCreateRequestDto payload) {
+        return inclusionExclusionMapper.toDto(inclusionExclusionsHelper.create(payload));
     }
 
     @Override
-    public List<InclusionExclusionResponseDto> fetchAllExclusions(Long companyId) {
-        return inclusionExclusionMapper.toDtoList(inclusionExclusionsHelper.fetchAllExclusions(companyId));
+    public InclusionExclusionResponseDto update(String uid, InclusionExclusionUpdateRequestDto payload) {
+        return inclusionExclusionMapper.toDto(inclusionExclusionsHelper.update(uid, payload));
     }
 
     @Override
-    public InclusionExclusionResponseDto getInclusionExclusionByUid(String uid) {
-        return inclusionExclusionMapper.toDto(inclusionExclusionsHelper.getInclusionExclusionByUid(uid));
+    public InclusionExclusionResponseDto deactivate(String uid) {
+        return inclusionExclusionMapper.toDto(inclusionExclusionsHelper.deactivate(uid));
     }
 
     @Override
-    public InclusionExclusionResponseDto createInclusionExclusion(InclusionExclusionCreateRequestDto payload) {
-        return inclusionExclusionMapper.toDto(inclusionExclusionsHelper.createInclusionExclusion(payload));
-    }
-
-    @Override
-    public InclusionExclusionResponseDto updateInclusionExclusion(String uid, InclusionExclusionUpdateRequestDto payload) {
-        return inclusionExclusionMapper.toDto(inclusionExclusionsHelper.updateInclusionExclusion(uid, payload));
+    public List<InclusionExclusionResponseDto> getSelectableForItinerary(UUID itineraryUid, String type) {
+        return inclusionExclusionMapper.toDtoList(inclusionExclusionsHelper.getSelectableForItinerary(itineraryUid, type));
     }
 }

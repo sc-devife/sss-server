@@ -5,17 +5,18 @@ import com.sss.app.dto.library.inclusionexclusion.InclusionExclusionResponseDto;
 import com.sss.app.dto.library.inclusionexclusion.InclusionExclusionUpdateRequestDto;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface InclusionExclusionsService {
-    List<InclusionExclusionResponseDto> fetchAllInclusionExclusions(Long companyId);
+    List<InclusionExclusionResponseDto> fetchAllForOrg(String type);
 
-    List<InclusionExclusionResponseDto> fetchAllInclusions(Long companyId);
+    InclusionExclusionResponseDto getByUid(String uid);
 
-    List<InclusionExclusionResponseDto> fetchAllExclusions(Long companyId);
+    InclusionExclusionResponseDto create(InclusionExclusionCreateRequestDto payload);
 
-    InclusionExclusionResponseDto getInclusionExclusionByUid(String uid);
+    InclusionExclusionResponseDto update(String uid, InclusionExclusionUpdateRequestDto payload);
 
-    InclusionExclusionResponseDto createInclusionExclusion(InclusionExclusionCreateRequestDto payload);
+    InclusionExclusionResponseDto deactivate(String uid);
 
-    InclusionExclusionResponseDto updateInclusionExclusion(String uid, InclusionExclusionUpdateRequestDto payload);
+    List<InclusionExclusionResponseDto> getSelectableForItinerary(UUID itineraryUid, String type);
 }
