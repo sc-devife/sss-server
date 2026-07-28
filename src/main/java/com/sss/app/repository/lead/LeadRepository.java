@@ -4,6 +4,7 @@ import com.sss.app.entity.lead.Lead;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -18,6 +19,14 @@ public interface LeadRepository extends JpaRepository<Lead, Long> {
     List<Lead> findAllByOrgId(Long orgId);
 
     long countByAssignedToUserIdAndStatusNotIn(Long assignedToUserId, List<String> excludedStatuses);
+
+    List<Lead> findAllByOrgIdAndAssignedToUserIdAndStatusNotIn(Long orgId, Long assignedToUserId, List<String> excludedStatuses);
+
+    long countByOrgId(Long orgId);
+
+    long countByOrgIdAndStatus(Long orgId, String status);
+
+    long countByOrgIdAndCreatedAtAfter(Long orgId, LocalDateTime since);
 
     // Example: find leads by source (INSTAGRAM, WEBSITE, etc.)
    // List<Lead> findBySource(com.example.crm.entity.LeadSource source);

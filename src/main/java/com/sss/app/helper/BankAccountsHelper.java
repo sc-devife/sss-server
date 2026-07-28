@@ -67,6 +67,19 @@ public class BankAccountsHelper {
 
     @Transactional
     public OrganizationBankDetails deactivateBankAccount(Long orgId, Long accountId) {
+        OrganizationBankDetails account = getOwnedAccount(orgId, accountId);
+        account.setStatus("inactive");
+        return bankAccountRepository.save(account);
+    }
+
+    @Transactional
+    public OrganizationBankDetails reactivateBankAccount(Long orgId, Long accountId) {
+        OrganizationBankDetails account = getOwnedAccount(orgId, accountId);
+        account.setStatus("active");
+        return bankAccountRepository.save(account);
+    }
+
+    private OrganizationBankDetails getOwnedAccount(Long orgId, Long accountId) {
         orgAccessGuard.requireAccessToOrg(orgId);
 
         OrganizationBankDetails account = bankAccountRepository.findById(accountId)
@@ -75,9 +88,7 @@ public class BankAccountsHelper {
         if (!account.getOrganization().getSeqp().equals(orgId)) {
             throw new RuntimeException("Bank account does not belong to this organization");
         }
-
-        account.setStatus("inactive");
-        return bankAccountRepository.save(account);
+        return account;
     }
 
 }

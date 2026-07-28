@@ -13,4 +13,9 @@ public interface EscapeRepository extends JpaRepository<Escape, Long> {
 
     @EntityGraph(attributePaths = {"lead", "travellers", "destinations"})
     List<Escape> findAllByOrgId(Long orgId);
+
+    @EntityGraph(attributePaths = {"lead", "travellers", "destinations"})
+    List<Escape> findAllByOrgIdAndLead_AssignedToUserIdAndStatusNotIn(Long orgId, Long assignedToUserId, List<String> excludedStatuses);
+
+    long countByOrgIdAndStatusNotIn(Long orgId, List<String> excludedStatuses);
 }

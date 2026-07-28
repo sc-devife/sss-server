@@ -32,4 +32,10 @@ public class BankAccountServiceImpl implements BankAccountService {
     public BankAccountDto deactivateBankAccount(Long orgId, Long accountId) {
         return accountsMapper.mapToDTO(accountsHelper.deactivateBankAccount(orgId, accountId));
     }
+
+    @Transactional
+    @Override
+    public BankAccountDto reactivateBankAccount(Long orgId, Long accountId) {
+        return accountsMapper.mapToDTO(accountsHelper.reactivateBankAccount(orgId, accountId));
+    }
 }

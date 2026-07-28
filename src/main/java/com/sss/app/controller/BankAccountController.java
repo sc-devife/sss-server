@@ -42,4 +42,11 @@ public class BankAccountController {
                                                                  @PathVariable Long accountId) {
         return ResponseEntity.ok(bankAccountService.deactivateBankAccount(orgId, accountId));
     }
+
+    @PreAuthorize("@permissionService.hasPermission('bank_accounts.write')")
+    @PatchMapping("/{orgId}/{accountId}/reactivate")
+    public ResponseEntity<BankAccountDto> reactivateBankAccount(@PathVariable Long orgId,
+                                                                 @PathVariable Long accountId) {
+        return ResponseEntity.ok(bankAccountService.reactivateBankAccount(orgId, accountId));
+    }
 }
