@@ -3,6 +3,7 @@ package com.sss.app.helper.escape;
 import com.sss.app.dto.escape.EscapeCreateRequestDTO;
 import com.sss.app.dto.escape.EscapeUpdateRequestDTO;
 import com.sss.app.entity.escape.Escape;
+import com.sss.app.entity.escape.TripStatus;
 import com.sss.app.entity.lead.Lead;
 import com.sss.app.entity.library.escapepoint.EscapePoint;
 import com.sss.app.entity.library.escapesource.EscapeSource;
@@ -64,7 +65,7 @@ public class EscapeHelper {
                 request.getStartDate().plusDays(request.getNumberOfDays() - 1)
         );
 
-        trip.setStatus("CREATED");
+        trip.setStatus(TripStatus.PLANNING);
 
         return escapeRepository.save(trip);
     }
@@ -114,7 +115,9 @@ public class EscapeHelper {
         }
 
         //Update Other Fields
-        escape.setStatus(request.getStatus());
+        // Deliberately not setting status here — Section 8 requires status
+        // changes to go through TripLifecycleService (validated + audited),
+        // same "no freeform edits" pattern as Lead's lifecycle in Phase 3.
         escape.setStartDate(request.getStartDate());
         escape.setNumberOfDays(request.getNumberOfDays());
 

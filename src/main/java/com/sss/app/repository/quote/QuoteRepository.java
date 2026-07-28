@@ -1,0 +1,15 @@
+package com.sss.app.repository.quote;
+
+import com.sss.app.entity.quote.Quote;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+public interface QuoteRepository extends JpaRepository<Quote, Long> {
+
+    Optional<Quote> findByUid(UUID uid);
+
+    List<Quote> findAllByOrgIdAndItinerary_Seqp(Long orgId, Long itinerarySeqp);
+}
