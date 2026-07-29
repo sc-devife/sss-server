@@ -6,7 +6,11 @@
 -- pre-Flyway-baseline table's uid column, in case this one was missed.
 ALTER TABLE supported_currencies ALTER COLUMN uid SET DEFAULT gen_random_uuid();
 
-INSERT INTO supported_currencies (code, name, symbol, is_active) VALUES
+-- WHERE NOT EXISTS rather than ON CONFLICT: the legacy table's `code` column
+-- has no confirmed unique/exclusion constraint to target, so ON CONFLICT
+-- could itself error. This is constraint-agnostic and safe to re-run.
+INSERT INTO supported_currencies (code, name, symbol, is_active)
+SELECT v.code, v.name, v.symbol, v.is_active FROM (VALUES
     ('USD', 'US Dollar', '$', true),
     ('EUR', 'Euro', '€', true),
     ('GBP', 'British Pound', '£', true),
@@ -38,4 +42,6 @@ INSERT INTO supported_currencies (code, name, symbol, is_active) VALUES
     ('SCR', 'Seychellois Rupee', '₨', true),
     ('FJD', 'Fijian Dollar', 'FJ$', true),
     ('MXN', 'Mexican Peso', '$', true),
-    ('BRL', 'Brazilian Real', 'R$', true);
+    ('BRL', 'Brazilian Real', 'R$', true)
+) AS v(code, name, symbol, is_active)
+WHERE NOT EXISTS (SELECT 1 FROM supported_currencies s WHERE s.code = v.code);

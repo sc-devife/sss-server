@@ -2,7 +2,7 @@
 -- the dictionary explicitly but is required to make "partially_paid"
 -- actually mean something; label isn't in the dictionary either but staff
 -- need a name for each milestone (Deposit, Balance, ...).
-CREATE TABLE payment_milestones (
+CREATE TABLE IF NOT EXISTS payment_milestones (
     seqp BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     uid UUID NOT NULL UNIQUE,
     org_id BIGINT REFERENCES organizations (seqp),
@@ -20,5 +20,5 @@ CREATE TABLE payment_milestones (
     updated_by BIGINT
 );
 
-CREATE INDEX idx_payment_milestones_deal_id ON payment_milestones (deal_id);
-CREATE INDEX idx_payment_milestones_due_date ON payment_milestones (due_date);
+CREATE INDEX IF NOT EXISTS idx_payment_milestones_deal_id ON payment_milestones (deal_id);
+CREATE INDEX IF NOT EXISTS idx_payment_milestones_due_date ON payment_milestones (due_date);

@@ -58,8 +58,9 @@ public class Lead extends Auditable {
     @Column(name = "assignment_reason")
     private String assignmentReason;
 
-    @Column(name = "is_priority")
-    private Boolean isPriority;
+    @Builder.Default
+    @Column(name = "is_priority", nullable = false)
+    private Boolean isPriority = false;
 
     // Section 5's fuller priority-detection rules (metro-city origin,
     // honeymoon/family + vacation season) — see LeadAssignmentServiceImpl.

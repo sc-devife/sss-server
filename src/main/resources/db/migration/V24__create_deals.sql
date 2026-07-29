@@ -2,7 +2,7 @@
 -- trip converts to a Deal; all sibling itineraries/quotes remain as
 -- history, marked superseded/rejected." UNIQUE(escape_id) enforces the
 -- "exactly one Deal per trip" rule at the DB level, not just in app code.
-CREATE TABLE deals (
+CREATE TABLE IF NOT EXISTS deals (
     seqp BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     uid UUID NOT NULL UNIQUE,
     org_id BIGINT REFERENCES organizations (seqp),
@@ -15,4 +15,4 @@ CREATE TABLE deals (
     updated_by BIGINT
 );
 
-CREATE INDEX idx_deals_org_id ON deals (org_id);
+CREATE INDEX IF NOT EXISTS idx_deals_org_id ON deals (org_id);

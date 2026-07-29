@@ -7,7 +7,7 @@
 -- fires exactly once at that offset. Orgs with zero rules configured fall
 -- back to the spec's recommended default cadence at send time, rather than
 -- needing every org to set this up before reminders work at all.
-CREATE TABLE reminder_rules (
+CREATE TABLE IF NOT EXISTS reminder_rules (
     seqp BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     uid UUID NOT NULL UNIQUE,
     org_id BIGINT NOT NULL REFERENCES organizations (seqp),
@@ -19,12 +19,12 @@ CREATE TABLE reminder_rules (
     updated_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_reminder_rules_org_id ON reminder_rules (org_id);
+CREATE INDEX IF NOT EXISTS idx_reminder_rules_org_id ON reminder_rules (org_id);
 
 -- Tracks which (milestone, calendar date) reminders have already gone out,
 -- so a re-run of the daily job (or a milestone matching >1 rule the same
 -- day) never double-sends.
-CREATE TABLE payment_reminder_log (
+CREATE TABLE IF NOT EXISTS payment_reminder_log (
     seqp BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     milestone_id BIGINT NOT NULL REFERENCES payment_milestones (seqp),
     sent_date DATE NOT NULL,

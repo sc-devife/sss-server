@@ -4,7 +4,7 @@
 -- already-built itinerary — same "snapshot, don't reference" pattern as Quote
 -- pricing. source_item_id is kept purely for traceability. Ad-hoc, trip-only
 -- additions (no library backing) simply leave source_item_id null.
-CREATE TABLE itinerary_content_items (
+CREATE TABLE IF NOT EXISTS itinerary_content_items (
     seqp BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     uid UUID NOT NULL UNIQUE,
     org_id BIGINT REFERENCES organizations (seqp),
@@ -20,4 +20,4 @@ CREATE TABLE itinerary_content_items (
     updated_by BIGINT
 );
 
-CREATE INDEX idx_itinerary_content_items_itinerary_id ON itinerary_content_items (itinerary_id);
+CREATE INDEX IF NOT EXISTS idx_itinerary_content_items_itinerary_id ON itinerary_content_items (itinerary_id);

@@ -31,6 +31,9 @@ public class LeadsHelper {
         Lead lead = leadMapper.toEntity(payload);
         lead.setOrgId(currentUser().getOrgId());
         lead.setStatus("New");
+        if (lead.getIsPriority() == null) {
+            lead.setIsPriority(false);
+        }
         if (lead.getSourceCode() == null || lead.getSourceCode().isBlank()) {
             lead.setSourceCode("manual");
         }

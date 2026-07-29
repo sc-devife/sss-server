@@ -3,7 +3,7 @@
 -- it as plain text here since there's no KMS/secrets-manager wired into
 -- this app yet — flagged as a gap to close before this goes to real
 -- production traffic with real customer credentials.
-CREATE TABLE integration_connections (
+CREATE TABLE IF NOT EXISTS integration_connections (
     seqp BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     org_id BIGINT NOT NULL REFERENCES organizations (seqp),
     channel_code VARCHAR(30) NOT NULL,
@@ -16,4 +16,4 @@ CREATE TABLE integration_connections (
     UNIQUE (org_id, channel_code)
 );
 
-CREATE INDEX idx_integration_connections_org_id ON integration_connections (org_id);
+CREATE INDEX IF NOT EXISTS idx_integration_connections_org_id ON integration_connections (org_id);

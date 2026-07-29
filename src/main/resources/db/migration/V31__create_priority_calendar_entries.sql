@@ -1,4 +1,4 @@
-CREATE TABLE priority_calendar_entries (
+CREATE TABLE IF NOT EXISTS priority_calendar_entries (
     seqp BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     uid UUID NOT NULL UNIQUE,
     org_id BIGINT REFERENCES organizations (seqp),
@@ -11,4 +11,4 @@ CREATE TABLE priority_calendar_entries (
     updated_by BIGINT
 );
 
-CREATE INDEX idx_priority_calendar_entries_org_id ON priority_calendar_entries (org_id);
+CREATE INDEX IF NOT EXISTS idx_priority_calendar_entries_org_id ON priority_calendar_entries (org_id);

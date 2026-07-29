@@ -10,15 +10,22 @@
 -- *_code columns going forward; reconciling old rows is a data-cleanup task,
 -- not a schema one.
 
+-- IF NOT EXISTS on every clause: this table already had created_at/updated_at/
+-- created_by/updated_by from an out-of-band change made before Flyway's
+-- history caught up (this ran against the real DB for the first time with
+-- the schema at version 7, and errored on the first already-existing column
+-- inside this multi-column ALTER TABLE, atomically rolling back the whole
+-- statement — see Postgres transactional DDL). Idempotent per-column adds so
+-- this only creates what's genuinely still missing.
 ALTER TABLE escape_points
-    ADD COLUMN country_code VARCHAR(4),
-    ADD COLUMN region_code VARCHAR(10),
-    ADD COLUMN city_code VARCHAR(160),
-    ADD COLUMN description TEXT,
-    ADD COLUMN images TEXT[],
-    ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'active',
-    ADD COLUMN deleted_at TIMESTAMP,
-    ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT now(),
-    ADD COLUMN updated_at TIMESTAMP NOT NULL DEFAULT now(),
-    ADD COLUMN created_by BIGINT,
-    ADD COLUMN updated_by BIGINT;
+    ADD COLUMN IF NOT EXISTS country_code VARCHAR(4),
+    ADD COLUMN IF NOT EXISTS region_code VARCHAR(10),
+    ADD COLUMN IF NOT EXISTS city_code VARCHAR(160),
+    ADD COLUMN IF NOT EXISTS description TEXT,
+    ADD COLUMN IF NOT EXISTS images TEXT[],
+    ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'active',
+    ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP,
+    ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT now(),
+    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT now(),
+    ADD COLUMN IF NOT EXISTS created_by BIGINT,
+    ADD COLUMN IF NOT EXISTS updated_by BIGINT;

@@ -1,2 +1,2 @@
 ALTER TABLE users
-    ADD COLUMN accepting_leads BOOLEAN NOT NULL DEFAULT true;
+    ADD COLUMN IF NOT EXISTS accepting_leads BOOLEAN NOT NULL DEFAULT true;

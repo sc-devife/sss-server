@@ -3,7 +3,7 @@
 -- rules, not hardcoded percentages" — each org defines its own named tax
 -- rates (GST 18%, VAT 20%, No Tax, ...) and picks one per quote via
 -- Quote.tax_profile_id (already a placeholder UUID column since V20).
-CREATE TABLE tax_profiles (
+CREATE TABLE IF NOT EXISTS tax_profiles (
     seqp BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     uid UUID NOT NULL UNIQUE,
     org_id BIGINT NOT NULL REFERENCES organizations (seqp),
@@ -18,4 +18,4 @@ CREATE TABLE tax_profiles (
     updated_by BIGINT
 );
 
-CREATE INDEX idx_tax_profiles_org_id ON tax_profiles (org_id);
+CREATE INDEX IF NOT EXISTS idx_tax_profiles_org_id ON tax_profiles (org_id);

@@ -6,7 +6,7 @@
 -- Phase 5's Quotation Engine, not built here. template_id is a placeholder
 -- FK-less UUID (no quote_templates table exists yet), same pattern already
 -- used for organizations.quote_template_id from Phase 1.
-CREATE TABLE quotes (
+CREATE TABLE IF NOT EXISTS quotes (
     seqp BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     uid UUID NOT NULL UNIQUE,
     org_id BIGINT REFERENCES organizations (seqp),
@@ -29,5 +29,5 @@ CREATE TABLE quotes (
     updated_by BIGINT
 );
 
-CREATE INDEX idx_quotes_itinerary_id ON quotes (itinerary_id);
-CREATE INDEX idx_quotes_org_id ON quotes (org_id);
+CREATE INDEX IF NOT EXISTS idx_quotes_itinerary_id ON quotes (itinerary_id);
+CREATE INDEX IF NOT EXISTS idx_quotes_org_id ON quotes (org_id);
