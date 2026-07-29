@@ -16,4 +16,11 @@ public interface RolePermissionRepository extends JpaRepository<RolePermission, 
             WHERE rp.role.seqp = :roleId
             """)
     List<RolePermission> findAllByRoleId(@Param("roleId") Long roleId);
+
+    @Query("""
+            SELECT rp FROM RolePermission rp
+            LEFT JOIN FETCH rp.permission
+            WHERE rp.role.seqp IN :roleIds
+            """)
+    List<RolePermission> findAllByRoleIdIn(@Param("roleIds") List<Long> roleIds);
 }

@@ -12,6 +12,8 @@ public interface HotelRepository extends JpaRepository<Hotel, Long>, JpaSpecific
 
     Optional<Hotel> findByUid(UUID uid);
 
+    List<Hotel> findAllByUidIn(List<UUID> uids);
+
     List<Hotel> findAllByOrgIdAndDeletedAtIsNull(Long orgId);
 
     boolean existsByNameIgnoreCaseAndLocation_Uid(String name, UUID locationUid);

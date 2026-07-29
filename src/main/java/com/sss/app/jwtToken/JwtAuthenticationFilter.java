@@ -91,8 +91,15 @@ public class JwtAuthenticationFilter implements Filter {
                 sendErrorResponse(httpResponse, HttpStatus.UNAUTHORIZED, "Invalid or expired session");
                 return;
             }
-            session.get().setLastAccessed(LocalDateTime.now());
-            userSessionRepo.save(session.get());
+            // lastAccessed isn't read anywhere today, but keep it roughly fresh in
+            // case something needs it later — throttled so this doesn't cost a
+            // write on every single request (was previously unconditional).
+            LocalDateTime now = LocalDateTime.now();
+            UserSession userSession = session.get();
+            if (userSession.getLastAccessed() == null || userSession.getLastAccessed().isBefore(now.minusMinutes(5))) {
+                userSession.setLastAccessed(now);
+                userSessionRepo.save(userSession);
+            }
 
             User user = userRepository.findByEmailWithRoles(username).orElse(null);
             if (user == null) {

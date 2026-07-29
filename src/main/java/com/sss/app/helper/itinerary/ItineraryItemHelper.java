@@ -17,7 +17,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -101,6 +103,35 @@ public class ItineraryItemHelper {
                     .orElse("(deleted transport)");
             default -> "(unknown)";
         };
+    }
+
+    /**
+     * Batch version of resolveLabel for a whole list — 3 queries total (one
+     * per item type) instead of one query per item, since a list of N items
+     * previously meant N sequential round-trips just to build display labels.
+     */
+    public Map<UUID, String> resolveLabels(List<ItineraryItem> items) {
+        Map<UUID, String> labels = new HashMap<>();
+
+        List<UUID> hotelIds = items.stream().filter(i -> "hotel".equals(i.getItemType())).map(ItineraryItem::getReferenceId).toList();
+        List<UUID> activityIds = items.stream().filter(i -> "activity".equals(i.getItemType())).map(ItineraryItem::getReferenceId).toList();
+        List<UUID> transportIds = items.stream().filter(i -> "transport".equals(i.getItemType())).map(ItineraryItem::getReferenceId).toList();
+
+        if (!hotelIds.isEmpty()) {
+            hotelRepository.findAllByUidIn(hotelIds).forEach(h -> labels.put(h.getUid(), h.getName()));
+        }
+        if (!activityIds.isEmpty()) {
+            activityRepository.findAllByUidIn(activityIds).forEach(a -> labels.put(a.getUid(), a.getName()));
+        }
+        if (!transportIds.isEmpty()) {
+            transportRepository.findAllByUidIn(transportIds).forEach(t ->
+                    labels.put(t.getUid(), t.getModeCode() + (t.getVehicleTypeCode() != null ? " — " + t.getVehicleTypeCode() : "")));
+        }
+
+        for (ItineraryItem item : items) {
+            labels.computeIfAbsent(item.getReferenceId(), id -> "(deleted " + item.getItemType() + ")");
+        }
+        return labels;
     }
 
     private void validateReference(String itemType, UUID referenceId) {

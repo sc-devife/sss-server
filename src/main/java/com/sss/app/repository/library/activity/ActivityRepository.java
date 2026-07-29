@@ -11,5 +11,7 @@ public interface ActivityRepository extends JpaRepository<Activity, Long> {
 
     Optional<Activity> findByUid(UUID uid);
 
+    List<Activity> findAllByUidIn(List<UUID> uids);
+
     List<Activity> findAllByOrgIdAndDeletedAtIsNull(Long orgId);
 }

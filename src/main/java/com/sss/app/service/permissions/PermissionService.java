@@ -1,5 +1,6 @@
 package com.sss.app.service.permissions;
 
+import com.sss.app.entity.roles.Role;
 import com.sss.app.entity.userrolelinks.UserRoleLink;
 import com.sss.app.entity.users.User;
 import com.sss.app.repository.permissions.RolePermissionRepository;
@@ -8,6 +9,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -28,10 +30,19 @@ public class PermissionService {
             return false;
         }
 
-        return user.getRoles().stream()
+        List<Long> roleIds = user.getRoles().stream()
                 .map(UserRoleLink::getRole)
                 .filter(Objects::nonNull)
-                .flatMap(role -> rolePermissionRepository.findAllByRoleId(role.getSeqp()).stream())
+                .map(Role::getSeqp)
+                .toList();
+        if (roleIds.isEmpty()) {
+            return false;
+        }
+
+        // One query regardless of how many roles the user holds, instead of
+        // one query per role — this runs on every single @PreAuthorize check
+        // across the whole app, so it's worth not paying N round-trips here.
+        return rolePermissionRepository.findAllByRoleIdIn(roleIds).stream()
                 .anyMatch(rolePermission -> key.equals(rolePermission.getPermission().getKey()));
     }
 }

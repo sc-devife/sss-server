@@ -11,5 +11,7 @@ public interface TransportRepository extends JpaRepository<Transport, Long> {
 
     Optional<Transport> findByUid(UUID uid);
 
+    List<Transport> findAllByUidIn(List<UUID> uids);
+
     List<Transport> findAllByOrgIdAndDeletedAtIsNull(Long orgId);
 }
