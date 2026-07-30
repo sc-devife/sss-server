@@ -59,4 +59,9 @@ public class UsersServiceImpl implements UsersService {
     public UserResponseDto reassignRoles(String uid, List<String> roles) {
         return userMapper.toUserResponseDto(usersHelper.reassignRoles(uid, roles));
     }
+
+    @Override
+    public UserResponseDto setBlocked(String uid, boolean blocked) {
+        return userMapper.toUserResponseDto(usersHelper.setBlocked(uid, blocked));
+    }
 }

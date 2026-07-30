@@ -23,4 +23,5 @@ public class UserResponseDto extends UserDto {
     private Integer maxConcurrentAssignments;
     private Boolean eligibleForPriorityLeads;
     private Boolean acceptingLeads;
+    private Boolean blocked;
 }

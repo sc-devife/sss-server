@@ -9,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/newuser")
 public class UserInvitationsController {
@@ -22,6 +24,19 @@ public class UserInvitationsController {
     @PreAuthorize("@permissionService.hasPermission('users.write')")
     @PostMapping(value = "/invite", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<UserInvitationDto> inviteUser(@Valid @RequestBody InviteUserRequestDto request) {
-        return ResponseEntity.ok(userInvitationsService.inviteUser(request.getEmail()));
+        return ResponseEntity.ok(userInvitationsService.inviteUser(request.getEmail(), request.getRoles()));
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('users.write')")
+    @GetMapping(value = "/invite/pending", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<UserInvitationDto>> pendingInvitations() {
+        return ResponseEntity.ok(userInvitationsService.listPendingInvitations());
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('users.write')")
+    @DeleteMapping("/invite/{invitationId}")
+    public ResponseEntity<Void> cancelInvitation(@PathVariable Long invitationId) {
+        userInvitationsService.cancelInvitation(invitationId);
+        return ResponseEntity.noContent().build();
     }
 }

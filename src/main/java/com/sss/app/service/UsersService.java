@@ -21,4 +21,6 @@ public interface UsersService {
     UserResponseDto updateAssignmentSettings(String uid, UserAssignmentSettingsUpdateRequestDto payload);
 
     UserResponseDto reassignRoles(String uid, List<String> roles);
+
+    UserResponseDto setBlocked(String uid, boolean blocked);
 }

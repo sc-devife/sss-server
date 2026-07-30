@@ -78,6 +78,11 @@ public class User {
     @Column(name = "accepting_leads")
     private Boolean acceptingLeads = true;
 
+    // Org admins can block a user to immediately revoke login/API access
+    // without deleting their account or role history.
+    @Column(name = "blocked")
+    private Boolean blocked;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference
     @ToString.Exclude

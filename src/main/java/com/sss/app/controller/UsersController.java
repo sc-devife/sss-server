@@ -61,4 +61,16 @@ public class UsersController {
     public ResponseEntity<UserResponseDto> reassignRoles(@PathVariable String uid, @Valid @RequestBody List<String> roles) {
         return ResponseEntity.ok(usersService.reassignRoles(uid, roles));
     }
+
+    @PreAuthorize("@permissionService.hasPermission('users.write')")
+    @PutMapping(value = "{uid}/block", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UserResponseDto> blockUser(@PathVariable String uid) {
+        return ResponseEntity.ok(usersService.setBlocked(uid, true));
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('users.write')")
+    @PutMapping(value = "{uid}/unblock", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UserResponseDto> unblockUser(@PathVariable String uid) {
+        return ResponseEntity.ok(usersService.setBlocked(uid, false));
+    }
 }

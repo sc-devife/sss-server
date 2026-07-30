@@ -2,14 +2,18 @@ package com.sss.app.helper.signup;
 
 import com.sss.app.dto.signup.SignupCreateRequestDTO;
 import com.sss.app.entity.UserCredential;
+import com.sss.app.entity.roles.Role;
+import com.sss.app.entity.userrolelinks.UserRoleLink;
 import com.sss.app.entity.users.User;
 import com.sss.app.entity.users.invitations.UserInvitation;
 import com.sss.app.exception.ConflictException;
 import com.sss.app.exception.NotFoundException;
 import com.sss.app.mapper.signup.SignupMapper;
 import com.sss.app.repository.InvitationTokenRepository;
+import com.sss.app.repository.RoleRepository;
 import com.sss.app.repository.UserCredentialRepository;
 import com.sss.app.repository.UserRepository;
+import com.sss.app.repository.UserRoleLinkRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -29,6 +33,8 @@ public class SignupHelper {
     private final UserRepository userRepository;
     private final UserCredentialRepository userCredentialRepository;
     private final InvitationTokenRepository invitationTokenRepository;
+    private final RoleRepository roleRepository;
+    private final UserRoleLinkRepository userRoleLinkRepository;
 
     @Transactional
     public User createSignup(SignupCreateRequestDTO payload) {
@@ -37,6 +43,9 @@ public class SignupHelper {
 
         if (invitation.is_used()) {
             throw new ConflictException("This invitation has already been used");
+        }
+        if (invitation.is_archived()) {
+            throw new ConflictException("This invitation is no longer valid");
         }
         if (invitation.getExpires_set().isBefore(LocalDateTime.now())) {
             throw new ConflictException("This invitation has expired");
@@ -72,6 +81,13 @@ public class SignupHelper {
 
         UserCredential userCredential = UserCredential.create(user.getSeqp(), passwordHash);
         userCredentialRepository.save(userCredential);
+
+        if (invitation.getRoles() != null && !invitation.getRoles().isEmpty()) {
+            List<Role> roles = roleRepository.findByNameIn(invitation.getRoles());
+            for (Role role : roles) {
+                userRoleLinkRepository.save(UserRoleLink.create(user, role));
+            }
+        }
 
         invitation.set_used(true);
         invitationTokenRepository.save(invitation);

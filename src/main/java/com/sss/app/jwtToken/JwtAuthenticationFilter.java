@@ -106,6 +106,11 @@ public class JwtAuthenticationFilter implements Filter {
                 sendErrorResponse(httpResponse, HttpStatus.UNAUTHORIZED, "Unknown user");
                 return;
             }
+            if (Boolean.TRUE.equals(user.getBlocked())) {
+                userSessionRepo.deleteById(username);
+                sendErrorResponse(httpResponse, HttpStatus.FORBIDDEN, "Your account has been blocked. Please contact your organization administrator.");
+                return;
+            }
 
             List<GrantedAuthority> authorities = user.getRoles().stream()
                     .map(link -> link.getRole())

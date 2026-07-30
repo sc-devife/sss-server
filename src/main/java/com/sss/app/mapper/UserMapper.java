@@ -47,6 +47,7 @@ public class UserMapper {
         dto.setMaxConcurrentAssignments(user.getMaxConcurrentAssignments());
         dto.setEligibleForPriorityLeads(user.getEligibleForPriorityLeads());
         dto.setAcceptingLeads(user.getAcceptingLeads());
+        dto.setBlocked(user.getBlocked());
 
         List<UserRoleLinkResponseDto> roleDTOs = new ArrayList<>();
         for (UserRoleLink link : user.getRoles()) {

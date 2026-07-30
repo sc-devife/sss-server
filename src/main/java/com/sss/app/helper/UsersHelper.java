@@ -132,6 +132,16 @@ public class UsersHelper {
     }
 
     @Transactional
+    public User setBlocked(String uid, boolean blocked) {
+        User user = getUserByUid(uid);
+        user.setBlocked(blocked);
+        userRepository.save(user);
+
+        entityManager.refresh(user);
+        return user;
+    }
+
+    @Transactional
     public User reassignRoles(String uid, List<String> roles) {
         User user = getUserByUid(uid);
 

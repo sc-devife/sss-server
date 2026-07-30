@@ -4,6 +4,7 @@ import com.sss.app.dto.auth.ForgotPasswordRequest;
 import com.sss.app.dto.auth.LoginResponse;
 import com.sss.app.dto.auth.ResetPasswordRequest;
 import com.sss.app.entity.UserSession;
+import com.sss.app.exception.AccountBlockedException;
 import com.sss.app.jwtToken.JwtValidator;
 import com.sss.app.repository.UserSessionRepository;
 import com.sss.app.service.AuthenticationService;
@@ -40,6 +41,8 @@ public class AuthenticationController {
             loginResponse = authServices.authenticateAndGenerateToken(username, password);
             UserSession userSession = new UserSession(username, loginResponse.getToken(), LocalDateTime.now());
             userSessionRepo.save(userSession);
+        } catch (AccountBlockedException e) {
+            return ResponseEntity.status(403).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(401).body("Invalid credentials");
         }

@@ -7,6 +7,8 @@ import com.sss.app.mapper.UserInvitationMapper;
 import com.sss.app.service.UserInvitationsService;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class UserInvitationsServiceImpl implements UserInvitationsService {
 
@@ -19,9 +21,18 @@ public class UserInvitationsServiceImpl implements UserInvitationsService {
     }
 
     @Override
-    public UserInvitationDto inviteUser(String Email) {
-        UserInvitation userInvitation = userInvitationHelper.inviteUser(Email);
+    public UserInvitationDto inviteUser(String email, List<String> roles) {
+        UserInvitation userInvitation = userInvitationHelper.inviteUser(email, roles);
         return userInvitationMapper.toInvitationDto(userInvitation);
     }
-}
 
+    @Override
+    public List<UserInvitationDto> listPendingInvitations() {
+        return userInvitationMapper.toInvitationDtoList(userInvitationHelper.listPendingInvitations());
+    }
+
+    @Override
+    public void cancelInvitation(Long invitationId) {
+        userInvitationHelper.cancelInvitation(invitationId);
+    }
+}

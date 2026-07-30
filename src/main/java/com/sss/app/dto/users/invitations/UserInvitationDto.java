@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -14,4 +15,5 @@ public class UserInvitationDto {
     private String uid;
     private String email;
     private LocalDateTime expires_set;
+    private List<String> roles;
 }

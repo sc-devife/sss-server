@@ -3,6 +3,7 @@ package com.sss.app.service;
 import com.sss.app.dto.auth.LoginResponse;
 import com.sss.app.entity.UserCredential;
 import com.sss.app.entity.users.User;
+import com.sss.app.exception.AccountBlockedException;
 import com.sss.app.helper.UserCredentialsHelper;
 import com.sss.app.helper.UsersHelper;
 import com.sss.app.jwtToken.KeyProvider;
@@ -44,6 +45,10 @@ public class AuthenticationService {
 
         if (user.getEmail().equals(email) &&
                 passwordEncoder.matches(password, userCredential.getPassword_hash())) {
+
+            if (Boolean.TRUE.equals(user.getBlocked())) {
+                throw new AccountBlockedException("Your account has been blocked. Please contact your organization administrator.");
+            }
 
             String token = Jwts.builder()
                     .setSubject(email)

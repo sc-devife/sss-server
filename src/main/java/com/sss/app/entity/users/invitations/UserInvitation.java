@@ -1,8 +1,11 @@
 package com.sss.app.entity.users.invitations;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import lombok.Data;
 
@@ -35,4 +38,8 @@ public class UserInvitation {
 
     @Column
     private boolean is_archived;
+
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Column(name = "roles", columnDefinition = "text[]")
+    private List<String> roles;
 }
