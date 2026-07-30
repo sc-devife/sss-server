@@ -18,6 +18,7 @@ public class AddressMapper {
                 .streetSecond(address.getStreetSecond())
                 .landMark(address.getLandMark())
                 .additionalDetails(address.getAdditionalDetails())
+                .contactNumber(address.getContactNumber())
                 .contactEmail(address.getContactEmail())
                 .tripDestination(address.getTripDestination())
                 //.addressType(address.getAddressType())

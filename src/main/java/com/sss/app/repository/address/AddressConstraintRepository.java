@@ -12,6 +12,7 @@ import java.util.List;
 
 public interface AddressConstraintRepository extends JpaRepository<AddressConstraint, Long> {
         List<AddressConstraint> findByOrganizationUid(String orgId);
+        List<AddressConstraint> findByOrganizationSeqp(Long orgId);
         @Modifying
         @Query("update AddressConstraint c set c.primaryAddress = false " +
                 "where c.organization.seqp = :orgId and c.addressType = :type and c.primaryAddress = true")

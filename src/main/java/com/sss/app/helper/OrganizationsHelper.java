@@ -45,10 +45,28 @@ public class OrganizationsHelper {
             throw new IllegalArgumentException("Registered name already in use");
         }
         Organizations organization = Organizations.create(request);
+        organization.setOrgCode(generateOrgCode(request.getDisplay_name()));
         organization = organizationRepository.save(organization);
         entityManager.flush();
         entityManager.refresh(organization);
         return organization;
+    }
+
+    /** Slug derived from display_name, uniquified with a numeric suffix on collision. */
+    private String generateOrgCode(String displayName) {
+        String base = displayName == null ? "" : displayName.toLowerCase().trim()
+                .replaceAll("[^a-z0-9]+", "-")
+                .replaceAll("(^-+|-+$)", "");
+        if (base.isBlank()) {
+            base = "org";
+        }
+        String candidate = base;
+        int suffix = 2;
+        while (organizationRepository.existsByOrgCode(candidate)) {
+            candidate = base + "-" + suffix;
+            suffix++;
+        }
+        return candidate;
     }
     @Transactional
     public Organizations updateOrganizations(String uid, OrganizationsDto request) {

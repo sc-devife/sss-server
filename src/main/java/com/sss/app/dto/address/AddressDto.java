@@ -20,7 +20,7 @@ public class AddressDto {
     private String streetSecond;
     private String landMark;
     private String additionalDetails;
-    //private String contactNumber;
+    private String contactNumber;
     private String contactEmail;
     private String tripDestination;
 

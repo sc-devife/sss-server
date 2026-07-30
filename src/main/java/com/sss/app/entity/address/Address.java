@@ -30,6 +30,9 @@ public class Address {
     @Column(insertable = false, updatable = false)
     private String uid;
 
+    @Column(name = "organization_id", updatable = false)
+    private Long organizationId;
+
     private String label;
     private String city;
     private String state;
@@ -39,7 +42,7 @@ public class Address {
     private String streetSecond;
     private String landMark;
     private String additionalDetails;
-    //private String contactNumber;
+    private String contactNumber;
     private String contactEmail;
     private String tripDestination;
 
@@ -61,11 +64,10 @@ public class Address {
         builder.streetSecond(dto.getStreetSecond());
         builder.landMark(dto.getLandMark());
         builder.additionalDetails(dto.getAdditionalDetails());
+        builder.contactNumber(dto.getContactNumber());
         builder.contactEmail(dto.getContactEmail());
         builder.tripDestination(dto.getTripDestination());
-        builder.build();
         return builder.build();
-
     }
 
     public void update(AddressDto dto) {
@@ -98,6 +100,9 @@ public class Address {
 
         if (dto.getAdditionalDetails() != null && CompareUtil.hasChanged(dto.getAdditionalDetails(), this.additionalDetails)) {
             this.additionalDetails = dto.getAdditionalDetails();
+        }
+        if (dto.getContactNumber() != null && CompareUtil.hasChanged(dto.getContactNumber(), this.contactNumber)) {
+            this.contactNumber = dto.getContactNumber();
         }
         if (dto.getContactEmail() != null && CompareUtil.hasChanged(dto.getContactEmail(), this.contactEmail)) {
             this.contactEmail = dto.getContactEmail();

@@ -4,10 +4,14 @@ import com.sss.app.dto.address.AddressDto;
 import com.sss.app.service.AddressService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+// Contact addresses are an org-settings concept (Section 4 nav grouping), so
+// this reuses organizations.read/write rather than a new permission pair —
+// same convention as TaxProfile/ReminderRule.
 @RestController
 @RequestMapping("/api/addresses")
 @RequiredArgsConstructor
@@ -15,11 +19,13 @@ public class OrganizationAddressController {
 
     private final AddressService addressService;
 
+    @PreAuthorize("@permissionService.hasPermission('organizations.write')")
     @PostMapping(value = "/{orgId}/create", consumes = "application/json", produces = "application/json")
     public ResponseEntity<AddressDto> createAddress(@PathVariable Long orgId, @RequestBody AddressDto dto) {
         return ResponseEntity.ok(addressService.createOrganizationAddress(orgId, dto));
     }
 
+    @PreAuthorize("@permissionService.hasPermission('organizations.write')")
     @PutMapping(value = "/{orgId}/update/{addressId}", consumes = "application/json", produces = "application/json")
     public ResponseEntity<AddressDto> updateAddress(@PathVariable Long orgId,
                                                     @PathVariable Long addressId,
@@ -27,18 +33,13 @@ public class OrganizationAddressController {
         return ResponseEntity.ok(addressService.updateOrganizationAddress(orgId, addressId, dto));
     }
 
-    @RequestMapping("/{uid}")
-    public ResponseEntity<List<AddressDto>> getAddressesByOrg(@PathVariable String uid) {
-        List<AddressDto> addresses = addressService.getAddressesByOrganization(uid);
-        return ResponseEntity.ok(addresses);
+    @PreAuthorize("@permissionService.hasPermission('organizations.read')")
+    @GetMapping("/{orgId}")
+    public ResponseEntity<List<AddressDto>> getAddressesForOrg(@PathVariable Long orgId) {
+        return ResponseEntity.ok(addressService.getAddressesForOrg(orgId));
     }
 
-    // Get all addresses for an organization
-    @GetMapping("/organization/{orgId}")
-    public ResponseEntity<List<AddressDto>> getAddressesByOrganization(@PathVariable String orgId) {
-        return ResponseEntity.ok(addressService.getAddressesByOrganization(orgId));
-    }
-
+    @PreAuthorize("@permissionService.hasPermission('organizations.write')")
     @DeleteMapping("/{orgId}/address/{addressId}")
     public ResponseEntity<Void> deleteAddress(@PathVariable Long orgId,
                                               @PathVariable Long addressId) {

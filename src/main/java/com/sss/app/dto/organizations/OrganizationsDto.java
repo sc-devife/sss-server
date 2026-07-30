@@ -16,6 +16,7 @@ public class OrganizationsDto {
     private String uid;
     private String registered_name;
     private String display_name;
+    private String org_code;
     private String support_ph_num;
     private String country_code;
     private String default_currency_code;

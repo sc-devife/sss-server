@@ -11,5 +11,6 @@ public interface OrganizationRepository extends JpaRepository<Organizations, Lon
     Optional<Organizations> findByRegisteredName(String registeredName);
     Optional<Organizations> findByUid(String uid);
     boolean existsByRegisteredName(String registeredName);
+    boolean existsByOrgCode(String orgCode);
     void deleteByRegisteredName(String registeredName);
 }

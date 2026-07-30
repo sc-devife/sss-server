@@ -45,6 +45,13 @@ public class Organizations {
     @Column (name = "display_name")
     private String displayName;
 
+    // Short, unique, human-readable id derived from display_name at
+    // creation time — set once by OrganizationsHelper.createOrganizations,
+    // never touched by update() (stable identifier, not re-slugged every
+    // time the display name changes).
+    @Column(name = "org_code")
+    private String orgCode;
+
     @Column (name = "support_ph_num")
     private String supportPhNum;
 

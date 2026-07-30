@@ -13,6 +13,7 @@ public class OrganizationMapper {
         dto.setUid(orgs.getUid());
         dto.setRegistered_name(orgs.getRegisteredName());
         dto.setDisplay_name(orgs.getDisplayName());
+        dto.setOrg_code(orgs.getOrgCode());
         dto.setSupport_ph_num(orgs.getSupportPhNum());
         dto.setCountry_code(orgs.getCountryCode());
         dto.setDefault_currency_code(orgs.getDefaultCurrencyCode());
