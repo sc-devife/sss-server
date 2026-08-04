@@ -54,7 +54,9 @@ public class SecurityConfig {
                                 "/api/signup",
                                 "/error",
                                 "/files/**",
-                                "/api/integrations/webhook/**"
+                                "/api/integrations/webhook/**",
+                                "/api/integrations/meta/webhook",
+                                "/api/integrations/meta/webhook/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

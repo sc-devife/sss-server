@@ -41,6 +41,9 @@ public class TransportServiceImpl implements TransportService {
         if (dto.getProviderId() != null) {
             transport.setProvider(transportHelper.resolveProvider(dto.getProviderId()));
         }
+        if (dto.getDestinationId() != null) {
+            transport.setDestination(transportHelper.resolveDestination(dto.getDestinationId()));
+        }
         Transport saved = transportRepository.save(transport);
         return transportMapper.toResponse(saved);
     }
@@ -66,6 +69,9 @@ public class TransportServiceImpl implements TransportService {
         transportMapper.updateEntityFromDto(dto, transport);
         if (dto.getProviderId() != null) {
             transport.setProvider(transportHelper.resolveProvider(dto.getProviderId()));
+        }
+        if (dto.getDestinationId() != null) {
+            transport.setDestination(transportHelper.resolveDestination(dto.getDestinationId()));
         }
         Transport saved = transportRepository.save(transport);
         return transportMapper.toResponse(saved);

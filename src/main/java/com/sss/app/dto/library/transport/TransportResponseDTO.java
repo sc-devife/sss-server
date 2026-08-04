@@ -1,5 +1,6 @@
 package com.sss.app.dto.library.transport;
 
+import com.sss.app.dto.library.escapepoint.EscapePointResponseDto;
 import com.sss.app.dto.library.serviceprovider.ServiceProviderResponseDTO;
 import lombok.Data;
 
@@ -21,6 +22,12 @@ public class TransportResponseDTO {
     private ServiceProviderResponseDTO provider;
 
     private BigDecimal basePrice;
+
+    private String pickupLocation;
+
+    private String dropLocation;
+
+    private EscapePointResponseDto destination;
 
     private String status;
 

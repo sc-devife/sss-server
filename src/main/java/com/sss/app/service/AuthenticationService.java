@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.stream.Collectors;
 
 @Service
 public class AuthenticationService {
@@ -57,7 +58,11 @@ public class AuthenticationService {
                     .signWith(SignatureAlgorithm.RS256, keyProvider.getPrivateKey())
                     .compact();
 
-            return new LoginResponse(token, user.getUserId(), user.getName());
+            String role = user.getRoles().stream()
+                    .map(link -> link.getRole().getName())
+                    .collect(Collectors.joining(","));
+
+            return new LoginResponse(token, user.getUserId(), user.getName(), role);
         } else {
             throw new RuntimeException("Invalid credentials");
         }

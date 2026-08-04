@@ -13,8 +13,9 @@ public record LeadChannel(String code, String label, boolean available) {
 
     public static final List<LeadChannel> ALL = List.of(
             new LeadChannel("webhook", "Generic Inbound Webhook", true),
+            new LeadChannel("facebook", "Facebook Lead Ads", true),
+            new LeadChannel("instagram", "Instagram Lead Ads", true),
             new LeadChannel("whatsapp", "WhatsApp Business API", false),
-            new LeadChannel("instagram", "Instagram", false),
             new LeadChannel("youtube", "YouTube", false),
             new LeadChannel("google_ads", "Google Ads", false),
             new LeadChannel("agency", "Third-Party Agency Feed", false)

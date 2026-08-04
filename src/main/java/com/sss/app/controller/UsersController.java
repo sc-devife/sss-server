@@ -28,6 +28,14 @@ public class UsersController {
         return ResponseEntity.ok(usersService.getCurrentUser());
     }
 
+    // No @PreAuthorize — any authenticated user may update their own profile.
+    // Unlike {uid}/update below, this never takes a uid from the request, so
+    // it can't be used to edit anyone else's record.
+    @PutMapping(value = "/me", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UserResponseDto> updateCurrentUser(@Valid @RequestBody UserUpdateRequestDto payload) {
+        return ResponseEntity.ok(usersService.updateCurrentUser(payload));
+    }
+
     @RequestMapping(value = "/all", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<UserResponseDto>> fetchAllUsers() {
         return ResponseEntity.ok(usersService.fetchAllUsers(123456L));

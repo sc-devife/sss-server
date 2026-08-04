@@ -37,6 +37,7 @@ public class UserMapper {
         UserResponseDto dto = new UserResponseDto();
         dto.setSeqp(user.getSeqp());
         dto.setUid(user.getUid());
+        dto.setUserId(user.getUserId());
         dto.setName(user.getName());
         dto.setEmail(user.getEmail());
         dto.setFirst_name(user.getFirst_name());

@@ -12,4 +12,12 @@ public class IntegrationConnectionResponseDTO {
     private String status;     // connected / disconnected / error
     private Boolean autoCreateLeads;
     private LocalDateTime lastSyncedAt;
+
+    // Meta (facebook/instagram) only — null for other channels. The access
+    // token itself is never included here, in any form.
+    private String platform;
+    private String pageId;
+    private String igAccountId;
+    private String pageName;
+    private LocalDateTime tokenLastVerifiedAt;
 }

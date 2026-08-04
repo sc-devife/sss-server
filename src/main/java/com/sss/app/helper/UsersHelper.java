@@ -57,8 +57,11 @@ public class UsersHelper {
         return user;
     }
 
+    // Eager-fetches roles (rather than plain findByEmail) since login needs
+    // them to compute LoginResponse.role without relying on open-in-view to
+    // keep a lazy proxy resolvable later in the request.
     public User getUserByEmail(String email) {
-        return userRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found with email: " + email));
+        return userRepository.findByEmailWithRoles(email).orElseThrow(() -> new NotFoundException("User not found with email: " + email));
     }
 
     @Transactional
@@ -103,8 +106,15 @@ public class UsersHelper {
         user.update(payload);
         userRepository.save(user);
 
-        entityManager.refresh(user);
-        return user;
+        // See reassignRoles() — entityManager.refresh(user) cascades onto
+        // the cascade=ALL roles collection, which is fragile (it's what
+        // caused that method's "instance was not in a valid state" crash
+        // and silent re-insert bug). Clearing the persistence context and
+        // re-fetching avoids that risk entirely, even though this method
+        // doesn't touch roles itself.
+        entityManager.flush();
+        entityManager.clear();
+        return getUserByUid(uid);
     }
 
     @Transactional
@@ -127,6 +137,7 @@ public class UsersHelper {
         }
         userRepository.save(user);
 
+        entityManager.flush();
         entityManager.refresh(user);
         return user;
     }
@@ -137,8 +148,15 @@ public class UsersHelper {
         user.setBlocked(blocked);
         userRepository.save(user);
 
-        entityManager.refresh(user);
-        return user;
+        // See reassignRoles() — entityManager.refresh(user) cascades onto
+        // the cascade=ALL roles collection, which is fragile (it's what
+        // caused that method's "instance was not in a valid state" crash
+        // and silent re-insert bug). Clearing the persistence context and
+        // re-fetching avoids that risk entirely, even though this method
+        // doesn't touch roles itself.
+        entityManager.flush();
+        entityManager.clear();
+        return getUserByUid(uid);
     }
 
     @Transactional
@@ -167,15 +185,30 @@ public class UsersHelper {
                         .noneMatch(link -> link.getRole().getSeqp().equals(role.getSeqp())))
                 .toList();
 
+        // user.getRoles() is the live, cascade=ALL-managed collection (not a
+        // copy). If we delete roleLinksToDelete through the repository
+        // without also removing them from this collection, Hibernate still
+        // sees them as reachable via a cascade=PERSIST association at flush
+        // time and re-inserts the very rows we just told it to delete.
+        currentRoleLinks.removeAll(roleLinksToDelete);
         userRoleLinkRepository.deleteAll(roleLinksToDelete);
 
         List<UserRoleLink> linksToAdd = rolesToAdd.stream()
                 .map(role -> UserRoleLink.create(user, role))
                 .toList();
+        currentRoleLinks.addAll(linksToAdd);
         userRoleLinkRepository.saveAll(linksToAdd);
 
-        entityManager.refresh(user);
-        return user;
+        // entityManager.refresh(user) used to be called here to pick up the
+        // change, but cascading REFRESH onto this collection throws
+        // "instance was not in a valid state" once it contains entities that
+        // were just deleted. Clearing the persistence context and
+        // re-fetching through the same JOIN FETCH query sidesteps
+        // refresh-cascade entirely and guarantees the returned user reflects
+        // exactly what's committed.
+        entityManager.flush();
+        entityManager.clear();
+        return getUserByUid(uid);
     }
 }
 

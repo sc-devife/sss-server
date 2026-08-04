@@ -14,10 +14,12 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 public interface TransportMapper {
 
     @Mapping(target = "provider", ignore = true)
+    @Mapping(target = "destination", ignore = true)
     Transport toEntityCreate(TransportCreateRequestDTO dto);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "provider", ignore = true)
+    @Mapping(target = "destination", ignore = true)
     void updateEntityFromDto(TransportUpdateRequestDTO dto, @MappingTarget Transport entity);
 
     TransportResponseDTO toResponse(Transport entity);

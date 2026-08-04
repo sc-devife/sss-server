@@ -10,6 +10,8 @@ import java.util.List;
 public interface UsersService {
     UserResponseDto getCurrentUser();
 
+    UserResponseDto updateCurrentUser(UserUpdateRequestDto payload);
+
     List<UserResponseDto> fetchAllUsers(Long companyId);
 
     UserResponseDto getUserByUid(String uid);

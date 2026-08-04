@@ -20,5 +20,12 @@ public class TransportCreateRequestDTO {
 
     private BigDecimal basePrice;
 
+    private String pickupLocation;
+
+    private String dropLocation;
+
+    // The EscapePoint's uid (String) — resolved to the entity in TransportHelper, matching Activity's destinationId.
+    private String destinationId;
+
     private String status;
 }

@@ -51,7 +51,11 @@ public class JwtAuthenticationFilter implements Filter {
             "/sss/files/",
             // Public, unauthenticated webhook intake — secured by a per-org
             // shared secret (see WebhookLeadController), not a JWT.
-            "/sss/api/integrations/webhook/"
+            "/sss/api/integrations/webhook/",
+            // Meta (Facebook/Instagram) Lead Ads webhook — secured by real
+            // HMAC signature verification (see MetaSignatureVerifier), not a
+            // JWT. Kept in sync with SecurityConfig's requestMatchers().
+            "/sss/api/integrations/meta/webhook"
     );
 
     @Autowired

@@ -9,6 +9,7 @@ import com.sss.app.exception.NotFoundException;
 import com.sss.app.mapper.library.escapepoint.EscapePointMapper;
 import com.sss.app.repository.library.escapepoint.EscapePointRepository;
 import com.sss.app.security.OrgAccessGuard;
+import com.sss.app.service.files.CloudinaryService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
@@ -16,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -27,6 +29,8 @@ public class EscapePointsHelper {
     private final EscapePointMapper escapePointMapper;
 
     private final OrgAccessGuard orgAccessGuard;
+
+    private final CloudinaryService cloudinaryService;
 
     @PersistenceContext
     private final EntityManager entityManager;
@@ -64,7 +68,9 @@ public class EscapePointsHelper {
     @Transactional
     public EscapePoint updateEscapePoint(String uid, EscapePointUpdateRequestDto payload) {
         EscapePoint escapePoint = getEscapePointByUid(uid);
+        List<String> previousImages = escapePoint.getImages() == null ? null : new ArrayList<>(escapePoint.getImages());
         escapePointMapper.updateFromDto(payload, escapePoint);
+        cloudinaryService.deleteRemoved(previousImages, escapePoint.getImages());
 
         return escapePoint;
     }

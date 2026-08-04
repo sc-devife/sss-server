@@ -1,6 +1,7 @@
 package com.sss.app.entity.library.transport;
 
 import com.sss.app.entity.common.Auditable;
+import com.sss.app.entity.library.escapepoint.EscapePoint;
 import com.sss.app.entity.library.serviceprovider.ServiceProvider;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -52,6 +53,18 @@ public class Transport extends Auditable {
 
     @Column(name = "base_price", precision = 12, scale = 2)
     private BigDecimal basePrice;
+
+    @Column(name = "pickup_location")
+    private String pickupLocation;
+
+    @Column(name = "drop_location")
+    private String dropLocation;
+
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "destination_id")
+    private EscapePoint destination;
 
     @Column
     private String status;

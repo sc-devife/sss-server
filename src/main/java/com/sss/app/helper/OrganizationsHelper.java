@@ -5,20 +5,25 @@ import com.sss.app.entity.organizations.Organizations;
 import com.sss.app.entity.users.User;
 import com.sss.app.exception.NotFoundException;
 import com.sss.app.repository.OrganizationRepository;
+import com.sss.app.service.files.CloudinaryService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
+import java.util.Objects;
+
 @Component
 public class OrganizationsHelper {
     private final OrganizationRepository organizationRepository;
+    private final CloudinaryService cloudinaryService;
     @PersistenceContext
     private EntityManager entityManager;
 
-    public OrganizationsHelper(OrganizationRepository organizationRepository) {
+    public OrganizationsHelper(OrganizationRepository organizationRepository, CloudinaryService cloudinaryService) {
         this.organizationRepository = organizationRepository;
+        this.cloudinaryService = cloudinaryService;
     }
 
     public Organizations getMyOrganization() {
@@ -71,10 +76,16 @@ public class OrganizationsHelper {
     @Transactional
     public Organizations updateOrganizations(String uid, OrganizationsDto request) {
         Organizations organization = getOrganizationByUid(uid);
+        String previousLogoFile = organization.getLogoFile();
         organization.update(request);
         organizationRepository.save(organization);
         entityManager.flush();
         entityManager.refresh(organization);
+
+        if (!Objects.equals(previousLogoFile, organization.getLogoFile())) {
+            cloudinaryService.deleteByUrl(previousLogoFile);
+        }
+
         return organization;
     }
 

@@ -10,12 +10,14 @@ import com.sss.app.helper.library.hotel.HotelHelper;
 import com.sss.app.mapper.library.hotel.HotelMapper;
 import com.sss.app.repository.library.hotel.HotelRepository;
 import com.sss.app.security.OrgAccessGuard;
+import com.sss.app.service.files.CloudinaryService;
 import com.sss.app.service.library.hotel.HotelService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,6 +30,7 @@ public class HotelServiceImpl implements HotelService {
     private final HotelMapper hotelMapper;
     private final HotelHelper hotelHelper;
     private final OrgAccessGuard orgAccessGuard;
+    private final CloudinaryService cloudinaryService;
 
     private User currentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -70,6 +73,7 @@ public class HotelServiceImpl implements HotelService {
     @Override
     public HotelResponseDTO update(UUID id, HotelUpdateRequestDTO dto) {
         Hotel hotel = findEntityById(id);
+        List<String> previousImages = hotel.getImages() == null ? null : new ArrayList<>(hotel.getImages());
 
         // Update scalar fields (name, stars, checkIn/Out, childAge, isActive)
         hotelMapper.updateEntityFromDto(dto, hotel);
@@ -85,6 +89,7 @@ public class HotelServiceImpl implements HotelService {
         );
 
         Hotel saved = hotelRepository.save(hotel);
+        cloudinaryService.deleteRemoved(previousImages, saved.getImages());
         return hotelMapper.toResponse(saved);
     }
 

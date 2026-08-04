@@ -8,7 +8,9 @@ import com.sss.app.helper.lead.LeadsHelper;
 import com.sss.app.mapper.lead.LeadMapper;
 import com.sss.app.repository.OrganizationRepository;
 import com.sss.app.service.assignment.LeadAssignmentService;
+import com.sss.app.service.integration.ChannelLeadResult;
 import com.sss.app.service.integration.NormalizedLeadPayload;
+import com.sss.app.service.integration.ProviderLeadMetadata;
 import com.sss.app.service.lead.LeadService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -39,6 +41,15 @@ public class LeadServiceImpl implements LeadService {
                 payload.getTravelDate(), payload.getNumberOfPeople(), payload.getDurationDays());
         autoAssignIfEnabled(lead);
         return leadMapper.toResponse(lead);
+    }
+
+    @Override
+    public ChannelLeadResult createLeadFromChannel(Long orgId, String channelCode, NormalizedLeadPayload payload, ProviderLeadMetadata sourceMetadata) {
+        LeadsHelper.ChannelLeadResult result = leadHelper.createLeadFromChannel(orgId, channelCode, payload, sourceMetadata);
+        if (!result.wasDuplicate()) {
+            autoAssignIfEnabled(result.lead());
+        }
+        return new ChannelLeadResult(result.lead().getSeqp(), result.wasDuplicate());
     }
 
     /**

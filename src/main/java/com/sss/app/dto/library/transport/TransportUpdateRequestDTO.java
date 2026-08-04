@@ -18,5 +18,11 @@ public class TransportUpdateRequestDTO {
 
     private BigDecimal basePrice;
 
+    private String pickupLocation;
+
+    private String dropLocation;
+
+    private String destinationId;
+
     private String status;
 }
