@@ -123,8 +123,8 @@ public class UsersHelper {
         if (payload.getIsSpecialist() != null) {
             user.setIsSpecialist(payload.getIsSpecialist());
         }
-        if (payload.getSpecialistDestinations() != null) {
-            user.setSpecialistDestinations(payload.getSpecialistDestinations());
+        if (payload.getSpecialistEscapePoints() != null) {
+            user.setSpecialistEscapePoints(payload.getSpecialistEscapePoints());
         }
         if (payload.getMaxConcurrentAssignments() != null) {
             user.setMaxConcurrentAssignments(payload.getMaxConcurrentAssignments());

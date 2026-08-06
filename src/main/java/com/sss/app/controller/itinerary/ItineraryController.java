@@ -35,8 +35,8 @@ public class ItineraryController {
 
     @PreAuthorize("@permissionService.hasPermission('trips.read')")
     @GetMapping
-    public ResponseEntity<List<ItineraryResponseDTO>> getAllForTrip(@RequestParam Long tripId) {
-        return ResponseEntity.ok(itineraryService.getAllForTrip(tripId));
+    public ResponseEntity<List<ItineraryResponseDTO>> getAllForEscape(@RequestParam Long escapeId) {
+        return ResponseEntity.ok(itineraryService.getAllForEscape(escapeId));
     }
 
     @PreAuthorize("@permissionService.hasPermission('trips.write')")

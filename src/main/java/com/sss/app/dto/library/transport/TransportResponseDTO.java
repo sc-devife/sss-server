@@ -27,7 +27,7 @@ public class TransportResponseDTO {
 
     private String dropLocation;
 
-    private EscapePointResponseDto destination;
+    private EscapePointResponseDto escapePoint;
 
     private String status;
 

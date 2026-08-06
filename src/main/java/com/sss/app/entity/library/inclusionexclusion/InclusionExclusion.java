@@ -16,7 +16,7 @@ import org.hibernate.annotations.DynamicUpdate;
 /**
  * Reusable Terms &amp; Conditions / Inclusion / Exclusion content blocks
  * (Section 8's itinerary Terms/Inclusions/Exclusions). Optionally linked to
- * one Destination (EscapePoint); left unlinked, an item lives in the
+ * one EscapePoint; left unlinked, an item lives in the
  * org-wide library and can still be attached to any itinerary. Attaching to
  * an itinerary copies the content into ItineraryContentItem rather than
  * referencing this row live.
@@ -62,5 +62,5 @@ public class InclusionExclusion extends Auditable {
     @EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "destination_id")
-    private EscapePoint destination;
+    private EscapePoint escapePoint;
 }

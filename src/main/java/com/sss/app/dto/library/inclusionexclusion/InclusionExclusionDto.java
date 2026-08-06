@@ -7,6 +7,6 @@ public class InclusionExclusionDto {
     private String name;
     private String type; // INCLUSION / EXCLUSION / TERMS
     private String contentHtml;
-    private String destinationId; // EscapePoint uid, optional — unlinked items live in the org-wide library
+    private String escapePointId; // EscapePoint uid, optional — unlinked items live in the org-wide library
     private Long sortOrder;
 }

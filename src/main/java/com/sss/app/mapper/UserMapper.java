@@ -44,7 +44,7 @@ public class UserMapper {
         dto.setLast_name(user.getLast_name());
         dto.setContact_number(user.getContact_number());
         dto.setIsSpecialist(user.getIsSpecialist());
-        dto.setSpecialistDestinations(user.getSpecialistDestinations());
+        dto.setSpecialistEscapePoints(user.getSpecialistEscapePoints());
         dto.setMaxConcurrentAssignments(user.getMaxConcurrentAssignments());
         dto.setEligibleForPriorityLeads(user.getEligibleForPriorityLeads());
         dto.setAcceptingLeads(user.getAcceptingLeads());

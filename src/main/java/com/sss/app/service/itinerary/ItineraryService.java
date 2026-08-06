@@ -10,7 +10,7 @@ import java.util.UUID;
 public interface ItineraryService {
     ItineraryResponseDTO create(ItineraryCreateRequestDTO request);
     ItineraryResponseDTO getByUid(UUID uid);
-    List<ItineraryResponseDTO> getAllForTrip(Long tripId);
+    List<ItineraryResponseDTO> getAllForEscape(Long escapeId);
     ItineraryResponseDTO update(UUID uid, ItineraryUpdateRequestDTO request);
     void delete(UUID uid);
     ItineraryResponseDTO createNewVersion(UUID sourceUid);

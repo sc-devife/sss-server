@@ -29,7 +29,7 @@ public class OrganizationsController {
 
     @PreAuthorize("@permissionService.hasPermission('organizations.write')")
     @PostMapping("/create")
-    public ResponseEntity<OrganizationsDto> createOrganizations(@RequestBody OrganizationsDto request) {
+    public ResponseEntity<OrganizationsDto> createOrganizations(@Valid @RequestBody OrganizationsDto request) {
         return ResponseEntity.ok(organizationsService.createOrganizations(request));
     }
 

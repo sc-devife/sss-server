@@ -50,7 +50,7 @@ public class Lead extends Auditable {
     @EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "destination_id")
-    private EscapePoint destinationRef;
+    private EscapePoint escapePointRef;
 
     @Column(name = "assigned_to_user_id")
     private Long assignedToUserId;

@@ -2,11 +2,13 @@ package com.sss.app.service;
 
 import com.sss.app.dto.auth.LoginResponse;
 import com.sss.app.entity.UserCredential;
+import com.sss.app.entity.organizations.Organizations;
 import com.sss.app.entity.users.User;
 import com.sss.app.exception.AccountBlockedException;
 import com.sss.app.helper.UserCredentialsHelper;
 import com.sss.app.helper.UsersHelper;
 import com.sss.app.jwtToken.KeyProvider;
+import com.sss.app.repository.OrganizationRepository;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -31,12 +33,16 @@ public class AuthenticationService {
     private final UserCredentialsHelper userCredentialsHelper;
 
     @Autowired
+    private final OrganizationRepository organizationRepository;
+
+    @Autowired
     private KeyProvider keyProvider;
 
-    public AuthenticationService(BCryptPasswordEncoder passwordEncoder, UsersHelper usersHelper, UserCredentialsHelper userCredentialsHelper) {
+    public AuthenticationService(BCryptPasswordEncoder passwordEncoder, UsersHelper usersHelper, UserCredentialsHelper userCredentialsHelper, OrganizationRepository organizationRepository) {
         this.passwordEncoder = passwordEncoder;
         this.usersHelper = usersHelper;
         this.userCredentialsHelper = userCredentialsHelper;
+        this.organizationRepository = organizationRepository;
     }
 
     public LoginResponse authenticateAndGenerateToken(String email, String password) throws Exception {
@@ -62,7 +68,16 @@ public class AuthenticationService {
                     .map(link -> link.getRole().getName())
                     .collect(Collectors.joining(","));
 
-            return new LoginResponse(token, user.getUserId(), user.getName(), role);
+            // Joined through the user's existing orgId relationship, not
+            // duplicated onto the users table — same pattern as
+            // UsersServiceImpl.toProfileResponseDto for the self-service
+            // profile endpoints.
+            String organizationLogo = user.getOrgId() == null ? null
+                    : organizationRepository.findById(user.getOrgId())
+                            .map(Organizations::getLogoFile)
+                            .orElse(null);
+
+            return new LoginResponse(token, user.getUserId(), user.getName(), role, organizationLogo);
         } else {
             throw new RuntimeException("Invalid credentials");
         }

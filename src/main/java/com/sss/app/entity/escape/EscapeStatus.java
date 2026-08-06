@@ -2,9 +2,9 @@ package com.sss.app.entity.escape;
 
 import java.util.List;
 
-/** Section 8 trip lifecycle — a strict forward-only sequence, plus Cancelled which is only reachable pre-Ongoing. */
-public final class TripStatus {
-    private TripStatus() {}
+/** Section 8 escape lifecycle — a strict forward-only sequence, plus Cancelled which is only reachable pre-Ongoing. */
+public final class EscapeStatus {
+    private EscapeStatus() {}
 
     public static final String PLANNING = "Planning";
     public static final String ITINERARY_DRAFTING = "Itinerary Drafting";
@@ -13,14 +13,14 @@ public final class TripStatus {
     public static final String PAYMENT_PENDING = "Payment Pending";
     public static final String PARTIALLY_PAID = "Partially Paid";
     public static final String FULLY_PAID = "Fully Paid";
-    public static final String TRIP_CONFIRMED = "Trip Confirmed";
+    public static final String ESCAPE_CONFIRMED = "Escape Confirmed";
     public static final String ONGOING = "Ongoing";
     public static final String COMPLETED = "Completed";
     public static final String CANCELLED = "Cancelled";
 
     public static final List<String> ORDER = List.of(
             PLANNING, ITINERARY_DRAFTING, QUOTATION_SENT, QUOTE_ACCEPTED, PAYMENT_PENDING,
-            PARTIALLY_PAID, FULLY_PAID, TRIP_CONFIRMED, ONGOING, COMPLETED
+            PARTIALLY_PAID, FULLY_PAID, ESCAPE_CONFIRMED, ONGOING, COMPLETED
     );
 
     public static int indexOf(String status) {

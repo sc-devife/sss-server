@@ -15,7 +15,7 @@ public class ActivityResponseDTO {
 
     private String name;
 
-    private EscapePointResponseDto destination;
+    private EscapePointResponseDto escapePoint;
 
     private String categoryCode;
 

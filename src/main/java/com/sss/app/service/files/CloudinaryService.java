@@ -18,7 +18,7 @@ import java.util.Set;
 
 /**
  * Generic, reusable Cloudinary upload/delete service — used by every module
- * that stores an image (org logos, hotel/activity/destination galleries, and
+ * that stores an image (org logos, hotel/activity/escape point galleries, and
  * anything added later) instead of each having its own storage logic.
  */
 @Service
@@ -76,7 +76,7 @@ public class CloudinaryService {
         deleteByPublicId(publicId);
     }
 
-    /** Deletes every URL in previousUrls that's no longer present in currentUrls — for image-list fields (hotel/activity/destination galleries) that get fully replaced on update. */
+    /** Deletes every URL in previousUrls that's no longer present in currentUrls — for image-list fields (hotel/activity/escape point galleries) that get fully replaced on update. */
     public void deleteRemoved(List<String> previousUrls, List<String> currentUrls) {
         if (previousUrls == null || previousUrls.isEmpty()) {
             return;

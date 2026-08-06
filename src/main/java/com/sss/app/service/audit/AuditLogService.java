@@ -12,7 +12,7 @@ import java.util.List;
 
 /**
  * Single shared entry point for writing/reading audit history (Section 13
- * DRY principle) — every module that needs an audit trail (Lead now, Trip/
+ * DRY principle) — every module that needs an audit trail (Lead now, Escape/
  * Itinerary/Quote later) calls record()/history() here rather than rolling
  * its own logging.
  */

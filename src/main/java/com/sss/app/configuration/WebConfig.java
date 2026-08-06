@@ -29,7 +29,7 @@ public class WebConfig {
 
             @Override
             public void addResourceHandlers(ResourceHandlerRegistry registry) {
-                // Serves uploaded library images (hotels/destinations/etc.) and org
+                // Serves uploaded library images (hotels/escape points/etc.) and org
                 // logos back out as plain static files — <img src> requests don't
                 // carry our Authorization header, so this path must stay public
                 // (see SecurityConfig/JwtAuthenticationFilter's PUBLIC_PATHS).

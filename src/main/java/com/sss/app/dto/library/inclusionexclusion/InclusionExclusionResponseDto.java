@@ -14,7 +14,7 @@ public class InclusionExclusionResponseDto extends InclusionExclusionDto {
     private Long seqp;
     private String uid;
     private Boolean isActive;
-    private EscapePointResponseDto destination;
+    private EscapePointResponseDto escapePoint;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

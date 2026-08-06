@@ -34,7 +34,7 @@ public class EscapeSource {
     private String shortName;
 
     @Column(name = "trip_source_tag")
-    private String tripSourceTag;
+    private String escapeSourceTag;
 
     @Enumerated(EnumType.STRING)
     private EscapeSourceStatus status = EscapeSourceStatus.ACTIVE;

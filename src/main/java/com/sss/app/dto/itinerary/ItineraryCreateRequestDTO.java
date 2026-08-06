@@ -7,8 +7,8 @@ import lombok.Data;
 @Data
 public class ItineraryCreateRequestDTO {
 
-    @NotNull(message = "tripId is required")
-    private Long tripId;
+    @NotNull(message = "escapeId is required")
+    private Long escapeId;
 
     @NotBlank(message = "Name is required")
     private String name;

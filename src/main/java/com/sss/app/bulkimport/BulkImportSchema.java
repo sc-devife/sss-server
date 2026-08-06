@@ -11,7 +11,7 @@ import java.util.Map;
  */
 public interface BulkImportSchema {
 
-    /** URL-safe slug, matches the frontend route segment (e.g. "destinations"). */
+    /** URL-safe slug, matches the frontend route segment (e.g. "escape-points"). */
     String entityType();
 
     /** Column headers, in order — used for both the downloadable template and the expected upload shape. */

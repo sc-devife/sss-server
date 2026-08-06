@@ -17,7 +17,7 @@ public class EscapeDTO {
 
     private List<TravellerResponseDTO> travellers;
 
-    private List<EscapePointResponseDto> destinations;
+    private List<EscapePointResponseDto> escapePoints;
 
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate startDate;

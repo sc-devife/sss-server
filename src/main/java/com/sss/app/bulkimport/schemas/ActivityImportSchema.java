@@ -31,7 +31,7 @@ public class ActivityImportSchema implements BulkImportSchema {
 
     @Override
     public List<String> columns() {
-        return List.of("name", "destinationCode", "categoryCode", "durationMinutes", "basePrice", "description", "status");
+        return List.of("name", "escapePointCode", "categoryCode", "durationMinutes", "basePrice", "description", "status");
     }
 
     @Override
@@ -42,9 +42,9 @@ public class ActivityImportSchema implements BulkImportSchema {
     @Override
     public List<String> validateRow(Map<String, String> row) {
         List<String> errors = new ArrayList<>();
-        String destinationCode = row.get("destinationCode");
-        if (destinationCode != null && !destinationCode.isBlank() && findDestination(destinationCode).isEmpty()) {
-            errors.add("No destination found with code \"" + destinationCode + "\"");
+        String escapePointCode = row.get("escapePointCode");
+        if (escapePointCode != null && !escapePointCode.isBlank() && findEscapePoint(escapePointCode).isEmpty()) {
+            errors.add("No escape point found with code \"" + escapePointCode + "\"");
         }
         return errors;
     }
@@ -59,15 +59,15 @@ public class ActivityImportSchema implements BulkImportSchema {
         dto.setDescription(blankToNull(row.get("description")));
         dto.setStatus(blankToNull(row.get("status")));
 
-        String destinationCode = blankToNull(row.get("destinationCode"));
-        if (destinationCode != null) {
-            findDestination(destinationCode).ifPresent(d -> dto.setDestinationId(d.getUid()));
+        String escapePointCode = blankToNull(row.get("escapePointCode"));
+        if (escapePointCode != null) {
+            findEscapePoint(escapePointCode).ifPresent(d -> dto.setEscapePointId(d.getUid()));
         }
 
         activityService.create(dto);
     }
 
-    private Optional<EscapePoint> findDestination(String code) {
+    private Optional<EscapePoint> findEscapePoint(String code) {
         return escapePointRepository.findAll().stream()
                 .filter(e -> code.equals(e.getId()))
                 .findFirst();

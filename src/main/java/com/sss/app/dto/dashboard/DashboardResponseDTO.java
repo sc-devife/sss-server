@@ -12,10 +12,10 @@ public class DashboardResponseDTO {
     /** Null when the caller doesn't hold organizations.read (Regular Users). */
     private DashboardOrgMetricsDTO orgMetrics;
 
-    // Section 4: "Regular Users see their assigned leads/trips/tasks and
+    // Section 4: "Regular Users see their assigned leads/escapes/tasks and
     // upcoming payment milestones" — populated for every caller regardless
     // of role, since an Admin can also be a working agent with assignments.
     private List<LeadResponseDTO> myOpenLeads;
-    private List<EscapeResponseDTO> myOpenTrips;
+    private List<EscapeResponseDTO> myOpenEscapes;
     private List<PaymentMilestoneResponseDTO> myUpcomingPaymentMilestones;
 }

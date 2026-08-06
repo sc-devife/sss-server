@@ -8,6 +8,6 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface ItineraryMapper {
 
-    @Mapping(target = "tripId", source = "escape.seqp")
+    @Mapping(target = "escapeId", source = "escape.seqp")
     ItineraryResponseDTO toResponse(Itinerary entity);
 }

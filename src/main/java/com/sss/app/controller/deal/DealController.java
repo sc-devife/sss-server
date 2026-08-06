@@ -31,7 +31,7 @@ public class DealController {
 
     @PreAuthorize("@permissionService.hasPermission('trips.read')")
     @GetMapping
-    public ResponseEntity<DealResponseDTO> getForTrip(@RequestParam Long tripId) {
-        return ResponseEntity.ok(dealService.getForTrip(tripId));
+    public ResponseEntity<DealResponseDTO> getForEscape(@RequestParam Long escapeId) {
+        return ResponseEntity.ok(dealService.getForEscape(escapeId));
     }
 }

@@ -15,14 +15,14 @@ import static com.sss.app.bulkimport.RowUtils.blankToNull;
 
 @Component
 @RequiredArgsConstructor
-public class DestinationImportSchema implements BulkImportSchema {
+public class EscapePointImportSchema implements BulkImportSchema {
 
     private final EscapePointsService escapePointsService;
     private final EscapePointRepository escapePointRepository;
 
     @Override
     public String entityType() {
-        return "destinations";
+        return "escape-points";
     }
 
     @Override

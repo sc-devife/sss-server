@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
-public class TripAdvanceRequestDTO {
+public class EscapeAdvanceRequestDTO {
     @NotBlank(message = "targetStatus is required")
     private String targetStatus;
 }

@@ -22,8 +22,8 @@ public class TransportHelper {
                 .orElseThrow(() -> new ResourceNotFoundException("ServiceProvider", providerId));
     }
 
-    public EscapePoint resolveDestination(String destinationUid) {
-        return escapePointRepository.findByUid(destinationUid)
-                .orElseThrow(() -> new ResourceNotFoundException("Destination", destinationUid));
+    public EscapePoint resolveEscapePoint(String escapePointUid) {
+        return escapePointRepository.findByUid(escapePointUid)
+                .orElseThrow(() -> new ResourceNotFoundException("EscapePoint", escapePointUid));
     }
 }

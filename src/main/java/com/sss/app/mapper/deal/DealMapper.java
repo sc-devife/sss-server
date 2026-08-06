@@ -8,7 +8,7 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface DealMapper {
 
-    @Mapping(target = "tripId", source = "escape.seqp")
+    @Mapping(target = "escapeId", source = "escape.seqp")
     @Mapping(target = "acceptedQuoteUid", source = "acceptedQuote.uid")
     DealResponseDTO toResponse(Deal entity);
 }

@@ -19,7 +19,7 @@ import static com.sss.app.bulkimport.RowUtils.parseIntOrNull;
 
 /**
  * Bulk import covers Hotel's core dictionary fields only (name, location,
- * destination, stars, address, contact, status) — meal plans, room types,
+ * escape point, stars, address, contact, status) — meal plans, room types,
  * and images aren't spreadsheet-friendly relations and are left to the
  * regular create/edit screen, consistent with keeping this a v1-scoped
  * import rather than a full parity importer.
@@ -39,7 +39,7 @@ public class HotelImportSchema implements BulkImportSchema {
 
     @Override
     public List<String> columns() {
-        return List.of("name", "locationDisplayName", "destinationCode", "stars", "address", "contactInfo", "status");
+        return List.of("name", "locationDisplayName", "escapePointCode", "stars", "address", "contactInfo", "status");
     }
 
     @Override
@@ -55,9 +55,9 @@ public class HotelImportSchema implements BulkImportSchema {
                 && locationRepository.findByDisplayNameIgnoreCase(locationDisplayName).isEmpty()) {
             errors.add("No location found named \"" + locationDisplayName + "\" — create it first on the Hotels screen");
         }
-        String destinationCode = row.get("destinationCode");
-        if (destinationCode != null && !destinationCode.isBlank() && findDestination(destinationCode).isEmpty()) {
-            errors.add("No destination found with code \"" + destinationCode + "\"");
+        String escapePointCode = row.get("escapePointCode");
+        if (escapePointCode != null && !escapePointCode.isBlank() && findEscapePoint(escapePointCode).isEmpty()) {
+            errors.add("No escape point found with code \"" + escapePointCode + "\"");
         }
         return errors;
     }
@@ -74,15 +74,15 @@ public class HotelImportSchema implements BulkImportSchema {
         locationRepository.findByDisplayNameIgnoreCase(row.get("locationDisplayName"))
                 .ifPresent(l -> dto.setLocationId(l.getUid()));
 
-        String destinationCode = blankToNull(row.get("destinationCode"));
-        if (destinationCode != null) {
-            findDestination(destinationCode).ifPresent(d -> dto.setDestinationId(d.getUid()));
+        String escapePointCode = blankToNull(row.get("escapePointCode"));
+        if (escapePointCode != null) {
+            findEscapePoint(escapePointCode).ifPresent(d -> dto.setEscapePointId(d.getUid()));
         }
 
         hotelService.create(dto);
     }
 
-    private Optional<EscapePoint> findDestination(String code) {
+    private Optional<EscapePoint> findEscapePoint(String code) {
         return escapePointRepository.findAll().stream()
                 .filter(e -> code.equals(e.getId()))
                 .findFirst();

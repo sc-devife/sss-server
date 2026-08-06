@@ -30,8 +30,8 @@ public class ItineraryServiceImpl implements ItineraryService {
     }
 
     @Override
-    public List<ItineraryResponseDTO> getAllForTrip(Long tripId) {
-        return itineraryHelper.getAllForTrip(tripId).stream().map(itineraryMapper::toResponse).toList();
+    public List<ItineraryResponseDTO> getAllForEscape(Long escapeId) {
+        return itineraryHelper.getAllForEscape(escapeId).stream().map(itineraryMapper::toResponse).toList();
     }
 
     @Override

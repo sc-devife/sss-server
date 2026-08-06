@@ -64,7 +64,7 @@ public class Transport extends Auditable {
     @EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "destination_id")
-    private EscapePoint destination;
+    private EscapePoint escapePoint;
 
     @Column
     private String status;

@@ -13,7 +13,7 @@ public class EscapeCreateRequestDTO extends EscapeDTO {
     private java.util.List<Long> travellerIds;
 
     @NotEmpty
-    private java.util.List<Long> destinationIds;
+    private java.util.List<Long> escapePointIds;
 
     @NotNull
     private Integer numberOfDays;

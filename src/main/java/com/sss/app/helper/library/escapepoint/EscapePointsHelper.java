@@ -39,7 +39,7 @@ public class EscapePointsHelper {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 
-    /** Destinations in the caller's own organization — Super Admins get their own org's view too, same as Users (Section 2). */
+    /** Escape Points in the caller's own organization — Super Admins get their own org's view too, same as Users (Section 2). */
     public List<EscapePoint> fetchAllEscapePoints() {
         return escapePointRepository.findEscapePointsByOrgId(currentUser().getOrgId());
     }

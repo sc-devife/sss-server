@@ -10,7 +10,7 @@ public class ActivityUpdateRequestDTO {
 
     private String name;
 
-    private String destinationId;
+    private String escapePointId;
 
     private String categoryCode;
 

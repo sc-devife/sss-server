@@ -27,7 +27,7 @@ public class DealServiceImpl implements DealService {
     }
 
     @Override
-    public DealResponseDTO getForTrip(Long tripId) {
-        return dealMapper.toResponse(dealHelper.getForTrip(tripId));
+    public DealResponseDTO getForEscape(Long escapeId) {
+        return dealMapper.toResponse(dealHelper.getForEscape(escapeId));
     }
 }

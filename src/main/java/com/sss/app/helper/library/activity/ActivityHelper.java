@@ -12,8 +12,8 @@ public class ActivityHelper {
 
     private final EscapePointRepository escapePointRepository;
 
-    public EscapePoint resolveDestination(String destinationUid) {
-        return escapePointRepository.findByUid(destinationUid)
-                .orElseThrow(() -> new ResourceNotFoundException("Destination", destinationUid));
+    public EscapePoint resolveEscapePoint(String escapePointUid) {
+        return escapePointRepository.findByUid(escapePointUid)
+                .orElseThrow(() -> new ResourceNotFoundException("EscapePoint", escapePointUid));
     }
 }

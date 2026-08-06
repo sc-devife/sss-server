@@ -18,10 +18,10 @@ public interface InclusionExclusionRepository extends JpaRepository<InclusionExc
 
     boolean existsByOrgIdAndTypeAndNameIgnoreCase(Long orgId, String type, String name);
 
-    /** Items selectable when building an itinerary: active, org-wide (unlinked) or linked to one of the trip's destinations. */
+    /** Items selectable when building an itinerary: active, org-wide (unlinked) or linked to one of the escape's escape points. */
     @Query("SELECT e FROM InclusionExclusion e WHERE e.orgId = :orgId AND e.type = :type AND e.isActive = true "
-            + "AND (e.destination IS NULL OR e.destination.seqp IN :destinationSeqps) "
+            + "AND (e.escapePoint IS NULL OR e.escapePoint.seqp IN :escapePointSeqps) "
             + "ORDER BY e.sortOrder ASC NULLS LAST, e.name ASC")
-    List<InclusionExclusion> findSelectableForDestinations(@Param("orgId") Long orgId, @Param("type") String type,
-                                                            @Param("destinationSeqps") List<Long> destinationSeqps);
+    List<InclusionExclusion> findSelectableForEscapePoints(@Param("orgId") Long orgId, @Param("type") String type,
+                                                            @Param("escapePointSeqps") List<Long> escapePointSeqps);
 }

@@ -8,7 +8,7 @@ import java.util.UUID;
 @Data
 public class ItineraryResponseDTO {
     private UUID uid;
-    private Long tripId;
+    private Long escapeId;
     private String name;
     private String status;
     private Integer version;

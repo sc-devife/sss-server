@@ -59,12 +59,12 @@ public class LeadAssignmentServiceImpl implements LeadAssignmentService {
                 .filter(u -> !isPriority || Boolean.TRUE.equals(u.getEligibleForPriorityLeads()))
                 .toList();
 
-        if (lead.getDestinationRef() != null) {
-            Long destinationSeqp = lead.getDestinationRef().getSeqp();
+        if (lead.getEscapePointRef() != null) {
+            Long escapePointSeqp = lead.getEscapePointRef().getSeqp();
             List<User> specialists = eligible.stream()
                     .filter(u -> Boolean.TRUE.equals(u.getIsSpecialist())
-                            && u.getSpecialistDestinations() != null
-                            && u.getSpecialistDestinations().contains(destinationSeqp))
+                            && u.getSpecialistEscapePoints() != null
+                            && u.getSpecialistEscapePoints().contains(escapePointSeqp))
                     .toList();
             if (!specialists.isEmpty()) {
                 eligible = specialists;

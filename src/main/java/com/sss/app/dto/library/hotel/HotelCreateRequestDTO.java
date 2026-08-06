@@ -21,9 +21,9 @@ public class HotelCreateRequestDTO {
     @NotNull(message = "Location is required")
     private UUID locationId;
 
-    // Dictionary-aligned single destination (see Hotel.destination) — the uid
+    // Dictionary-aligned single escape point (see Hotel.escapePoint) — the uid
     // of an EscapePoint, resolved to the entity in HotelHelper like locationId.
-    private String destinationId;
+    private String escapePointId;
 
     private Set<String> escapePointIds;
 

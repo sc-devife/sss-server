@@ -2,7 +2,7 @@ package com.sss.app.helper.deal;
 
 import com.sss.app.entity.deal.Deal;
 import com.sss.app.entity.escape.Escape;
-import com.sss.app.entity.escape.TripStatus;
+import com.sss.app.entity.escape.EscapeStatus;
 import com.sss.app.entity.itinerary.Itinerary;
 import com.sss.app.entity.quote.Quote;
 import com.sss.app.entity.users.User;
@@ -14,7 +14,7 @@ import com.sss.app.repository.itinerary.ItineraryRepository;
 import com.sss.app.repository.quote.QuoteRepository;
 import com.sss.app.security.OrgAccessGuard;
 import com.sss.app.service.audit.AuditLogService;
-import com.sss.app.service.escape.TripLifecycleService;
+import com.sss.app.service.escape.EscapeLifecycleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -34,7 +34,7 @@ public class DealHelper {
     private final QuoteHelper quoteHelper;
     private final QuoteRepository quoteRepository;
     private final ItineraryRepository itineraryRepository;
-    private final TripLifecycleService tripLifecycleService;
+    private final EscapeLifecycleService escapeLifecycleService;
     private final AuditLogService auditLogService;
     private final OrgAccessGuard orgAccessGuard;
 
@@ -93,8 +93,8 @@ public class DealHelper {
 
         // Best-effort: advance the trip's lifecycle if it hasn't already
         // passed this stage (e.g. re-accepting after a manual status jump).
-        if (TripStatus.indexOf(trip.getStatus()) < TripStatus.indexOf(TripStatus.QUOTE_ACCEPTED)) {
-            tripLifecycleService.advance(trip.getSeqp(), TripStatus.QUOTE_ACCEPTED);
+        if (EscapeStatus.indexOf(trip.getStatus()) < EscapeStatus.indexOf(EscapeStatus.QUOTE_ACCEPTED)) {
+            escapeLifecycleService.advance(trip.getSeqp(), EscapeStatus.QUOTE_ACCEPTED);
         }
 
         return deal;
@@ -107,9 +107,9 @@ public class DealHelper {
         return deal;
     }
 
-    public Deal getForTrip(Long tripId) {
-        Deal deal = dealRepository.findByEscape_Seqp(tripId)
-                .orElseThrow(() -> new NotFoundException("No deal exists for this trip yet"));
+    public Deal getForEscape(Long escapeId) {
+        Deal deal = dealRepository.findByEscape_Seqp(escapeId)
+                .orElseThrow(() -> new NotFoundException("No deal exists for this escape yet"));
         orgAccessGuard.requireAccessToOrg(deal.getOrgId());
         return deal;
     }

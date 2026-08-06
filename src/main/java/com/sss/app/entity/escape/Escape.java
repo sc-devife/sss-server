@@ -50,8 +50,7 @@ public class Escape {
             joinColumns = @JoinColumn(name = "escape_id"),
             inverseJoinColumns = @JoinColumn(name = "escape_point_id")
     )
-   // private List<EscapePoint> destinations;
-    private Set<EscapePoint> destinations = new HashSet<>();
+    private Set<EscapePoint> escapePoints = new HashSet<>();
 
     private String status;
 

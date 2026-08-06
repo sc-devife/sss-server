@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 /**
- * Polymorphic audit trail (Section 16) — one shared table for Lead, Trip
+ * Polymorphic audit trail (Section 16) — one shared table for Lead, Escape
  * (Escape), Itinerary, and Quote history, keyed by entityType + entityId,
  * rather than a separate audit table per entity.
  */

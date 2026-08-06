@@ -13,7 +13,7 @@ public class EscapeSourceRequestDTO {
     private String fullName;
     private String shortName;
 
-    private String tripSourceTag;
+    private String escapeSourceTag;
 
     // Only for B2B
     private EscapeSourceB2BDetailsDTO b2bDetails;

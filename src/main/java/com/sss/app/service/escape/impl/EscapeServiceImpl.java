@@ -15,30 +15,30 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EscapeServiceImpl implements EscapeService {
 
-    private final EscapeMapper tripMapper;
+    private final EscapeMapper escapeMapper;
     private final EscapeHelper escapeHelper;
 
     @Override
     public EscapeResponseDTO createEscape(EscapeCreateRequestDTO request) {
 
-        return tripMapper.toResponse(escapeHelper.createEscape(request));
+        return escapeMapper.toResponse(escapeHelper.createEscape(request));
     }
 
     @Override
     public EscapeResponseDTO updateEscape(Long seqp, EscapeUpdateRequestDTO request)
     {
-        return tripMapper.toResponse(escapeHelper.updateEscape(seqp, request));
+        return escapeMapper.toResponse(escapeHelper.updateEscape(seqp, request));
     }
 
 
     @Override
-    public EscapeResponseDTO getTripById(Long id) {
-        return tripMapper.toResponse(escapeHelper.getEscapeById(id));
+    public EscapeResponseDTO getEscapeById(Long id) {
+        return escapeMapper.toResponse(escapeHelper.getEscapeById(id));
     }
 
     @Override
     public List<EscapeResponseDTO> getAllEscapes() {
-        return escapeHelper.getAllEscapes().stream().map(tripMapper::toResponse).toList();
+        return escapeHelper.getAllEscapes().stream().map(escapeMapper::toResponse).toList();
     }
 
     @Override

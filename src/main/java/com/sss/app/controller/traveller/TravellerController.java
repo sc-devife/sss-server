@@ -15,7 +15,7 @@ import java.util.List;
 
 // No dedicated travellers.* permission exists — travellers only matter in
 // the context of trips, so this reuses trips.read/trips.write rather than
-// minting a new resource for what's really a sub-concept of Trip.
+// minting a new resource for what's really a sub-concept of Escape.
 @RestController
 @RequestMapping("/traveller")
 @RequiredArgsConstructor

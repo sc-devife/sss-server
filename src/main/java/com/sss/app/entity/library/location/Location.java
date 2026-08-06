@@ -50,7 +50,7 @@ public class Location {
     private Boolean isActive = true;
 
     // Ground-truth geography for whatever sits here (Hotel, Activity, Transport, ServiceProvider) —
-    // used for pricing/tax/scheduling, unlike the destination's representative currency/timezone.
+    // used for pricing/tax/scheduling, unlike the escape point's representative currency/timezone.
     private String currencyCode;
 
     private String timeZone;

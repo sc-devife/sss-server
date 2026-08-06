@@ -22,7 +22,7 @@ public class TransportUpdateRequestDTO {
 
     private String dropLocation;
 
-    private String destinationId;
+    private String escapePointId;
 
     private String status;
 }

@@ -65,7 +65,7 @@ public class User {
 
     @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.ARRAY)
     @Column(name = "specialist_destinations", columnDefinition = "bigint[]")
-    private List<Long> specialistDestinations;
+    private List<Long> specialistEscapePoints;
 
     @Column(name = "max_concurrent_assignments")
     private Integer maxConcurrentAssignments;

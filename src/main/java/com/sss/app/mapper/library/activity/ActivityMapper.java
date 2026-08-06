@@ -13,11 +13,11 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 @Mapper(componentModel = "spring")
 public interface ActivityMapper {
 
-    @Mapping(target = "destination", ignore = true)
+    @Mapping(target = "escapePoint", ignore = true)
     Activity toEntityCreate(ActivityCreateRequestDTO dto);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    @Mapping(target = "destination", ignore = true)
+    @Mapping(target = "escapePoint", ignore = true)
     void updateEntityFromDto(ActivityUpdateRequestDTO dto, @MappingTarget Activity entity);
 
     ActivityResponseDTO toResponse(Activity entity);

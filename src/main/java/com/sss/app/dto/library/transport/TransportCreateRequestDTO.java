@@ -24,8 +24,8 @@ public class TransportCreateRequestDTO {
 
     private String dropLocation;
 
-    // The EscapePoint's uid (String) — resolved to the entity in TransportHelper, matching Activity's destinationId.
-    private String destinationId;
+    // The EscapePoint's uid (String) — resolved to the entity in TransportHelper, matching Activity's escapePointId.
+    private String escapePointId;
 
     private String status;
 }

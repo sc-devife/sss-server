@@ -9,15 +9,15 @@ import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
 public interface LeadMapper {
-    // Automatically maps fields with same names. destinationRef isn't
-    // name-matched to the DTO's destinationId (a String uid) — resolved
-    // manually in LeadsHelper, same pattern as Hotel/Activity's destination.
-    @Mapping(target = "destinationRef", ignore = true)
+    // Automatically maps fields with same names. escapePointRef isn't
+    // name-matched to the DTO's escapePointId (a String uid) — resolved
+    // manually in LeadsHelper, same pattern as Hotel/Activity's escapePoint.
+    @Mapping(target = "escapePointRef", ignore = true)
     Lead toEntity(LeadCreateRequestDTO dto);
 
     LeadResponseDTO toResponse(Lead entity);
 
     // For updates — copy values from DTO into an existing entity
-    @Mapping(target = "destinationRef", ignore = true)
+    @Mapping(target = "escapePointRef", ignore = true)
     void updateEntityFromDto(LeadCreateRequestDTO dto, @MappingTarget Lead entity);
 }

@@ -18,7 +18,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Resolves relation IDs (locationId, destinationIds, mealPlanIds, roomTypeIds)
+ * Resolves relation IDs (locationId, escapePointId, mealPlanIds, roomTypeIds)
  * coming from request DTOs into managed entities, and validates they exist.
  * Keeps this lookup/validation logic out of the Service layer.
  */
@@ -36,9 +36,9 @@ public class HotelHelper {
                 .orElseThrow(() -> new ResourceNotFoundException("Location", locationId));
     }
 
-    public EscapePoint resolveDestination(String destinationUid) {
-        return escapePointRepository.findByUid(destinationUid)
-                .orElseThrow(() -> new ResourceNotFoundException("Destination", destinationUid));
+    public EscapePoint resolveEscapePoint(String escapePointUid) {
+        return escapePointRepository.findByUid(escapePointUid)
+                .orElseThrow(() -> new ResourceNotFoundException("EscapePoint", escapePointUid));
     }
 
     public Set<EscapePoint> resolveEscapePoints(Set<String> escapePointIds) {
@@ -74,15 +74,15 @@ public class HotelHelper {
      */
     public void applyRelations(Hotel hotel,
                                 UUID locationId,
-                                String destinationId,
+                                String escapePointId,
                                 Set<String> escapePointIds,
                                 Set<UUID> mealPlanIds,
                                 Set<UUID> roomTypeIds) {
         if (locationId != null) {
             hotel.setLocation(resolveLocation(locationId));
         }
-        if (destinationId != null) {
-            hotel.setDestination(resolveDestination(destinationId));
+        if (escapePointId != null) {
+            hotel.setEscapePoint(resolveEscapePoint(escapePointId));
         }
         if (escapePointIds != null) {
             hotel.setEscapePoints(resolveEscapePoints(escapePointIds));

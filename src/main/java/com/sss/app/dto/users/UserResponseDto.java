@@ -26,7 +26,7 @@ public class UserResponseDto extends UserDto {
 
     // Section 5 assignment-engine settings — see UserAssignmentSettingsUpdateRequestDto.
     private Boolean isSpecialist;
-    private List<Long> specialistDestinations;
+    private List<Long> specialistEscapePoints;
     private Integer maxConcurrentAssignments;
     private Boolean eligibleForPriorityLeads;
     private Boolean acceptingLeads;

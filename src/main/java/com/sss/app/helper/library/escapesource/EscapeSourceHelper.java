@@ -74,7 +74,7 @@ public class EscapeSourceHelper {
         // ---------- Update Common Fields ----------
         existing.setFullName(payload.getFullName());
         existing.setShortName(payload.getShortName());
-        existing.setTripSourceTag(payload.getTripSourceTag());
+        existing.setEscapeSourceTag(payload.getEscapeSourceTag());
        // existing.setStatus(payload.getStatus());
 
         // ---------- Update B2B Details ----------

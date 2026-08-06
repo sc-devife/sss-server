@@ -7,7 +7,7 @@ import org.mapstruct.Mapper;
 import java.util.List;
 
 // Entity construction/updates happen by hand in InclusionExclusionsHelper (org
-// scoping + destination resolution need more control than a generated
+// scoping + escape point resolution need more control than a generated
 // bean-mapper gives) — this interface only handles the read-side response shape.
 @Mapper(componentModel = "spring")
 public interface InclusionExclusionMapper {

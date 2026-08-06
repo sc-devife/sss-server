@@ -8,7 +8,7 @@ import java.util.UUID;
 @Data
 public class DealResponseDTO {
     private UUID uid;
-    private Long tripId;
+    private Long escapeId;
     private UUID acceptedQuoteUid;
     private String status;
     private LocalDateTime createdAt;

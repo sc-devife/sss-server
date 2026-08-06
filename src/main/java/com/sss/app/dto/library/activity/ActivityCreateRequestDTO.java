@@ -12,7 +12,7 @@ public class ActivityCreateRequestDTO {
     @NotBlank(message = "Name is required")
     private String name;
 
-    private String destinationId;
+    private String escapePointId;
 
     private String categoryCode;
 

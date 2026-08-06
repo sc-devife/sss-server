@@ -17,7 +17,7 @@ public class HotelUpdateRequestDTO {
 
     private UUID locationId;
 
-    private String destinationId;
+    private String escapePointId;
 
     private Set<String> escapePointIds;
 

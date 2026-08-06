@@ -46,9 +46,9 @@ public class LeadsHelper {
         if (lead.getSourceCode() == null || lead.getSourceCode().isBlank()) {
             lead.setSourceCode("manual");
         }
-        if (payload.getDestinationId() != null && !payload.getDestinationId().isBlank()) {
-            escapePointRepository.findByUid(payload.getDestinationId())
-                    .ifPresent(lead::setDestinationRef);
+        if (payload.getEscapePointId() != null && !payload.getEscapePointId().isBlank()) {
+            escapePointRepository.findByUid(payload.getEscapePointId())
+                    .ifPresent(lead::setEscapePointRef);
         }
         return leadRepository.save(lead);
     }

@@ -36,8 +36,8 @@ public class ItineraryHelper {
     }
 
     public Itinerary create(ItineraryCreateRequestDTO request) {
-        // getEscapeById already enforces the trip belongs to the caller's own org.
-        Escape trip = escapeHelper.getEscapeById(request.getTripId());
+        // getEscapeById already enforces the escape belongs to the caller's own org.
+        Escape trip = escapeHelper.getEscapeById(request.getEscapeId());
 
         Itinerary itinerary = Itinerary.builder()
                 .orgId(currentUser().getOrgId())
@@ -57,9 +57,9 @@ public class ItineraryHelper {
         return itinerary;
     }
 
-    public List<Itinerary> getAllForTrip(Long tripId) {
-        escapeHelper.getEscapeById(tripId); // org check
-        return itineraryRepository.findAllByOrgIdAndEscape_Seqp(currentUser().getOrgId(), tripId);
+    public List<Itinerary> getAllForEscape(Long escapeId) {
+        escapeHelper.getEscapeById(escapeId); // org check
+        return itineraryRepository.findAllByOrgIdAndEscape_Seqp(currentUser().getOrgId(), escapeId);
     }
 
     public Itinerary update(UUID uid, ItineraryUpdateRequestDTO request) {

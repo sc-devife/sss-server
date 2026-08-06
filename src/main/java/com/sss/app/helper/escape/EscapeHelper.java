@@ -3,7 +3,7 @@ package com.sss.app.helper.escape;
 import com.sss.app.dto.escape.EscapeCreateRequestDTO;
 import com.sss.app.dto.escape.EscapeUpdateRequestDTO;
 import com.sss.app.entity.escape.Escape;
-import com.sss.app.entity.escape.TripStatus;
+import com.sss.app.entity.escape.EscapeStatus;
 import com.sss.app.entity.lead.Lead;
 import com.sss.app.entity.library.escapepoint.EscapePoint;
 import com.sss.app.entity.library.escapesource.EscapeSource;
@@ -32,7 +32,7 @@ public class EscapeHelper {
     private final EscapeMapper escapeMapper;
     private final LeadRepository leadRepository;
     private final TravellerRepository travellerRepository;
-    private final EscapePointRepository destinationRepository;
+    private final EscapePointRepository escapePointRepository;
     private final EscapeSourceRepository sourceRepository;
     private final OrgAccessGuard orgAccessGuard;
 
@@ -58,14 +58,14 @@ public class EscapeHelper {
                 new HashSet<>(travellerRepository.findAllById(request.getTravellerIds()))
         );
 
-        trip.setDestinations(
-                new HashSet<>(destinationRepository.findAllById(request.getDestinationIds()))
+        trip.setEscapePoints(
+                new HashSet<>(escapePointRepository.findAllById(request.getEscapePointIds()))
         );
         trip.setEndDate(
                 request.getStartDate().plusDays(request.getNumberOfDays() - 1)
         );
 
-        trip.setStatus(TripStatus.PLANNING);
+        trip.setStatus(EscapeStatus.PLANNING);
 
         return escapeRepository.save(trip);
     }
@@ -104,19 +104,19 @@ public class EscapeHelper {
             escape.getTravellers().addAll(travellers); // add new
         }
 
-        //Update Destinations (Overwrite old ones)
-        if (request.getDestinationIds() != null) {
+        //Update Escape Points (Overwrite old ones)
+        if (request.getEscapePointIds() != null) {
 
-            List<EscapePoint> destinations =
-                    destinationRepository.findAllById(request.getDestinationIds());
+            List<EscapePoint> escapePoints =
+                    escapePointRepository.findAllById(request.getEscapePointIds());
 
-            escape.getDestinations().clear();
-            escape.getDestinations().addAll(destinations);
+            escape.getEscapePoints().clear();
+            escape.getEscapePoints().addAll(escapePoints);
         }
 
         //Update Other Fields
         // Deliberately not setting status here — Section 8 requires status
-        // changes to go through TripLifecycleService (validated + audited),
+        // changes to go through EscapeLifecycleService (validated + audited),
         // same "no freeform edits" pattern as Lead's lifecycle in Phase 3.
         escape.setStartDate(request.getStartDate());
         escape.setNumberOfDays(request.getNumberOfDays());
@@ -128,13 +128,13 @@ public class EscapeHelper {
             );
         }
 
-        //Save Updated Trip
+        //Save Updated Escape
         return escapeRepository.save(escape);
     }
 
     public Escape getEscapeById(Long id) {
         Escape escape = escapeRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Trip not found with id: " + id));
+                .orElseThrow(() -> new NotFoundException("Escape not found with id: " + id));
         orgAccessGuard.requireAccessToOrg(escape.getOrgId());
         return escape;
     }

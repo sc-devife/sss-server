@@ -2,7 +2,7 @@ package com.sss.app.service.dashboard.impl;
 
 import com.sss.app.dto.dashboard.DashboardOrgMetricsDTO;
 import com.sss.app.dto.dashboard.DashboardResponseDTO;
-import com.sss.app.entity.escape.TripStatus;
+import com.sss.app.entity.escape.EscapeStatus;
 import com.sss.app.entity.lead.LeadStatus;
 import com.sss.app.entity.users.User;
 import com.sss.app.mapper.escape.EscapeMapper;
@@ -32,7 +32,7 @@ import java.util.List;
 public class DashboardServiceImpl implements DashboardService {
 
     private static final List<String> OPEN_MILESTONE_STATUSES = List.of("pending", "partially_paid", "overdue");
-    private static final List<String> INACTIVE_TRIP_STATUSES = List.of(TripStatus.COMPLETED, TripStatus.CANCELLED);
+    private static final List<String> INACTIVE_ESCAPE_STATUSES = List.of(EscapeStatus.COMPLETED, EscapeStatus.CANCELLED);
 
     private final LeadRepository leadRepository;
     private final EscapeRepository escapeRepository;
@@ -57,7 +57,7 @@ public class DashboardServiceImpl implements DashboardService {
         response.setMyOpenLeads(leadRepository.findAllByOrgIdAndAssignedToUserIdAndStatusNotIn(orgId, userId, LeadStatus.TERMINAL)
                 .stream().map(leadMapper::toResponse).toList());
 
-        response.setMyOpenTrips(escapeRepository.findAllByOrgIdAndLead_AssignedToUserIdAndStatusNotIn(orgId, userId, INACTIVE_TRIP_STATUSES)
+        response.setMyOpenEscapes(escapeRepository.findAllByOrgIdAndLead_AssignedToUserIdAndStatusNotIn(orgId, userId, INACTIVE_ESCAPE_STATUSES)
                 .stream().map(escapeMapper::toResponse).toList());
 
         response.setMyUpcomingPaymentMilestones(paymentMilestoneRepository.findUpcomingForAssignee(orgId, userId, OPEN_MILESTONE_STATUSES)
@@ -79,7 +79,7 @@ public class DashboardServiceImpl implements DashboardService {
         long convertedLeads = leadRepository.countByOrgIdAndStatus(orgId, LeadStatus.CONVERTED);
         metrics.setConversionRatePercent(totalLeads == 0 ? 0 : (convertedLeads * 100.0) / totalLeads);
 
-        metrics.setTripsInProgress(escapeRepository.countByOrgIdAndStatusNotIn(orgId, INACTIVE_TRIP_STATUSES));
+        metrics.setEscapesInProgress(escapeRepository.countByOrgIdAndStatusNotIn(orgId, INACTIVE_ESCAPE_STATUSES));
 
         BigDecimal outstanding = paymentMilestoneRepository.findAllByOrgIdAndStatusIn(orgId, OPEN_MILESTONE_STATUSES).stream()
                 .map(m -> m.getAmountUsd().subtract(m.getAmountPaidUsd()))

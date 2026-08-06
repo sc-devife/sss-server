@@ -13,7 +13,7 @@ public class EscapeSourceResponseDTO {
 
     private String fullName;
     private String shortName;
-    private String tripSourceTag;
+    private String escapeSourceTag;
 
     private EscapeSourceStatus status;
 

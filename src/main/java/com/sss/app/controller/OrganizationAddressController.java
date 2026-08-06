@@ -2,6 +2,7 @@ package com.sss.app.controller;
 
 import com.sss.app.dto.address.AddressDto;
 import com.sss.app.service.AddressService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,7 +22,7 @@ public class OrganizationAddressController {
 
     @PreAuthorize("@permissionService.hasPermission('organizations.write')")
     @PostMapping(value = "/{orgId}/create", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<AddressDto> createAddress(@PathVariable Long orgId, @RequestBody AddressDto dto) {
+    public ResponseEntity<AddressDto> createAddress(@PathVariable Long orgId, @Valid @RequestBody AddressDto dto) {
         return ResponseEntity.ok(addressService.createOrganizationAddress(orgId, dto));
     }
 
@@ -29,7 +30,7 @@ public class OrganizationAddressController {
     @PutMapping(value = "/{orgId}/update/{addressId}", consumes = "application/json", produces = "application/json")
     public ResponseEntity<AddressDto> updateAddress(@PathVariable Long orgId,
                                                     @PathVariable Long addressId,
-                                                    @RequestBody AddressDto dto) {
+                                                    @Valid @RequestBody AddressDto dto) {
         return ResponseEntity.ok(addressService.updateOrganizationAddress(orgId, addressId, dto));
     }
 

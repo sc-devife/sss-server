@@ -41,8 +41,8 @@ public class ActivityServiceImpl implements ActivityService {
     public ActivityResponseDTO create(ActivityCreateRequestDTO dto) {
         Activity activity = activityMapper.toEntityCreate(dto);
         activity.setOrgId(currentUser().getOrgId());
-        if (dto.getDestinationId() != null) {
-            activity.setDestination(activityHelper.resolveDestination(dto.getDestinationId()));
+        if (dto.getEscapePointId() != null) {
+            activity.setEscapePoint(activityHelper.resolveEscapePoint(dto.getEscapePointId()));
         }
         Activity saved = activityRepository.save(activity);
         return activityMapper.toResponse(saved);
@@ -68,8 +68,8 @@ public class ActivityServiceImpl implements ActivityService {
         Activity activity = findEntityById(id);
         List<String> previousImages = activity.getImages() == null ? null : new ArrayList<>(activity.getImages());
         activityMapper.updateEntityFromDto(dto, activity);
-        if (dto.getDestinationId() != null) {
-            activity.setDestination(activityHelper.resolveDestination(dto.getDestinationId()));
+        if (dto.getEscapePointId() != null) {
+            activity.setEscapePoint(activityHelper.resolveEscapePoint(dto.getEscapePointId()));
         }
         Activity saved = activityRepository.save(activity);
         cloudinaryService.deleteRemoved(previousImages, saved.getImages());

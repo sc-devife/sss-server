@@ -41,8 +41,8 @@ public class TransportServiceImpl implements TransportService {
         if (dto.getProviderId() != null) {
             transport.setProvider(transportHelper.resolveProvider(dto.getProviderId()));
         }
-        if (dto.getDestinationId() != null) {
-            transport.setDestination(transportHelper.resolveDestination(dto.getDestinationId()));
+        if (dto.getEscapePointId() != null) {
+            transport.setEscapePoint(transportHelper.resolveEscapePoint(dto.getEscapePointId()));
         }
         Transport saved = transportRepository.save(transport);
         return transportMapper.toResponse(saved);
@@ -70,8 +70,8 @@ public class TransportServiceImpl implements TransportService {
         if (dto.getProviderId() != null) {
             transport.setProvider(transportHelper.resolveProvider(dto.getProviderId()));
         }
-        if (dto.getDestinationId() != null) {
-            transport.setDestination(transportHelper.resolveDestination(dto.getDestinationId()));
+        if (dto.getEscapePointId() != null) {
+            transport.setEscapePoint(transportHelper.resolveEscapePoint(dto.getEscapePointId()));
         }
         Transport saved = transportRepository.save(transport);
         return transportMapper.toResponse(saved);

@@ -68,8 +68,8 @@ public class InclusionExclusionsHelper {
                 .isActive(true);
 
         InclusionExclusion item = builder.build();
-        if (payload.getDestinationId() != null && !payload.getDestinationId().isBlank()) {
-            item.setDestination(resolveDestination(payload.getDestinationId()));
+        if (payload.getEscapePointId() != null && !payload.getEscapePointId().isBlank()) {
+            item.setEscapePoint(resolveEscapePoint(payload.getEscapePointId()));
         }
         return inclusionExclusionRepository.save(item);
     }
@@ -82,10 +82,10 @@ public class InclusionExclusionsHelper {
         item.setType(payload.getType());
         item.setContentHtml(RichTextSanitizer.sanitize(payload.getContentHtml()));
         item.setSortOrder(payload.getSortOrder());
-        if (payload.getDestinationId() != null && !payload.getDestinationId().isBlank()) {
-            item.setDestination(resolveDestination(payload.getDestinationId()));
+        if (payload.getEscapePointId() != null && !payload.getEscapePointId().isBlank()) {
+            item.setEscapePoint(resolveEscapePoint(payload.getEscapePointId()));
         } else {
-            item.setDestination(null);
+            item.setEscapePoint(null);
         }
         return inclusionExclusionRepository.save(item);
     }
@@ -97,23 +97,23 @@ public class InclusionExclusionsHelper {
         return inclusionExclusionRepository.save(item);
     }
 
-    /** Items an itinerary builder can pick from: org-wide (unlinked) plus anything linked to the trip's own destinations. */
+    /** Items an itinerary builder can pick from: org-wide (unlinked) plus anything linked to the escape's own escape points. */
     public List<InclusionExclusion> getSelectableForItinerary(UUID itineraryUid, String type) {
         validateType(type);
         Itinerary itinerary = itineraryHelper.getByUid(itineraryUid);
-        List<Long> destinationSeqps = itinerary.getEscape().getDestinations().stream()
+        List<Long> escapePointSeqps = itinerary.getEscape().getEscapePoints().stream()
                 .map(EscapePoint::getSeqp)
                 .toList();
         // JPQL "IN ()" on an empty collection is invalid — a sentinel that never
         // matches a real seqp keeps the query valid while still only returning
-        // org-wide (unlinked) items when the trip has no destinations yet.
-        List<Long> safeSeqps = destinationSeqps.isEmpty() ? List.of(-1L) : destinationSeqps;
-        return inclusionExclusionRepository.findSelectableForDestinations(currentUser().getOrgId(), type, safeSeqps);
+        // org-wide (unlinked) items when the escape has no escape points yet.
+        List<Long> safeSeqps = escapePointSeqps.isEmpty() ? List.of(-1L) : escapePointSeqps;
+        return inclusionExclusionRepository.findSelectableForEscapePoints(currentUser().getOrgId(), type, safeSeqps);
     }
 
-    private EscapePoint resolveDestination(String destinationUid) {
-        return escapePointRepository.findByUid(destinationUid)
-                .orElseThrow(() -> new NotFoundException("Destination not found: " + destinationUid));
+    private EscapePoint resolveEscapePoint(String escapePointUid) {
+        return escapePointRepository.findByUid(escapePointUid)
+                .orElseThrow(() -> new NotFoundException("EscapePoint not found: " + escapePointUid));
     }
 
     private void validateType(String type) {

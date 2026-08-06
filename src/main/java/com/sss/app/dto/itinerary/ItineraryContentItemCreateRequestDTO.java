@@ -6,7 +6,7 @@ import lombok.Data;
 
 import java.util.UUID;
 
-/** Trip-specific ad-hoc addition — no library item backing it. */
+/** Escape-specific ad-hoc addition — no library item backing it. */
 @Data
 public class ItineraryContentItemCreateRequestDTO {
 

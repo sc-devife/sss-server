@@ -15,7 +15,7 @@ import java.util.Map;
 
 /**
  * Generic image upload endpoint used by every module (org logos, hotel/
- * activity/destination galleries, ...) — storage itself is delegated to
+ * activity/escape point galleries, ...) — storage itself is delegated to
  * CloudinaryService, so this controller stays a thin HTTP adapter and any
  * future storage-provider swap only touches that one service.
  */

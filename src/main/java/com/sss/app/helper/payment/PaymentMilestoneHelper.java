@@ -3,7 +3,7 @@ package com.sss.app.helper.payment;
 import com.sss.app.dto.payment.PaymentMilestoneCreateRequestDTO;
 import com.sss.app.entity.deal.Deal;
 import com.sss.app.entity.escape.Escape;
-import com.sss.app.entity.escape.TripStatus;
+import com.sss.app.entity.escape.EscapeStatus;
 import com.sss.app.entity.payment.PaymentMilestone;
 import com.sss.app.entity.users.User;
 import com.sss.app.exception.BadRequestException;
@@ -12,7 +12,7 @@ import com.sss.app.helper.deal.DealHelper;
 import com.sss.app.repository.payment.PaymentMilestoneRepository;
 import com.sss.app.security.OrgAccessGuard;
 import com.sss.app.service.audit.AuditLogService;
-import com.sss.app.service.escape.TripLifecycleService;
+import com.sss.app.service.escape.EscapeLifecycleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -31,7 +31,7 @@ public class PaymentMilestoneHelper {
     private final DealHelper dealHelper;
     private final OrgAccessGuard orgAccessGuard;
     private final AuditLogService auditLogService;
-    private final TripLifecycleService tripLifecycleService;
+    private final EscapeLifecycleService escapeLifecycleService;
 
     private User currentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -94,12 +94,12 @@ public class PaymentMilestoneHelper {
         auditLogService.record("Escape", milestone.getDeal().getEscape().getSeqp(), "PAYMENT_RECORDED",
                 milestone.getLabel(), amount);
 
-        advanceTripPaymentStatus(milestone.getDeal());
+        advanceEscapePaymentStatus(milestone.getDeal());
 
         return saved;
     }
 
-    private void advanceTripPaymentStatus(Deal deal) {
+    private void advanceEscapePaymentStatus(Deal deal) {
         Escape trip = deal.getEscape();
         List<PaymentMilestone> allMilestones = paymentMilestoneRepository.findAllByDeal_Seqp(deal.getSeqp());
         if (allMilestones.isEmpty()) return;
@@ -107,13 +107,13 @@ public class PaymentMilestoneHelper {
         boolean allPaid = allMilestones.stream().allMatch(m -> "paid".equals(m.getStatus()));
         boolean anyPayment = allMilestones.stream().anyMatch(m -> m.getAmountPaidUsd().compareTo(BigDecimal.ZERO) > 0);
 
-        String target = allPaid ? TripStatus.FULLY_PAID : anyPayment ? TripStatus.PARTIALLY_PAID : null;
+        String target = allPaid ? EscapeStatus.FULLY_PAID : anyPayment ? EscapeStatus.PARTIALLY_PAID : null;
         if (target == null) return;
 
-        int currentIndex = TripStatus.indexOf(trip.getStatus());
-        int targetIndex = TripStatus.indexOf(target);
+        int currentIndex = EscapeStatus.indexOf(trip.getStatus());
+        int targetIndex = EscapeStatus.indexOf(target);
         if (currentIndex >= 0 && targetIndex > currentIndex) {
-            tripLifecycleService.advance(trip.getSeqp(), target);
+            escapeLifecycleService.advance(trip.getSeqp(), target);
         }
     }
 }

@@ -8,7 +8,7 @@ import java.util.List;
 @Data
 public class EscapeUpdateRequestDTO extends EscapeDTO {
 
-  //  @NotNull(message = "Trip ID is required")
+  //  @NotNull(message = "Escape ID is required")
     //private Long seqp;
 
     @NotNull(message = "Lead ID is required")
@@ -17,5 +17,5 @@ public class EscapeUpdateRequestDTO extends EscapeDTO {
 
     private List<Long> travellerIds;
 
-    private List<Long> destinationIds;
+    private List<Long> escapePointIds;
 }

@@ -25,7 +25,7 @@ public class HotelResponseDTO {
     // ✅ Full nested objects
     private LocationResponseDTO location;
 
-    private EscapePointResponseDto destination;
+    private EscapePointResponseDto escapePoint;
 
     private Set<EscapePointResponseDto> escapePoints;
 

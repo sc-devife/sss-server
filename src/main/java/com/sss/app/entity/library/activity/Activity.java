@@ -42,7 +42,7 @@ public class Activity extends Auditable {
     @EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "destination_id")
-    private EscapePoint destination;
+    private EscapePoint escapePoint;
 
     // single_select: water sports/sightseeing/adventure (Section 15)
     @Column(name = "category_code")

@@ -12,7 +12,7 @@ import java.util.List;
 @Data
 public class UserAssignmentSettingsUpdateRequestDto {
     private Boolean isSpecialist;
-    private List<Long> specialistDestinations;
+    private List<Long> specialistEscapePoints;
     private Integer maxConcurrentAssignments;
     private Boolean eligibleForPriorityLeads;
     private Boolean acceptingLeads;

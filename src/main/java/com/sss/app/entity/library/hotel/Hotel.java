@@ -56,7 +56,7 @@ public class Hotel extends Auditable {
     @JoinColumn(name = "location_id", nullable = false)
     private Location location;
 
-    // ----- Destination: ManyToOne, per the data dictionary. Added alongside
+    // ----- Escape Point: ManyToOne, per the data dictionary. Added alongside
     // the older escapePoints M2M below rather than replacing it — see V9
     // migration notes for why a clean 1:1 backfill wasn't possible for every
     // row. New code should read/write this field going forward. -----
@@ -64,11 +64,11 @@ public class Hotel extends Auditable {
     @EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "destination_id")
-    private EscapePoint destination;
+    private EscapePoint escapePoint;
 
-    // ----- Escape Points (Destinations): ManyToMany, kept for backward
-    // compatibility with pre-existing multi-destination hotel data (see
-    // `destination` above for the dictionary-aligned single-FK field). -----
+    // ----- Escape Points: ManyToMany, kept for backward compatibility with
+    // pre-existing multi-escape-point hotel data (see `escapePoint` above
+    // for the dictionary-aligned single-FK field). -----
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @ManyToMany(fetch = FetchType.LAZY)
