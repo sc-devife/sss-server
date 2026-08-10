@@ -4,19 +4,21 @@ import com.sss.app.dto.escape.EscapeCreateRequestDTO;
 import com.sss.app.dto.escape.EscapeResponseDTO;
 import com.sss.app.dto.lead.LeadResponseDTO;
 
+import java.util.UUID;
+
 /**
  * The only way a Lead's status changes (Section 7: "editable only by
  * system" — users trigger transitions through these actions rather than
  * freeform field edits). Every transition writes an AuditLog entry.
  */
 public interface LeadLifecycleService {
-    LeadResponseDTO contact(Long leadId);
-    LeadResponseDTO qualify(Long leadId);
-    LeadResponseDTO disqualify(Long leadId, String reason);
-    LeadResponseDTO markLost(Long leadId, String reason);
-    LeadResponseDTO markDuplicate(Long leadId, String reason);
-    EscapeResponseDTO convertToEscape(Long leadId, EscapeCreateRequestDTO request);
+    LeadResponseDTO contact(UUID leadId);
+    LeadResponseDTO qualify(UUID leadId);
+    LeadResponseDTO disqualify(UUID leadId, String reason);
+    LeadResponseDTO markLost(UUID leadId, String reason);
+    LeadResponseDTO markDuplicate(UUID leadId, String reason);
+    EscapeResponseDTO convertToEscape(UUID leadId, EscapeCreateRequestDTO request);
 
     /** Excel writeup: manual "Mark as Priority Lead" override, available regardless of auto-detection. */
-    LeadResponseDTO togglePriority(Long leadId);
+    LeadResponseDTO togglePriority(UUID leadId);
 }

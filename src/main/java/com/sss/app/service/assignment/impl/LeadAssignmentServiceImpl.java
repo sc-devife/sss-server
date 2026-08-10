@@ -22,6 +22,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Section 5 / the user's Excel writeup — priority auto-detection combines:
@@ -92,7 +93,7 @@ public class LeadAssignmentServiceImpl implements LeadAssignmentService {
     }
 
     @Override
-    public LeadResponseDTO manuallyAssign(Long leadId, Long userId, String reason) {
+    public LeadResponseDTO manuallyAssign(UUID leadId, Long userId, String reason) {
         Lead lead = leadsHelper.getLeadById(leadId);
 
         User user = userRepository.findById(userId)
@@ -105,7 +106,7 @@ public class LeadAssignmentServiceImpl implements LeadAssignmentService {
         lead.setAssignedToUserId(user.getSeqp());
         lead.setAssignmentReason(reason);
         Lead saved = leadRepository.save(lead);
-        auditLogService.record("Lead", leadId, "MANUALLY_ASSIGNED", previousAssignee, user.getSeqp());
+        auditLogService.record("Lead", lead.getSeqp(), "MANUALLY_ASSIGNED", previousAssignee, user.getSeqp());
 
         return leadMapper.toResponse(saved);
     }

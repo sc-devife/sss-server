@@ -21,6 +21,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/leads")
@@ -39,7 +40,7 @@ public class LeadController {
 
     @PreAuthorize("@permissionService.hasPermission('leads.read')")
     @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<LeadResponseDTO> getLeadById(@PathVariable Long id) {
+    public ResponseEntity<LeadResponseDTO> getLeadById(@PathVariable UUID id) {
         return ResponseEntity.ok(leadService.getLeadById(id));
     }
 
@@ -54,58 +55,58 @@ public class LeadController {
 
     @PreAuthorize("@permissionService.hasPermission('leads.write')")
     @PostMapping(value = "/{id}/actions/contact", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<LeadResponseDTO> contact(@PathVariable Long id) {
+    public ResponseEntity<LeadResponseDTO> contact(@PathVariable UUID id) {
         return ResponseEntity.ok(leadLifecycleService.contact(id));
     }
 
     @PreAuthorize("@permissionService.hasPermission('leads.write')")
     @PostMapping(value = "/{id}/actions/qualify", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<LeadResponseDTO> qualify(@PathVariable Long id) {
+    public ResponseEntity<LeadResponseDTO> qualify(@PathVariable UUID id) {
         return ResponseEntity.ok(leadLifecycleService.qualify(id));
     }
 
     @PreAuthorize("@permissionService.hasPermission('leads.write')")
     @PostMapping(value = "/{id}/actions/disqualify", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<LeadResponseDTO> disqualify(@PathVariable Long id, @RequestBody LeadReasonActionRequestDTO body) {
+    public ResponseEntity<LeadResponseDTO> disqualify(@PathVariable UUID id, @RequestBody LeadReasonActionRequestDTO body) {
         return ResponseEntity.ok(leadLifecycleService.disqualify(id, body.getReason()));
     }
 
     @PreAuthorize("@permissionService.hasPermission('leads.write')")
     @PostMapping(value = "/{id}/actions/mark-lost", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<LeadResponseDTO> markLost(@PathVariable Long id, @RequestBody LeadReasonActionRequestDTO body) {
+    public ResponseEntity<LeadResponseDTO> markLost(@PathVariable UUID id, @RequestBody LeadReasonActionRequestDTO body) {
         return ResponseEntity.ok(leadLifecycleService.markLost(id, body.getReason()));
     }
 
     @PreAuthorize("@permissionService.hasPermission('leads.write')")
     @PostMapping(value = "/{id}/actions/mark-duplicate", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<LeadResponseDTO> markDuplicate(@PathVariable Long id, @RequestBody LeadReasonActionRequestDTO body) {
+    public ResponseEntity<LeadResponseDTO> markDuplicate(@PathVariable UUID id, @RequestBody LeadReasonActionRequestDTO body) {
         return ResponseEntity.ok(leadLifecycleService.markDuplicate(id, body.getReason()));
     }
 
     @PreAuthorize("@permissionService.hasPermission('leads.write')")
     @PostMapping(value = "/{id}/actions/convert", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<EscapeResponseDTO> convert(@PathVariable Long id, @Valid @RequestBody EscapeCreateRequestDTO request) {
+    public ResponseEntity<EscapeResponseDTO> convert(@PathVariable UUID id, @Valid @RequestBody EscapeCreateRequestDTO request) {
         return ResponseEntity.ok(leadLifecycleService.convertToEscape(id, request));
     }
 
     @PreAuthorize("@permissionService.hasPermission('leads.write')")
     @PostMapping(value = "/{id}/actions/toggle-priority", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<LeadResponseDTO> togglePriority(@PathVariable Long id) {
+    public ResponseEntity<LeadResponseDTO> togglePriority(@PathVariable UUID id) {
         return ResponseEntity.ok(leadLifecycleService.togglePriority(id));
     }
 
     @PreAuthorize("@permissionService.hasPermission('leads.assign')")
     @PostMapping(value = "/{id}/assign", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<LeadResponseDTO> assign(@PathVariable Long id, @Valid @RequestBody LeadAssignRequestDTO body) {
+    public ResponseEntity<LeadResponseDTO> assign(@PathVariable UUID id, @Valid @RequestBody LeadAssignRequestDTO body) {
         return ResponseEntity.ok(leadAssignmentService.manuallyAssign(id, body.getUserId(), body.getReason()));
     }
 
     @PreAuthorize("@permissionService.hasPermission('leads.read')")
     @GetMapping(value = "/{id}/audit-log", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<AuditLogResponseDTO>> auditLog(@PathVariable Long id) {
+    public ResponseEntity<List<AuditLogResponseDTO>> auditLog(@PathVariable UUID id) {
         // Confirms the lead exists in the caller's own org before exposing its history.
-        leadService.getLeadById(id);
-        List<AuditLogResponseDTO> history = auditLogService.history("Lead", id).stream()
+        Long seqp = leadService.resolveSeqp(id);
+        List<AuditLogResponseDTO> history = auditLogService.history("Lead", seqp).stream()
                 .map(this::toAuditLogResponse)
                 .toList();
         return ResponseEntity.ok(history);

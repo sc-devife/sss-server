@@ -14,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Day-to-day operational view of connected lead sources (sync history,
@@ -50,7 +51,7 @@ public class LeadSourceController {
 
     @PreAuthorize("@permissionService.hasPermission('leads.write')")
     @PostMapping("/import-attempts/{id}/resync")
-    public ResponseEntity<LeadImportAttemptResponseDTO> resync(@PathVariable Long id) {
+    public ResponseEntity<LeadImportAttemptResponseDTO> resync(@PathVariable UUID id) {
         return ResponseEntity.ok(leadSourceService.toResponseDto(metaResyncService.resync(id)));
     }
 

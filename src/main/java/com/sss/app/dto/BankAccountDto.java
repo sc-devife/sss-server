@@ -2,13 +2,15 @@ package com.sss.app.dto;
 
 import lombok.*;
 
+import java.util.UUID;
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class BankAccountDto {
-    private Long id;
+    private UUID uid;
     private String bankName;
     private String bankShortName;
     private String branchName;

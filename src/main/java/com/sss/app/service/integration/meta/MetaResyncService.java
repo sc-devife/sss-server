@@ -8,6 +8,8 @@ import com.sss.app.security.OrgAccessGuard;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 /**
  * Manual re-sync of a failed lead import. Re-fetches the token/lead fresh
  * (never trusts the stale raw_merged_payload for the token — the connection
@@ -23,8 +25,8 @@ public class MetaResyncService {
     private final MetaWebhookOrchestrationService orchestrationService;
     private final OrgAccessGuard orgAccessGuard;
 
-    public LeadImportAttempt resync(Long attemptId) {
-        LeadImportAttempt attempt = importAttemptRepository.findById(attemptId)
+    public LeadImportAttempt resync(UUID attemptId) {
+        LeadImportAttempt attempt = importAttemptRepository.findByUid(attemptId)
                 .orElseThrow(() -> new NotFoundException("Import attempt not found"));
 
         orgAccessGuard.requireAccessToOrg(attempt.getOrgId());

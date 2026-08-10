@@ -6,10 +6,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface EscapeRepository extends JpaRepository<Escape, Long> {
     @EntityGraph(attributePaths = {"lead", "travellers", "escapePoints"})
     Optional<Escape> findBySeqp(Long seqp);
+
+    @EntityGraph(attributePaths = {"lead", "travellers", "escapePoints"})
+    Optional<Escape> findByUid(UUID uid);
 
     @EntityGraph(attributePaths = {"lead", "travellers", "escapePoints"})
     List<Escape> findAllByOrgId(Long orgId);

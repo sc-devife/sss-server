@@ -1,5 +1,6 @@
 package com.sss.app.entity.integration.meta;
 
+import com.sss.app.util.IdGenerator;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 /**
  * Meta (Facebook Page / Instagram Business Account) connection details, kept
@@ -24,6 +26,9 @@ public class MetaChannelConfig {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long seqp;
+
+    @Column(nullable = false, unique = true, updatable = false)
+    private UUID uid;
 
     @Column(name = "connection_id", nullable = false, unique = true)
     private Long connectionId;
@@ -68,6 +73,9 @@ public class MetaChannelConfig {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        if (this.uid == null) {
+            this.uid = IdGenerator.newUid();
+        }
     }
 
     @PreUpdate

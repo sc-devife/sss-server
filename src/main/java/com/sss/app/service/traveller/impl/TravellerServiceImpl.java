@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -26,17 +27,17 @@ public class TravellerServiceImpl implements TravellerService {
     }
 
     @Override
-    public TravellerResponseDTO updateTraveller(Long id, TravellerUpdateRequestDTO payload) {
+    public TravellerResponseDTO updateTraveller(UUID id, TravellerUpdateRequestDTO payload) {
         return travellerMapper.toResponse(travellerHelper.updateTraveller(id, payload));
     }
 
     @Override
-    public TravellerResponseDTO getTravellerById(Long id) {
+    public TravellerResponseDTO getTravellerById(UUID id) {
         return travellerMapper.toResponse(travellerHelper.getTravellerById(id));
     }
 
     @Override
-    public void deleteTraveller(Long id) {
+    public void deleteTraveller(UUID id) {
         Traveller traveller = travellerHelper.getTravellerById(id); // org check
         travellerHelper.deleteTraveller(traveller);
     }

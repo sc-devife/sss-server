@@ -22,28 +22,28 @@ public class OrganizationAddressController {
 
     @PreAuthorize("@permissionService.hasPermission('organizations.write')")
     @PostMapping(value = "/{orgId}/create", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<AddressDto> createAddress(@PathVariable Long orgId, @Valid @RequestBody AddressDto dto) {
+    public ResponseEntity<AddressDto> createAddress(@PathVariable String orgId, @Valid @RequestBody AddressDto dto) {
         return ResponseEntity.ok(addressService.createOrganizationAddress(orgId, dto));
     }
 
     @PreAuthorize("@permissionService.hasPermission('organizations.write')")
     @PutMapping(value = "/{orgId}/update/{addressId}", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<AddressDto> updateAddress(@PathVariable Long orgId,
-                                                    @PathVariable Long addressId,
+    public ResponseEntity<AddressDto> updateAddress(@PathVariable String orgId,
+                                                    @PathVariable String addressId,
                                                     @Valid @RequestBody AddressDto dto) {
         return ResponseEntity.ok(addressService.updateOrganizationAddress(orgId, addressId, dto));
     }
 
     @PreAuthorize("@permissionService.hasPermission('organizations.read')")
     @GetMapping("/{orgId}")
-    public ResponseEntity<List<AddressDto>> getAddressesForOrg(@PathVariable Long orgId) {
+    public ResponseEntity<List<AddressDto>> getAddressesForOrg(@PathVariable String orgId) {
         return ResponseEntity.ok(addressService.getAddressesForOrg(orgId));
     }
 
     @PreAuthorize("@permissionService.hasPermission('organizations.write')")
     @DeleteMapping("/{orgId}/address/{addressId}")
-    public ResponseEntity<Void> deleteAddress(@PathVariable Long orgId,
-                                              @PathVariable Long addressId) {
+    public ResponseEntity<Void> deleteAddress(@PathVariable String orgId,
+                                              @PathVariable String addressId) {
         addressService.deleteOrganizationAddress(orgId, addressId);
         return ResponseEntity.noContent().build(); // HTTP 204
     }

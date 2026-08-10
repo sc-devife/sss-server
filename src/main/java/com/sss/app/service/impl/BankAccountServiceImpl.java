@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -18,24 +19,24 @@ public class BankAccountServiceImpl implements BankAccountService {
     private final BankAccountsMapper accountsMapper;
 
     @Override
-    public BankAccountDto createBankAccount(Long orgId, BankAccountDto createRequest) {
-        return accountsMapper.mapToDTO(accountsHelper.createBankAccount(orgId, createRequest));
+    public BankAccountDto createBankAccount(String orgUid, BankAccountDto createRequest) {
+        return accountsMapper.mapToDTO(accountsHelper.createBankAccount(orgUid, createRequest));
     }
 
     @Override
-    public List<BankAccountDto> getAccountsForOrg(Long orgId) {
-        return accountsHelper.getAccountsForOrg(orgId);
-    }
-
-    @Transactional
-    @Override
-    public BankAccountDto deactivateBankAccount(Long orgId, Long accountId) {
-        return accountsMapper.mapToDTO(accountsHelper.deactivateBankAccount(orgId, accountId));
+    public List<BankAccountDto> getAccountsForOrg(String orgUid) {
+        return accountsHelper.getAccountsForOrg(orgUid);
     }
 
     @Transactional
     @Override
-    public BankAccountDto reactivateBankAccount(Long orgId, Long accountId) {
-        return accountsMapper.mapToDTO(accountsHelper.reactivateBankAccount(orgId, accountId));
+    public BankAccountDto deactivateBankAccount(String orgUid, UUID accountUid) {
+        return accountsMapper.mapToDTO(accountsHelper.deactivateBankAccount(orgUid, accountUid));
+    }
+
+    @Transactional
+    @Override
+    public BankAccountDto reactivateBankAccount(String orgUid, UUID accountUid) {
+        return accountsMapper.mapToDTO(accountsHelper.reactivateBankAccount(orgUid, accountUid));
     }
 }

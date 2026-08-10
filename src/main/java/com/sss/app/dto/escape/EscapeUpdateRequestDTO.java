@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.util.List;
+import java.util.UUID;
 
 @Data
 public class EscapeUpdateRequestDTO extends EscapeDTO {
@@ -12,10 +13,12 @@ public class EscapeUpdateRequestDTO extends EscapeDTO {
     //private Long seqp;
 
     @NotNull(message = "Lead ID is required")
-    private Long leadId;
-    private Long sourceId;
+    private UUID leadUid;
+    private UUID sourceUid;
 
-    private List<Long> travellerIds;
+    private List<UUID> travellerUids;
 
-    private List<Long> escapePointIds;
+    // EscapePoint's own uid is String-typed — see note in
+    // EscapeCreateRequestDTO.
+    private List<String> escapePointUids;
 }

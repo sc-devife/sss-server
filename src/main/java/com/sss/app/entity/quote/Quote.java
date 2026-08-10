@@ -2,6 +2,7 @@ package com.sss.app.entity.quote;
 
 import com.sss.app.entity.common.Auditable;
 import com.sss.app.entity.itinerary.Itinerary;
+import com.sss.app.util.IdGenerator;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -85,7 +86,7 @@ public class Quote extends Auditable {
     @PrePersist
     protected void onCreate() {
         if (this.uid == null) {
-            this.uid = UUID.randomUUID();
+            this.uid = IdGenerator.newUid();
         }
         if (this.status == null) {
             this.status = "draft";

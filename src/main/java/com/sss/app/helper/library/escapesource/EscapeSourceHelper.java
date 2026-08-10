@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
 import java.util.List;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -65,10 +66,10 @@ public class EscapeSourceHelper {
         return newEscapeSource;
     }
     @Transactional
-    public EscapeSource updateEscapeSource(Long id, EscapeSourceRequestDTO payload) {
+    public EscapeSource updateEscapeSource(UUID id, EscapeSourceRequestDTO payload) {
 
         EscapeSource existing =
-                escapeSourceRepository.findById(id)
+                escapeSourceRepository.findByUid(id)
                         .orElseThrow(() -> new NotFoundException("Source not found: " + id));
 
         // ---------- Update Common Fields ----------
@@ -109,9 +110,9 @@ public class EscapeSourceHelper {
         return escapeSourceRepository.save(existing);
     }
     @Transactional(readOnly = true)
-    public EscapeSource getSourceById(Long id) {
+    public EscapeSource getSourceById(UUID id) {
 
-        return escapeSourceRepository.findById(id)
+        return escapeSourceRepository.findByUid(id)
                 .orElseThrow(() ->
                         new NotFoundException("Escape Source not found with id: " + id));
     }

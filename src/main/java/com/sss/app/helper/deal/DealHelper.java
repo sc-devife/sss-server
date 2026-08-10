@@ -10,6 +10,7 @@ import com.sss.app.exception.ConflictException;
 import com.sss.app.exception.NotFoundException;
 import com.sss.app.helper.quote.QuoteHelper;
 import com.sss.app.repository.deal.DealRepository;
+import com.sss.app.repository.escape.EscapeRepository;
 import com.sss.app.repository.itinerary.ItineraryRepository;
 import com.sss.app.repository.quote.QuoteRepository;
 import com.sss.app.security.OrgAccessGuard;
@@ -34,6 +35,7 @@ public class DealHelper {
     private final QuoteHelper quoteHelper;
     private final QuoteRepository quoteRepository;
     private final ItineraryRepository itineraryRepository;
+    private final EscapeRepository escapeRepository;
     private final EscapeLifecycleService escapeLifecycleService;
     private final AuditLogService auditLogService;
     private final OrgAccessGuard orgAccessGuard;
@@ -94,7 +96,7 @@ public class DealHelper {
         // Best-effort: advance the trip's lifecycle if it hasn't already
         // passed this stage (e.g. re-accepting after a manual status jump).
         if (EscapeStatus.indexOf(trip.getStatus()) < EscapeStatus.indexOf(EscapeStatus.QUOTE_ACCEPTED)) {
-            escapeLifecycleService.advance(trip.getSeqp(), EscapeStatus.QUOTE_ACCEPTED);
+            escapeLifecycleService.advance(trip.getUid(), EscapeStatus.QUOTE_ACCEPTED);
         }
 
         return deal;
@@ -107,8 +109,10 @@ public class DealHelper {
         return deal;
     }
 
-    public Deal getForEscape(Long escapeId) {
-        Deal deal = dealRepository.findByEscape_Seqp(escapeId)
+    public Deal getForEscape(UUID escapeUid) {
+        Escape trip = escapeRepository.findByUid(escapeUid)
+                .orElseThrow(() -> new NotFoundException("Escape not found"));
+        Deal deal = dealRepository.findByEscape_Seqp(trip.getSeqp())
                 .orElseThrow(() -> new NotFoundException("No deal exists for this escape yet"));
         orgAccessGuard.requireAccessToOrg(deal.getOrgId());
         return deal;

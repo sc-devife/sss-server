@@ -1,5 +1,6 @@
 package com.sss.app.entity.reminder;
 
+import com.sss.app.util.IdGenerator;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -48,7 +49,7 @@ public class ReminderRule {
     @PrePersist
     protected void onCreate() {
         if (this.uid == null) {
-            this.uid = UUID.randomUUID();
+            this.uid = IdGenerator.newUid();
         }
         if (this.isActive == null) {
             this.isActive = true;

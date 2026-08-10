@@ -9,6 +9,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
 
+import java.util.Optional;
+import java.util.UUID;
+
 public interface EscapeSourceRepository extends JpaRepository<EscapeSource, Long> {
     boolean existsByFullNameIgnoreCaseAndSourceType(
             String fullName,
@@ -17,4 +20,6 @@ public interface EscapeSourceRepository extends JpaRepository<EscapeSource, Long
 
     boolean existsByShortNameIgnoreCase(String shortName);
     Page<EscapeSource> findAll(Pageable pageable);
+
+    Optional<EscapeSource> findByUid(UUID uid);
 }

@@ -2,6 +2,7 @@ package com.sss.app.entity.lead;
 
 import com.sss.app.entity.common.Auditable;
 import com.sss.app.entity.library.escapepoint.EscapePoint;
+import com.sss.app.util.IdGenerator;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,6 +12,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Entity
 @Table(name = "leads")
@@ -25,6 +27,10 @@ public class Lead extends Auditable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long seqp;
+
+    @Column(nullable = false, unique = true, updatable = false)
+    private UUID uid;
+
     private Long orgId;
     private String name;
     private String email;
@@ -72,4 +78,11 @@ public class Lead extends Auditable {
 
     @Column(length = 500)
     private String notes;
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.uid == null) {
+            this.uid = IdGenerator.newUid();
+        }
+    }
 }

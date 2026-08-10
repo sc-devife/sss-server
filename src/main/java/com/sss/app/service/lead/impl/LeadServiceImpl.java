@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -67,7 +68,7 @@ public class LeadServiceImpl implements LeadService {
     }
 
     @Override
-    public LeadResponseDTO getLeadById(Long id) {
+    public LeadResponseDTO getLeadById(UUID id) {
         return leadMapper.toResponse(leadHelper.getLeadById(id));
     }
 
@@ -77,5 +78,10 @@ public class LeadServiceImpl implements LeadService {
                 .stream()
                 .map(leadMapper::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Long resolveSeqp(UUID id) {
+        return leadHelper.getLeadById(id).getSeqp();
     }
 }

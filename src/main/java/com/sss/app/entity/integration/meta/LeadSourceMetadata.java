@@ -1,5 +1,6 @@
 package com.sss.app.entity.integration.meta;
 
+import com.sss.app.util.IdGenerator;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 /**
  * Provider-specific lead metadata (campaign/ad/form), deliberately split out
@@ -25,6 +27,9 @@ public class LeadSourceMetadata {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long seqp;
+
+    @Column(nullable = false, unique = true, updatable = false)
+    private UUID uid;
 
     @Column(name = "lead_id", nullable = false, unique = true)
     private Long leadId;
@@ -74,5 +79,8 @@ public class LeadSourceMetadata {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+        if (this.uid == null) {
+            this.uid = IdGenerator.newUid();
+        }
     }
 }

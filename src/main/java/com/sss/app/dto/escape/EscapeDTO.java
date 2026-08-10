@@ -22,6 +22,9 @@ public class EscapeDTO {
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate startDate;
 
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate endDate;
+
     private Integer numberOfDays;
     private String status;
 }

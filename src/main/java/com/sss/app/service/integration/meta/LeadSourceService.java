@@ -12,6 +12,7 @@ import com.sss.app.exception.BadRequestException;
 import com.sss.app.repository.integration.meta.LeadImportAttemptRepository;
 import com.sss.app.repository.integration.meta.MetaFieldMappingRepository;
 import com.sss.app.repository.integration.meta.MetaWebhookEventRepository;
+import com.sss.app.repository.lead.LeadRepository;
 import com.sss.app.service.integration.IntegrationConnectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -39,6 +40,7 @@ public class LeadSourceService {
     private final MetaWebhookEventRepository webhookEventRepository;
     private final LeadImportAttemptRepository importAttemptRepository;
     private final MetaFieldMappingRepository fieldMappingRepository;
+    private final LeadRepository leadRepository;
 
     private User currentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -120,7 +122,7 @@ public class LeadSourceService {
 
     private LeadImportAttemptResponseDTO toDto(LeadImportAttempt attempt) {
         LeadImportAttemptResponseDTO dto = new LeadImportAttemptResponseDTO();
-        dto.setSeqp(attempt.getSeqp());
+        dto.setUid(attempt.getUid());
         dto.setProvider(attempt.getProvider());
         dto.setLeadgenId(attempt.getLeadgenId());
         dto.setFormId(attempt.getFormId());
@@ -128,7 +130,9 @@ public class LeadSourceService {
         dto.setAdId(attempt.getAdId());
         dto.setCampaignId(attempt.getCampaignId());
         dto.setStatus(attempt.getStatus());
-        dto.setLeadId(attempt.getLeadId());
+        if (attempt.getLeadId() != null) {
+            leadRepository.findById(attempt.getLeadId()).ifPresent(lead -> dto.setLeadUid(lead.getUid()));
+        }
         dto.setFailureReason(attempt.getFailureReason());
         dto.setRetryCount(attempt.getRetryCount());
         dto.setLastAttemptedAt(attempt.getLastAttemptedAt());

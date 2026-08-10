@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 public class AddressMapper {
     public AddressDto mapToDTO(Address address) {
         return AddressDto.builder()
-                .id(address.getSeqp())
+                .uid(address.getUid())
                 .label(address.getLabel())
                 .city(address.getCity())
                 .state(address.getState())

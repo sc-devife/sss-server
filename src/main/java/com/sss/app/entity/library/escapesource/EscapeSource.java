@@ -1,5 +1,6 @@
 package com.sss.app.entity.library.escapesource;
 
+import com.sss.app.util.IdGenerator;
 import com.sss.app.util.escapeSource.EscapeSourceType;
 import com.sss.app.util.escapeSource.EscapeSourceStatus;
 import jakarta.persistence.*;
@@ -7,6 +8,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.UUID;
 
 @Entity
 @Table(name = "escape_sources")
@@ -19,6 +22,9 @@ public class EscapeSource {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long seqp;
+
+    @Column(nullable = false, unique = true, updatable = false)
+    private UUID uid;
 
     @Column(name = "org_id")
     private Long orgId;
@@ -44,4 +50,11 @@ public class EscapeSource {
 
     @OneToOne(mappedBy = "escapeSource", cascade = CascadeType.ALL)
     private EscapeSourceDirectDetails directDetails;
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.uid == null) {
+            this.uid = IdGenerator.newUid();
+        }
+    }
 }

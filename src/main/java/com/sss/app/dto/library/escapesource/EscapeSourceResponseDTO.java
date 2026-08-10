@@ -5,10 +5,12 @@ import com.sss.app.util.escapeSource.EscapeSourceType;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @Getter
 @Setter
 public class EscapeSourceResponseDTO {
-    private Long seqp;
+    private UUID uid;
     private EscapeSourceType sourceType;
 
     private String fullName;

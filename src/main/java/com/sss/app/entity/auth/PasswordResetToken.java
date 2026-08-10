@@ -1,11 +1,13 @@
 package com.sss.app.entity.auth;
 
+import com.sss.app.util.IdGenerator;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "user_password_resets")
@@ -21,6 +23,9 @@ public class PasswordResetToken {
    @Column(name = "seqp")
    private Long seqp;
 
+    @Column(nullable = false, unique = true, updatable = false)
+    private UUID uid;
+
     @Column(nullable = false, unique = true, length = 150)
     private String email;
 
@@ -29,4 +34,11 @@ public class PasswordResetToken {
 
     @Column(name = "token_expiry")
     private LocalDateTime tokenExpiry;
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.uid == null) {
+            this.uid = IdGenerator.newUid();
+        }
+    }
 }

@@ -27,7 +27,7 @@ public class DealServiceImpl implements DealService {
     }
 
     @Override
-    public DealResponseDTO getForEscape(Long escapeId) {
-        return dealMapper.toResponse(dealHelper.getForEscape(escapeId));
+    public DealResponseDTO getForEscape(UUID escapeUid) {
+        return dealMapper.toResponse(dealHelper.getForEscape(escapeUid));
     }
 }

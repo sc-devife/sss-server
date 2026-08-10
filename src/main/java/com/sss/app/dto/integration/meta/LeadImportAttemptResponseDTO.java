@@ -3,10 +3,11 @@ package com.sss.app.dto.integration.meta;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 public class LeadImportAttemptResponseDTO {
-    private Long seqp;
+    private UUID uid;
     private String provider;
     private String leadgenId;
     private String formId;
@@ -14,7 +15,7 @@ public class LeadImportAttemptResponseDTO {
     private String adId;
     private String campaignId;
     private String status;
-    private Long leadId;
+    private UUID leadUid;
     private String failureReason;
     private Integer retryCount;
     private LocalDateTime lastAttemptedAt;

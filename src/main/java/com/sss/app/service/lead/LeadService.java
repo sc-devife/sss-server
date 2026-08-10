@@ -7,6 +7,7 @@ import com.sss.app.service.integration.NormalizedLeadPayload;
 import com.sss.app.service.integration.ProviderLeadMetadata;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface LeadService {
     LeadResponseDTO createLead(LeadCreateRequestDTO request);
@@ -15,6 +16,11 @@ public interface LeadService {
     /** Lead Source Integration (Meta) path — adds dedup + provider metadata persistence. */
     ChannelLeadResult createLeadFromChannel(Long orgId, String channelCode, NormalizedLeadPayload payload, ProviderLeadMetadata sourceMetadata);
 
-    LeadResponseDTO getLeadById(Long id);
+    LeadResponseDTO getLeadById(UUID id);
     List<LeadResponseDTO> getAllLeads();
+
+    // Internal-only: resolves the external uid to the entity's internal
+    // seqp for callers (e.g. audit log lookups) that must keep using the
+    // Long-keyed AuditLog storage without leaking seqp through the response DTO.
+    Long resolveSeqp(UUID id);
 }

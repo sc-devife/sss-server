@@ -1,6 +1,7 @@
 package com.sss.app.entity.library.location;
 
 import com.sss.app.entity.library.hotel.Hotel;
+import com.sss.app.util.IdGenerator;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -70,7 +71,7 @@ public class Location {
     @PrePersist
     protected void onCreate() {
         if (this.uid == null) {
-            this.uid = UUID.randomUUID();
+            this.uid = IdGenerator.newUid();
         }
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();

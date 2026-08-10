@@ -1,5 +1,6 @@
 package com.sss.app.entity;
 
+import com.sss.app.util.IdGenerator;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.DynamicInsert;
@@ -45,5 +46,12 @@ public class UserCredential {
 
     public void update(String password) {
         this.setPassword_hash(password);
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.uid == null) {
+            this.uid = IdGenerator.newUid();
+        }
     }
 }

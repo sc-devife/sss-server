@@ -3,6 +3,7 @@ package com.sss.app.entity.userrolelinks;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.sss.app.entity.roles.Role;
 import com.sss.app.entity.users.User;
+import com.sss.app.util.IdGenerator;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.DynamicInsert;
@@ -66,5 +67,12 @@ public class UserRoleLink {
         builder.seqb_type("roles");
 
         return builder.build();
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.uid == null) {
+            this.uid = IdGenerator.newUid().toString();
+        }
     }
 }

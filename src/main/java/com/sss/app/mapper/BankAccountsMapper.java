@@ -11,7 +11,7 @@ public class BankAccountsMapper {
 
     public BankAccountDto mapToDTO(OrganizationBankDetails accounts) {
         return BankAccountDto.builder()
-                .id(accounts.getSeqp())
+                .uid(accounts.getUid())
                 .bankName(accounts.getBankName())
                 .bankShortName(accounts.getBankShortName())
                 .branchName(accounts.getBranchName())

@@ -11,7 +11,7 @@ import java.util.List;
 @Builder
 public class AddressDto {
 
-    private Long id;                 // optional in create, useful in response
+    private String uid;              // optional in create, useful in response
     private String label;
     private String city;
     private String state;

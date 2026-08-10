@@ -3,6 +3,8 @@ package com.sss.app.service.assignment;
 import com.sss.app.dto.lead.LeadResponseDTO;
 import com.sss.app.entity.lead.Lead;
 
+import java.util.UUID;
+
 /**
  * Section 5: configurable assignment strategies (specialist match, load
  * balancing, capacity cap, manual override), invoked automatically on lead
@@ -13,5 +15,5 @@ import com.sss.app.entity.lead.Lead;
 public interface LeadAssignmentService {
     void autoAssign(Lead lead);
 
-    LeadResponseDTO manuallyAssign(Long leadId, Long userId, String reason);
+    LeadResponseDTO manuallyAssign(UUID leadId, Long userId, String reason);
 }

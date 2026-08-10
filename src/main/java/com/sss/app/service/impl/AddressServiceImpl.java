@@ -17,22 +17,22 @@ public class AddressServiceImpl implements AddressService {
     private final AddressMapper addressMapper;
 
     @Override
-    public AddressDto createOrganizationAddress(Long orgId, AddressDto createRequest) {
+    public AddressDto createOrganizationAddress(String orgId, AddressDto createRequest) {
         return addressMapper.mapToDTO(addressHelper.createOrganizationAddress(orgId, createRequest));
     }
 
     @Override
-    public AddressDto updateOrganizationAddress(Long orgId, Long addressId, AddressDto createRequest) {
+    public AddressDto updateOrganizationAddress(String orgId, String addressId, AddressDto createRequest) {
         return addressMapper.mapToDTO(addressHelper.updateOrganizationAddress(orgId, addressId, createRequest));
     }
 
     @Override
-    public List<AddressDto> getAddressesForOrg(Long orgId) {
+    public List<AddressDto> getAddressesForOrg(String orgId) {
         return addressHelper.getAddressesForOrg(orgId).stream().map(addressMapper::mapToDTO).toList();
     }
 
     @Override
-    public void deleteOrganizationAddress(Long orgId, Long addressId) {
+    public void deleteOrganizationAddress(String orgId, String addressId) {
         addressHelper.deleteOrganizationAddress(orgId, addressId);
     }
 }

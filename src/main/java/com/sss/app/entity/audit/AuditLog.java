@@ -1,5 +1,6 @@
 package com.sss.app.entity.audit;
 
+import com.sss.app.util.IdGenerator;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 /**
  * Polymorphic audit trail (Section 16) — one shared table for Lead, Escape
@@ -24,6 +26,9 @@ public class AuditLog {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long seqp;
+
+    @Column(nullable = false, unique = true, updatable = false)
+    private UUID uid;
 
     private Long orgId;
 
@@ -51,5 +56,8 @@ public class AuditLog {
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
+        if (this.uid == null) {
+            this.uid = IdGenerator.newUid();
+        }
     }
 }

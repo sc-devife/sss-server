@@ -29,13 +29,12 @@ public class AddressHelper {
     private EntityManager entityManager;
 
     @Transactional
-    public Address createOrganizationAddress(Long orgId, AddressDto dto) {
-        orgAccessGuard.requireAccessToOrg(orgId);
-        Organizations org = organizationRepository.findById(orgId)
-                .orElseThrow(() -> new NotFoundException("Organization not found"));
+    public Address createOrganizationAddress(String orgUid, AddressDto dto) {
+        Organizations org = resolveOrg(orgUid);
+        orgAccessGuard.requireAccessToOrg(org.getSeqp());
 
         Address address = Address.create(dto);
-        address.setOrganizationId(orgId);
+        address.setOrganizationId(org.getSeqp());
 
         Address savedAddress = addressRepository.save(address);
         addressRepository.flush();
@@ -44,7 +43,7 @@ public class AddressHelper {
         for (AddressType type : addressTypesOrDefault(dto)) {
             if (Boolean.TRUE.equals(dto.getPrimaryAddress())) {
                 // remove any old default of same type for this org
-                constraintRepository.clearDefaultForOrgAndType(orgId, type);
+                constraintRepository.clearDefaultForOrgAndType(org.getSeqp(), type);
             }
             AddressConstraint constraint = AddressConstraint.create(org, savedAddress, type, Boolean.TRUE.equals(dto.getPrimaryAddress()));
             constraintRepository.save(constraint);
@@ -53,12 +52,11 @@ public class AddressHelper {
     }
 
     @Transactional
-    public Address updateOrganizationAddress(Long orgId, Long addressId, AddressDto dto) {
-        orgAccessGuard.requireAccessToOrg(orgId);
-        Organizations org = organizationRepository.findById(orgId)
-                .orElseThrow(() -> new NotFoundException("Organization not found"));
+    public Address updateOrganizationAddress(String orgUid, String addressUid, AddressDto dto) {
+        Organizations org = resolveOrg(orgUid);
+        orgAccessGuard.requireAccessToOrg(org.getSeqp());
 
-        Address address = getOwnedAddress(orgId, addressId);
+        Address address = getOwnedAddress(org, addressUid);
 
         address.update(dto);
         // update constraints
@@ -66,7 +64,7 @@ public class AddressHelper {
             address.getConstraints().clear();
             for (AddressType type : addressTypesOrDefault(dto)) {
                 if (Boolean.TRUE.equals(dto.getPrimaryAddress())) {
-                    constraintRepository.clearDefaultForOrgAndType(orgId, type);
+                    constraintRepository.clearDefaultForOrgAndType(org.getSeqp(), type);
                 }
                 AddressConstraint constraint = AddressConstraint.create(org, address, type, Boolean.TRUE.equals(dto.getPrimaryAddress()));
                 address.getConstraints().add(constraint);
@@ -77,25 +75,32 @@ public class AddressHelper {
     }
 
     @Transactional
-    public void deleteOrganizationAddress(Long orgId, Long addressId) {
-        orgAccessGuard.requireAccessToOrg(orgId);
-        getOwnedAddress(orgId, addressId);
-        addressRepository.deleteById(addressId);
+    public void deleteOrganizationAddress(String orgUid, String addressUid) {
+        Organizations org = resolveOrg(orgUid);
+        orgAccessGuard.requireAccessToOrg(org.getSeqp());
+        Address address = getOwnedAddress(org, addressUid);
+        addressRepository.delete(address);
     }
 
-    public List<Address> getAddressesForOrg(Long orgId) {
-        orgAccessGuard.requireAccessToOrg(orgId);
-        return constraintRepository.findByOrganizationSeqp(orgId).stream()
+    public List<Address> getAddressesForOrg(String orgUid) {
+        Organizations org = resolveOrg(orgUid);
+        orgAccessGuard.requireAccessToOrg(org.getSeqp());
+        return constraintRepository.findByOrganizationSeqp(org.getSeqp()).stream()
                 .map(AddressConstraint::getAddress)
                 .distinct()
                 .toList();
     }
 
-    private Address getOwnedAddress(Long orgId, Long addressId) {
-        Address address = addressRepository.findById(addressId)
+    private Organizations resolveOrg(String orgUid) {
+        return organizationRepository.findByUid(orgUid)
+                .orElseThrow(() -> new NotFoundException("Organization not found"));
+    }
+
+    private Address getOwnedAddress(Organizations org, String addressUid) {
+        Address address = addressRepository.findByUid(addressUid)
                 .orElseThrow(() -> new NotFoundException("Address not found"));
         boolean belongsToOrg = address.getConstraints().stream()
-                .anyMatch(c -> c.getOrganization().getSeqp().equals(orgId));
+                .anyMatch(c -> c.getOrganization().getSeqp().equals(org.getSeqp()));
         if (!belongsToOrg) {
             throw new NotFoundException("Address not found");
         }

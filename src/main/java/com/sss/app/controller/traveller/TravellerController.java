@@ -12,6 +12,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 // No dedicated travellers.* permission exists — travellers only matter in
 // the context of trips, so this reuses trips.read/trips.write rather than
@@ -31,7 +32,7 @@ public class TravellerController {
     @PreAuthorize("@permissionService.hasPermission('trips.write')")
     @PutMapping(value = "/{id}/update", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<TravellerResponseDTO> updateTraveller(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @Valid @RequestBody TravellerUpdateRequestDTO payload) {
 
         return ResponseEntity.ok(travellerService.updateTraveller(id, payload));
@@ -39,7 +40,7 @@ public class TravellerController {
 
     @PreAuthorize("@permissionService.hasPermission('trips.read')")
     @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<TravellerResponseDTO> getTravellerById(@PathVariable Long id) {
+    public ResponseEntity<TravellerResponseDTO> getTravellerById(@PathVariable UUID id) {
         return ResponseEntity.ok(travellerService.getTravellerById(id));
     }
 
@@ -51,7 +52,7 @@ public class TravellerController {
 
     @PreAuthorize("@permissionService.hasPermission('trips.write')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTraveller(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteTraveller(@PathVariable UUID id) {
         travellerService.deleteTraveller(id);
         return ResponseEntity.noContent().build();
     }

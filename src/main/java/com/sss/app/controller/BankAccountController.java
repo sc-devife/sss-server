@@ -8,6 +8,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/bank-accounts")
@@ -19,34 +20,34 @@ public class BankAccountController {
     @PreAuthorize("@permissionService.hasPermission('bank_accounts.write')")
     @PostMapping(value = "/{orgId}/create", consumes = "application/json", produces = "application/json")
     public ResponseEntity<BankAccountDto> createBankAccount(
-            @PathVariable Long orgId,
+            @PathVariable String orgId,
             @RequestBody BankAccountDto dto) {
 
         BankAccountDto saved = bankAccountService.createBankAccount(orgId, dto);
 
-        dto.setId(saved.getId());
+        dto.setUid(saved.getUid());
         return ResponseEntity.ok(dto);
 
     }
 
     @PreAuthorize("@permissionService.hasPermission('bank_accounts.read')")
     @GetMapping("/{orgId}")
-    public ResponseEntity<List<BankAccountDto>> getBankAccounts(@PathVariable Long orgId) {
+    public ResponseEntity<List<BankAccountDto>> getBankAccounts(@PathVariable String orgId) {
         List<BankAccountDto> accounts = bankAccountService.getAccountsForOrg(orgId);
         return ResponseEntity.ok(accounts);
     }
 
     @PreAuthorize("@permissionService.hasPermission('bank_accounts.write')")
     @PatchMapping("/{orgId}/{accountId}/deactivate")
-    public ResponseEntity<BankAccountDto> deactivateBankAccount(@PathVariable Long orgId,
-                                                                 @PathVariable Long accountId) {
+    public ResponseEntity<BankAccountDto> deactivateBankAccount(@PathVariable String orgId,
+                                                                 @PathVariable UUID accountId) {
         return ResponseEntity.ok(bankAccountService.deactivateBankAccount(orgId, accountId));
     }
 
     @PreAuthorize("@permissionService.hasPermission('bank_accounts.write')")
     @PatchMapping("/{orgId}/{accountId}/reactivate")
-    public ResponseEntity<BankAccountDto> reactivateBankAccount(@PathVariable Long orgId,
-                                                                 @PathVariable Long accountId) {
+    public ResponseEntity<BankAccountDto> reactivateBankAccount(@PathVariable String orgId,
+                                                                 @PathVariable UUID accountId) {
         return ResponseEntity.ok(bankAccountService.reactivateBankAccount(orgId, accountId));
     }
 }

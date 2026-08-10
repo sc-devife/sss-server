@@ -61,6 +61,6 @@ public class WebhookLeadController {
         connection.setLastSyncedAt(LocalDateTime.now());
         integrationConnectionRepository.save(connection);
 
-        return ResponseEntity.ok(Map.of("accepted", true, "leadId", lead.getSeqp()));
+        return ResponseEntity.ok(Map.of("accepted", true, "leadUid", lead.getUid()));
     }
 }

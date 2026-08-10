@@ -8,6 +8,5 @@ import lombok.ToString;
 @Data
 @ToString(callSuper = true)
 public class EscapePointResponseDto extends EscapePointDto {
-    private Long seqp;
     private String uid;
 }

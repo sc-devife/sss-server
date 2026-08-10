@@ -14,6 +14,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -38,15 +39,15 @@ public class TravellerHelper {
         return travellerRepository.save(traveller);
     }
 
-    public Traveller updateTraveller(Long id, TravellerUpdateRequestDTO payload) {
+    public Traveller updateTraveller(UUID id, TravellerUpdateRequestDTO payload) {
         Traveller traveller = getTravellerById(id);
         travellerMapper.updateEntityFromDto(payload, traveller);
         return travellerRepository.save(traveller);
     }
 
-    public Traveller getTravellerById(Long seqp) {
-        Traveller traveller = travellerRepository.findById(seqp)
-                .orElseThrow(() -> new NotFoundException("Traveller not found with id: " + seqp));
+    public Traveller getTravellerById(UUID uid) {
+        Traveller traveller = travellerRepository.findByUid(uid)
+                .orElseThrow(() -> new NotFoundException("Traveller not found with id: " + uid));
         orgAccessGuard.requireAccessToOrg(traveller.getOrgId());
         return traveller;
     }

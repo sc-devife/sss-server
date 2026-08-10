@@ -4,6 +4,7 @@ import com.sss.app.entity.lead.Lead;
 import com.sss.app.entity.library.escapepoint.EscapePoint;
 import com.sss.app.entity.library.escapesource.EscapeSource;
 import com.sss.app.entity.traveller.Traveller;
+import com.sss.app.util.IdGenerator;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -11,6 +12,7 @@ import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @Table(name = "escapes")
@@ -24,6 +26,9 @@ public class Escape {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long seqp;
+
+    @Column(nullable = false, unique = true, updatable = false)
+    private UUID uid;
 
     private Long orgId;
 
@@ -61,4 +66,11 @@ public class Escape {
 
   /*  public void setTravellers(List<Escape> allById) {
     }*/
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.uid == null) {
+            this.uid = IdGenerator.newUid();
+        }
+    }
 }

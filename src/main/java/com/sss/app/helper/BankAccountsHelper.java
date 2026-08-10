@@ -4,6 +4,7 @@ import com.sss.app.dto.BankAccountDto;
 import com.sss.app.entity.OrganizationBankDetails;
 import com.sss.app.entity.address.Address;
 import com.sss.app.entity.organizations.Organizations;
+import com.sss.app.exception.NotFoundException;
 import com.sss.app.repository.BankAccountRepository;
 import com.sss.app.repository.OrganizationRepository;
 import com.sss.app.security.OrgAccessGuard;
@@ -14,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
@@ -25,11 +27,11 @@ public class BankAccountsHelper {
     private final OrgAccessGuard orgAccessGuard;
     @PersistenceContext
     private EntityManager entityManager;
+
     @Transactional
-    public OrganizationBankDetails createBankAccount(Long orgId, BankAccountDto dto) {
-        orgAccessGuard.requireAccessToOrg(orgId);
-        Organizations org = organizationRepository.findById(orgId)
-                .orElseThrow(() -> new RuntimeException("Organization not found"));
+    public OrganizationBankDetails createBankAccount(String orgUid, BankAccountDto dto) {
+        Organizations org = resolveOrg(orgUid);
+        orgAccessGuard.requireAccessToOrg(org.getSeqp());
 
         OrganizationBankDetails bankAccount = OrganizationBankDetails.create(dto, org);
         bankAccount  = bankAccountRepository.save(bankAccount);
@@ -38,14 +40,14 @@ public class BankAccountsHelper {
         return bankAccount;
     }
 
-   public List<BankAccountDto> getAccountsForOrg(Long orgId) {
-       orgAccessGuard.requireAccessToOrg(orgId);
- //   public OrganizationBankDetails getAccountsForOrg(Long orgId) {
-        List<OrganizationBankDetails> accounts = bankAccountRepository.findByOrganizationSeqp(orgId);
+   public List<BankAccountDto> getAccountsForOrg(String orgUid) {
+        Organizations org = resolveOrg(orgUid);
+        orgAccessGuard.requireAccessToOrg(org.getSeqp());
+        List<OrganizationBankDetails> accounts = bankAccountRepository.findByOrganizationSeqp(org.getSeqp());
 
         return accounts.stream()
                 .map(acc -> BankAccountDto.builder()
-                        .id(acc.getSeqp())
+                        .uid(acc.getUid())
                         .bankName(acc.getBankName())
                         .bankShortName(acc.getBankShortName())
                         .branchName(acc.getBranchName())
@@ -66,26 +68,32 @@ public class BankAccountsHelper {
     }
 
     @Transactional
-    public OrganizationBankDetails deactivateBankAccount(Long orgId, Long accountId) {
-        OrganizationBankDetails account = getOwnedAccount(orgId, accountId);
+    public OrganizationBankDetails deactivateBankAccount(String orgUid, UUID accountUid) {
+        OrganizationBankDetails account = getOwnedAccount(orgUid, accountUid);
         account.setStatus("inactive");
         return bankAccountRepository.save(account);
     }
 
     @Transactional
-    public OrganizationBankDetails reactivateBankAccount(Long orgId, Long accountId) {
-        OrganizationBankDetails account = getOwnedAccount(orgId, accountId);
+    public OrganizationBankDetails reactivateBankAccount(String orgUid, UUID accountUid) {
+        OrganizationBankDetails account = getOwnedAccount(orgUid, accountUid);
         account.setStatus("active");
         return bankAccountRepository.save(account);
     }
 
-    private OrganizationBankDetails getOwnedAccount(Long orgId, Long accountId) {
-        orgAccessGuard.requireAccessToOrg(orgId);
+    private Organizations resolveOrg(String orgUid) {
+        return organizationRepository.findByUid(orgUid)
+                .orElseThrow(() -> new NotFoundException("Organization not found"));
+    }
 
-        OrganizationBankDetails account = bankAccountRepository.findById(accountId)
+    private OrganizationBankDetails getOwnedAccount(String orgUid, UUID accountUid) {
+        Organizations org = resolveOrg(orgUid);
+        orgAccessGuard.requireAccessToOrg(org.getSeqp());
+
+        OrganizationBankDetails account = bankAccountRepository.findByUid(accountUid)
                 .orElseThrow(() -> new RuntimeException("Bank account not found"));
 
-        if (!account.getOrganization().getSeqp().equals(orgId)) {
+        if (!account.getOrganization().getSeqp().equals(org.getSeqp())) {
             throw new RuntimeException("Bank account does not belong to this organization");
         }
         return account;

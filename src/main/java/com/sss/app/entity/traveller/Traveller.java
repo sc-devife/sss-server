@@ -1,9 +1,11 @@
 package com.sss.app.entity.traveller;
 
+import com.sss.app.util.IdGenerator;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Entity
 @Table(name = "traveller")
@@ -17,6 +19,9 @@ public class Traveller {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long seqp;
+
+    @Column(nullable = false, unique = true, updatable = false)
+    private UUID uid;
 
     private Long orgId;
 
@@ -44,5 +49,10 @@ public class Traveller {
     //@Column(name = "is_deleted")
     //private Boolean isDeleted = false;
 
-
+    @PrePersist
+    protected void onCreate() {
+        if (this.uid == null) {
+            this.uid = IdGenerator.newUid();
+        }
+    }
 }

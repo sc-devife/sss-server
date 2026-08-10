@@ -5,11 +5,12 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class TravellerResponseDTO extends TravellerDTO{
-    private Long seqp;
+    private UUID uid;
 }

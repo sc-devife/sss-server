@@ -14,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -27,7 +29,7 @@ public class EscapeLifecycleServiceImpl implements EscapeLifecycleService {
     private final AuditLogService auditLogService;
 
     @Override
-    public EscapeResponseDTO advance(Long escapeId, String targetStatus) {
+    public EscapeResponseDTO advance(UUID escapeId, String targetStatus) {
         Escape escape = escapeHelper.getEscapeById(escapeId);
 
         int currentIndex = EscapeStatus.indexOf(escape.getStatus());
@@ -49,13 +51,13 @@ public class EscapeLifecycleServiceImpl implements EscapeLifecycleService {
         String previousStatus = escape.getStatus();
         escape.setStatus(targetStatus);
         Escape saved = escapeRepository.save(escape);
-        auditLogService.record(ENTITY_TYPE, escapeId, "STATUS_ADVANCED", previousStatus, targetStatus);
+        auditLogService.record(ENTITY_TYPE, escape.getSeqp(), "STATUS_ADVANCED", previousStatus, targetStatus);
 
         return escapeMapper.toResponse(saved);
     }
 
     @Override
-    public EscapeResponseDTO cancel(Long escapeId, String reason) {
+    public EscapeResponseDTO cancel(UUID escapeId, String reason) {
         Escape escape = escapeHelper.getEscapeById(escapeId);
 
         int currentIndex = EscapeStatus.indexOf(escape.getStatus());
@@ -70,7 +72,7 @@ public class EscapeLifecycleServiceImpl implements EscapeLifecycleService {
         String previousStatus = escape.getStatus();
         escape.setStatus(EscapeStatus.CANCELLED);
         Escape saved = escapeRepository.save(escape);
-        auditLogService.record(ENTITY_TYPE, escapeId, "CANCELLED", previousStatus, reason);
+        auditLogService.record(ENTITY_TYPE, escape.getSeqp(), "CANCELLED", previousStatus, reason);
 
         return escapeMapper.toResponse(saved);
     }

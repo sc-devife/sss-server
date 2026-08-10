@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -32,64 +33,64 @@ public class LeadLifecycleServiceImpl implements LeadLifecycleService {
     private final EscapeService escapeService;
 
     @Override
-    public LeadResponseDTO contact(Long leadId) {
+    public LeadResponseDTO contact(UUID leadId) {
         Lead lead = leadsHelper.getLeadById(leadId);
         requireStatus(lead, "New");
         return transition(lead, "Contacted", "CONTACTED", null);
     }
 
     @Override
-    public LeadResponseDTO qualify(Long leadId) {
+    public LeadResponseDTO qualify(UUID leadId) {
         Lead lead = leadsHelper.getLeadById(leadId);
         requireStatus(lead, "New", "Contacted");
         return transition(lead, "Qualified", "QUALIFIED", null);
     }
 
     @Override
-    public LeadResponseDTO disqualify(Long leadId, String reason) {
+    public LeadResponseDTO disqualify(UUID leadId, String reason) {
         Lead lead = leadsHelper.getLeadById(leadId);
         requireNotTerminal(lead);
         return transition(lead, "Unqualified", "DISQUALIFIED", reason);
     }
 
     @Override
-    public LeadResponseDTO markLost(Long leadId, String reason) {
+    public LeadResponseDTO markLost(UUID leadId, String reason) {
         Lead lead = leadsHelper.getLeadById(leadId);
         requireNotTerminal(lead);
         return transition(lead, "Lost", "MARKED_LOST", reason);
     }
 
     @Override
-    public LeadResponseDTO markDuplicate(Long leadId, String reason) {
+    public LeadResponseDTO markDuplicate(UUID leadId, String reason) {
         Lead lead = leadsHelper.getLeadById(leadId);
         requireNotTerminal(lead);
         return transition(lead, "Duplicate", "MARKED_DUPLICATE", reason);
     }
 
     @Override
-    public EscapeResponseDTO convertToEscape(Long leadId, EscapeCreateRequestDTO request) {
+    public EscapeResponseDTO convertToEscape(UUID leadId, EscapeCreateRequestDTO request) {
         Lead lead = leadsHelper.getLeadById(leadId);
         requireStatus(lead, "Qualified");
 
-        request.setLeadId(leadId);
+        request.setLeadUid(leadId);
         EscapeResponseDTO escape = escapeService.createEscape(request);
 
         String previousStatus = lead.getStatus();
         lead.setStatus("Converted");
         leadRepository.save(lead);
-        auditLogService.record(ENTITY_TYPE, leadId, "CONVERTED_TO_ESCAPE",
-                previousStatus, "Converted -> Escape #" + escape.getSeqp());
+        auditLogService.record(ENTITY_TYPE, lead.getSeqp(), "CONVERTED_TO_ESCAPE",
+                previousStatus, "Converted -> Escape #" + escape.getUid());
 
         return escape;
     }
 
     @Override
-    public LeadResponseDTO togglePriority(Long leadId) {
+    public LeadResponseDTO togglePriority(UUID leadId) {
         Lead lead = leadsHelper.getLeadById(leadId);
         boolean newValue = !Boolean.TRUE.equals(lead.getIsPriority());
         lead.setIsPriority(newValue);
         Lead saved = leadRepository.save(lead);
-        auditLogService.record(ENTITY_TYPE, leadId, "PRIORITY_TOGGLED", String.valueOf(!newValue), String.valueOf(newValue));
+        auditLogService.record(ENTITY_TYPE, lead.getSeqp(), "PRIORITY_TOGGLED", String.valueOf(!newValue), String.valueOf(newValue));
         return leadMapper.toResponse(saved);
     }
 

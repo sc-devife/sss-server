@@ -4,8 +4,11 @@ import com.sss.app.dto.BankAccountDto;
 import com.sss.app.dto.address.AddressDto;
 import com.sss.app.entity.address.Address;
 import com.sss.app.entity.organizations.Organizations;
+import com.sss.app.util.IdGenerator;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.UUID;
 
 @Entity
 @Table(name = "organization_bank_accounts")
@@ -19,6 +22,9 @@ public class OrganizationBankDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long seqp;
+
+    @Column(nullable = false, unique = true, updatable = false)
+    private UUID uid;
 
     // ---- Bank Details ----
     @Column(name = "bank_name", nullable = false)
@@ -96,5 +102,12 @@ public class OrganizationBankDetails {
         builder.build();
         return builder.build();
 
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.uid == null) {
+            this.uid = IdGenerator.newUid();
+        }
     }
 }

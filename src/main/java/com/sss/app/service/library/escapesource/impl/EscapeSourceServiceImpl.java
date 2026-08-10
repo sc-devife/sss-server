@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class EscapeSourceServiceImpl implements EscapeSourceService {
@@ -30,13 +31,13 @@ public class EscapeSourceServiceImpl implements EscapeSourceService {
         return escapeSourceMapper.toDto(escapeSourceHelper.createEscapeSource(payload));
     }
     @Override
-    public EscapeSourceResponseDTO updateEscapeSource(Long id, EscapeSourceRequestDTO payload) {
+    public EscapeSourceResponseDTO updateEscapeSource(UUID id, EscapeSourceRequestDTO payload) {
         return escapeSourceMapper.toDto(
                 escapeSourceHelper.updateEscapeSource(id, payload)
         );
     }
     @Override
-    public EscapeSourceResponseDTO getSourceById(Long id) {
+    public EscapeSourceResponseDTO getSourceById(UUID id) {
         return escapeSourceMapper.toDto(
                 escapeSourceHelper.getSourceById(id)
         );

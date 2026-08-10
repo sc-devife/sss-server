@@ -6,11 +6,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class EscapeResponseDTO extends EscapeDTO {
-    private Long seqp;
+    private UUID uid;
     private EscapeSourceResponseDTO source;
 }

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 //import java.awt.print.Pageable;
 import java.util.List;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @RestController
@@ -27,13 +28,13 @@ public class EscapeSourceController {
     }
     @PutMapping(value = "/{id}/update", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<EscapeSourceResponseDTO> updateEscapeSource(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @Valid @RequestBody EscapeSourceRequestDTO payload) {
 
         return ResponseEntity.ok(escapeSourceService.updateEscapeSource(id, payload));
     }
     @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<EscapeSourceResponseDTO> getSourceById(@PathVariable Long id) {
+    public ResponseEntity<EscapeSourceResponseDTO> getSourceById(@PathVariable UUID id) {
         return ResponseEntity.ok(escapeSourceService.getSourceById(id));
     }
 

@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -164,8 +165,8 @@ public class LeadsHelper {
         return notes.length() > NOTES_MAX_LENGTH ? notes.substring(notes.length() - NOTES_MAX_LENGTH) : notes;
     }
 
-    public Lead getLeadById(Long id) {
-        Lead lead = leadRepository.findById(id)
+    public Lead getLeadById(UUID id) {
+        Lead lead = leadRepository.findByUid(id)
                 .orElseThrow(() -> new NotFoundException("Lead not found with id: " + id));
         orgAccessGuard.requireAccessToOrg(lead.getOrgId());
         return lead;

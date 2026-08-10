@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -42,11 +43,11 @@ public class EscapeHelper {
 
     public Escape createEscape(EscapeCreateRequestDTO request) {
 
-        Lead lead = leadRepository.findById(request.getLeadId())
+        Lead lead = leadRepository.findByUid(request.getLeadUid())
                 .orElseThrow(() -> new NotFoundException("Lead not found"));
         orgAccessGuard.requireAccessToOrg(lead.getOrgId());
 
-        EscapeSource source = request.getSourceId() == null ? null : sourceRepository.findById(request.getSourceId())
+        EscapeSource source = request.getSourceUid() == null ? null : sourceRepository.findByUid(request.getSourceUid())
                 .orElseThrow(() -> new NotFoundException("Source not found"));
 
         Escape trip = escapeMapper.toEntityCreate(request);
@@ -55,11 +56,11 @@ public class EscapeHelper {
         trip.setLead(lead);
         trip.setSource(source);
         trip.setTravellers(
-                new HashSet<>(travellerRepository.findAllById(request.getTravellerIds()))
+                new HashSet<>(travellerRepository.findAllByUidIn(request.getTravellerUids()))
         );
 
         trip.setEscapePoints(
-                new HashSet<>(escapePointRepository.findAllById(request.getEscapePointIds()))
+                new HashSet<>(escapePointRepository.findAllByUidIn(new HashSet<>(request.getEscapePointUids())))
         );
         trip.setEndDate(
                 request.getStartDate().plusDays(request.getNumberOfDays() - 1)
@@ -74,41 +75,41 @@ public class EscapeHelper {
         return escapeRepository.findAllByOrgId(currentUser().getOrgId());
     }
 
-    public Escape updateEscape(Long seqp, EscapeUpdateRequestDTO request) {
+    public Escape updateEscape(UUID uid, EscapeUpdateRequestDTO request) {
         //Fetch existing trip
-        Escape escape = escapeRepository.findBySeqp(seqp)
+        Escape escape = escapeRepository.findByUid(uid)
                 .orElseThrow(() -> new NotFoundException("Escape not found"));
         orgAccessGuard.requireAccessToOrg(escape.getOrgId());
 
         //Update Lead
-        if (request.getLeadId() != null) {
-            Lead lead = leadRepository.findById(request.getLeadId())
+        if (request.getLeadUid() != null) {
+            Lead lead = leadRepository.findByUid(request.getLeadUid())
                     .orElseThrow(() -> new NotFoundException("Lead not found"));
             orgAccessGuard.requireAccessToOrg(lead.getOrgId());
             escape.setLead(lead);
         }
 
-        if (request.getSourceId() != null) {
-            EscapeSource source = sourceRepository.findById(request.getSourceId())
+        if (request.getSourceUid() != null) {
+            EscapeSource source = sourceRepository.findByUid(request.getSourceUid())
                     .orElseThrow(() -> new NotFoundException("Source not found"));
             escape.setSource(source);
         }
 
         //Update Travellers (Overwrite old ones)
-        if (request.getTravellerIds() != null) {
+        if (request.getTravellerUids() != null) {
 
             List<Traveller> travellers =
-                    travellerRepository.findAllById(request.getTravellerIds());
+                    travellerRepository.findAllByUidIn(request.getTravellerUids());
 
             escape.getTravellers().clear(); // remove old
             escape.getTravellers().addAll(travellers); // add new
         }
 
         //Update Escape Points (Overwrite old ones)
-        if (request.getEscapePointIds() != null) {
+        if (request.getEscapePointUids() != null) {
 
             List<EscapePoint> escapePoints =
-                    escapePointRepository.findAllById(request.getEscapePointIds());
+                    escapePointRepository.findAllByUidIn(new HashSet<>(request.getEscapePointUids()));
 
             escape.getEscapePoints().clear();
             escape.getEscapePoints().addAll(escapePoints);
@@ -132,15 +133,15 @@ public class EscapeHelper {
         return escapeRepository.save(escape);
     }
 
-    public Escape getEscapeById(Long id) {
-        Escape escape = escapeRepository.findById(id)
+    public Escape getEscapeById(UUID id) {
+        Escape escape = escapeRepository.findByUid(id)
                 .orElseThrow(() -> new NotFoundException("Escape not found with id: " + id));
         orgAccessGuard.requireAccessToOrg(escape.getOrgId());
         return escape;
     }
 
-    public void deleteEscape(Long seqp) {
-        Escape escape = getEscapeById(seqp);
+    public void deleteEscape(UUID uid) {
+        Escape escape = getEscapeById(uid);
         escapeRepository.delete(escape);
     }
 }

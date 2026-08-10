@@ -113,7 +113,7 @@ public class PaymentMilestoneHelper {
         int currentIndex = EscapeStatus.indexOf(trip.getStatus());
         int targetIndex = EscapeStatus.indexOf(target);
         if (currentIndex >= 0 && targetIndex > currentIndex) {
-            escapeLifecycleService.advance(trip.getSeqp(), target);
+            escapeLifecycleService.advance(trip.getUid(), target);
         }
     }
 }

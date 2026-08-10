@@ -1,5 +1,6 @@
 package com.sss.app.entity.assignment;
 
+import com.sss.app.util.IdGenerator;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -52,7 +53,7 @@ public class PriorityCalendarEntry {
     @PrePersist
     protected void onCreate() {
         if (this.uid == null) {
-            this.uid = UUID.randomUUID();
+            this.uid = IdGenerator.newUid();
         }
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();

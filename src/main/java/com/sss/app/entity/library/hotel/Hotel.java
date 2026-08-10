@@ -5,6 +5,7 @@ import com.sss.app.entity.library.escapepoint.EscapePoint;
 import com.sss.app.entity.library.location.Location;
 import com.sss.app.entity.library.mealplan.MealPlan;
 import com.sss.app.entity.library.roomtype.RoomType;
+import com.sss.app.util.IdGenerator;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -139,7 +140,7 @@ public class Hotel extends Auditable {
     @PrePersist
     protected void onCreate() {
         if (this.uid == null) {
-            this.uid = UUID.randomUUID();
+            this.uid = IdGenerator.newUid();
         }
     }
 }

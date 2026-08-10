@@ -1,5 +1,6 @@
 package com.sss.app.entity.integration.meta;
 
+import com.sss.app.util.IdGenerator;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 /**
  * Raw delivery-level audit of every Meta webhook POST, valid or not — see
@@ -25,6 +27,9 @@ public class MetaWebhookEvent {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long seqp;
+
+    @Column(nullable = false, unique = true, updatable = false)
+    private UUID uid;
 
     @Column(name = "org_id")
     private Long orgId;
@@ -63,6 +68,9 @@ public class MetaWebhookEvent {
     protected void onCreate() {
         if (receivedAt == null) {
             receivedAt = LocalDateTime.now();
+        }
+        if (this.uid == null) {
+            this.uid = IdGenerator.newUid();
         }
     }
 }

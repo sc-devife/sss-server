@@ -18,6 +18,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/escape")
@@ -38,14 +39,14 @@ public class EscapeController {
     @PreAuthorize("@permissionService.hasPermission('trips.write')")
     @PutMapping("/update/{id}")
     public ResponseEntity<EscapeResponseDTO> updateEscape(
-           @PathVariable Long id,
+           @PathVariable UUID id,
            @Valid @RequestBody EscapeUpdateRequestDTO request) {
         return ResponseEntity.ok(escapeService.updateEscape(id, request));
     }
 
     @PreAuthorize("@permissionService.hasPermission('trips.read')")
     @GetMapping("/{id}")
-    public ResponseEntity<EscapeResponseDTO> getEscape(@PathVariable Long id) {
+    public ResponseEntity<EscapeResponseDTO> getEscape(@PathVariable UUID id) {
         return ResponseEntity.ok(escapeService.getEscapeById(id));
     }
 
@@ -57,7 +58,7 @@ public class EscapeController {
 
     @PreAuthorize("@permissionService.hasPermission('trips.write')")
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<String> deleteEscape(@PathVariable Long id) {
+    public ResponseEntity<String> deleteEscape(@PathVariable UUID id) {
         escapeService.deleteEscape(id);
         return ResponseEntity.ok("Escape deleted successfully with id: " + id);
     }
@@ -66,21 +67,21 @@ public class EscapeController {
 
     @PreAuthorize("@permissionService.hasPermission('trips.write')")
     @PostMapping("/{id}/advance")
-    public ResponseEntity<EscapeResponseDTO> advance(@PathVariable Long id, @Valid @RequestBody EscapeAdvanceRequestDTO body) {
+    public ResponseEntity<EscapeResponseDTO> advance(@PathVariable UUID id, @Valid @RequestBody EscapeAdvanceRequestDTO body) {
         return ResponseEntity.ok(escapeLifecycleService.advance(id, body.getTargetStatus()));
     }
 
     @PreAuthorize("@permissionService.hasPermission('trips.write')")
     @PostMapping("/{id}/cancel")
-    public ResponseEntity<EscapeResponseDTO> cancel(@PathVariable Long id, @RequestBody EscapeCancelRequestDTO body) {
+    public ResponseEntity<EscapeResponseDTO> cancel(@PathVariable UUID id, @RequestBody EscapeCancelRequestDTO body) {
         return ResponseEntity.ok(escapeLifecycleService.cancel(id, body.getReason()));
     }
 
     @PreAuthorize("@permissionService.hasPermission('trips.read')")
     @GetMapping("/{id}/audit-log")
-    public ResponseEntity<List<AuditLogResponseDTO>> auditLog(@PathVariable Long id) {
-        escapeService.getEscapeById(id); // confirms it exists in the caller's own org
-        List<AuditLogResponseDTO> history = auditLogService.history("Escape", id).stream()
+    public ResponseEntity<List<AuditLogResponseDTO>> auditLog(@PathVariable UUID id) {
+        Long seqp = escapeService.resolveSeqp(id); // confirms it exists in the caller's own org
+        List<AuditLogResponseDTO> history = auditLogService.history("Escape", seqp).stream()
                 .map(this::toAuditLogResponse)
                 .toList();
         return ResponseEntity.ok(history);

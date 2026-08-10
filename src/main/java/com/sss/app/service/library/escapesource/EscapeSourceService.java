@@ -8,12 +8,13 @@ import com.sss.app.dto.library.escapesource.EscapeSourceResponseDTO;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
 import java.util.List;
+import java.util.UUID;
 
 public interface EscapeSourceService {
 
     EscapeSourceResponseDTO createEscapeSource(EscapeSourceRequestDTO dto);
-    EscapeSourceResponseDTO updateEscapeSource(Long id, EscapeSourceRequestDTO dto);
-    EscapeSourceResponseDTO getSourceById(Long id);
+    EscapeSourceResponseDTO updateEscapeSource(UUID id, EscapeSourceRequestDTO dto);
+    EscapeSourceResponseDTO getSourceById(UUID id);
     List<EscapeSourceResponseDTO> getAllSources();
     Page<EscapeSourceResponseDTO> getSources(Pageable pageable);
 

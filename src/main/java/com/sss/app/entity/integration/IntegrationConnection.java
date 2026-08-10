@@ -1,5 +1,6 @@
 package com.sss.app.entity.integration;
 
+import com.sss.app.util.IdGenerator;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "integration_connections")
@@ -19,6 +21,9 @@ public class IntegrationConnection {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long seqp;
+
+    @Column(nullable = false, unique = true, updatable = false)
+    private UUID uid;
 
     @Column(name = "org_id", nullable = false)
     private Long orgId;
@@ -48,6 +53,9 @@ public class IntegrationConnection {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        if (this.uid == null) {
+            this.uid = IdGenerator.newUid();
+        }
     }
 
     @PreUpdate
