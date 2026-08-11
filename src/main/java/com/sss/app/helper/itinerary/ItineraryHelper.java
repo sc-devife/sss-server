@@ -106,6 +106,8 @@ public class ItineraryHelper {
                         .dayNumber(item.getDayNumber())
                         .itemType(item.getItemType())
                         .referenceId(item.getReferenceId())
+                        .title(item.getTitle())
+                        .startTime(item.getStartTime())
                         .notes(item.getNotes())
                         .sortOrder(item.getSortOrder())
                         .build())

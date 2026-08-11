@@ -23,7 +23,7 @@ public class ItineraryItemServiceImpl implements ItineraryItemService {
     @Override
     public ItineraryItemResponseDTO create(ItineraryItemCreateRequestDTO request) {
         ItineraryItem item = itineraryItemHelper.create(request);
-        return toResponse(item, itineraryItemHelper.resolveLabel(item.getItemType(), item.getReferenceId()));
+        return toResponse(item, itineraryItemHelper.resolveLabel(item));
     }
 
     @Override
@@ -34,7 +34,7 @@ public class ItineraryItemServiceImpl implements ItineraryItemService {
     @Override
     public ItineraryItemResponseDTO update(UUID uid, ItineraryItemUpdateRequestDTO request) {
         ItineraryItem item = itineraryItemHelper.update(uid, request);
-        return toResponse(item, itineraryItemHelper.resolveLabel(item.getItemType(), item.getReferenceId()));
+        return toResponse(item, itineraryItemHelper.resolveLabel(item));
     }
 
     @Override
@@ -47,11 +47,13 @@ public class ItineraryItemServiceImpl implements ItineraryItemService {
         return toResponseList(itineraryItemHelper.reorder(request));
     }
 
-    // Batch-resolves reference labels once per list (3 queries total, one per
-    // item type) instead of once per item — see ItineraryItemHelper.resolveLabels.
+    // Batch-resolves reference labels once per list (one query per RefKind)
+    // instead of once per item — see ItineraryItemHelper.resolveLabels. Keyed
+    // by item uid, not referenceId, since ad-hoc items (no referenceId) still
+    // need a title-derived label.
     private List<ItineraryItemResponseDTO> toResponseList(List<ItineraryItem> items) {
         Map<UUID, String> labels = itineraryItemHelper.resolveLabels(items);
-        return items.stream().map(item -> toResponse(item, labels.get(item.getReferenceId()))).toList();
+        return items.stream().map(item -> toResponse(item, labels.get(item.getUid()))).toList();
     }
 
     private ItineraryItemResponseDTO toResponse(ItineraryItem item, String referenceLabel) {
@@ -62,6 +64,8 @@ public class ItineraryItemServiceImpl implements ItineraryItemService {
         dto.setItemType(item.getItemType());
         dto.setReferenceId(item.getReferenceId());
         dto.setReferenceLabel(referenceLabel);
+        dto.setTitle(item.getTitle());
+        dto.setStartTime(item.getStartTime());
         dto.setNotes(item.getNotes());
         dto.setSortOrder(item.getSortOrder());
         return dto;

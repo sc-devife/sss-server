@@ -41,7 +41,7 @@ public class Traveller {
     private String age;
     private String nationality;
 
-    @Column(unique = true)
+    @Column
     private String email;
 
     private String phone;

@@ -4,6 +4,7 @@ import com.sss.app.dto.escape.EscapeCreateRequestDTO;
 import com.sss.app.dto.escape.EscapeResponseDTO;
 import com.sss.app.dto.escape.EscapeUpdateRequestDTO;
 import com.sss.app.dto.lead.LeadResponseDTO;
+import com.sss.app.dto.traveller.TravellerCreateRequestDTO;
 import com.sss.app.helper.escape.EscapeHelper;
 import com.sss.app.mapper.escape.EscapeMapper;
 import com.sss.app.repository.UserRepository;
@@ -58,6 +59,18 @@ public class EscapeServiceImpl implements EscapeService {
     @Override
     public Long resolveSeqp(UUID id) {
         return escapeHelper.getEscapeById(id).getSeqp();
+    }
+
+    @Override
+    public EscapeResponseDTO addTraveller(UUID escapeUid, TravellerCreateRequestDTO request) {
+        EscapeResponseDTO response = escapeMapper.toResponse(escapeHelper.addTraveller(escapeUid, request));
+        enrichAssignedToName(response);
+        return response;
+    }
+
+    @Override
+    public void removeTraveller(UUID escapeUid, UUID travellerUid) {
+        escapeHelper.removeTraveller(escapeUid, travellerUid);
     }
 
     // Joins the lead's assigned agent through the existing

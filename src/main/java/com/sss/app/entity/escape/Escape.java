@@ -57,6 +57,13 @@ public class Escape {
     )
     private Set<EscapePoint> escapePoints = new HashSet<>();
 
+    // The traveller who represents the lead's original/primary contact, set
+    // once at creation time (see EscapeHelper.createEscape) rather than
+    // inferred from travellers' set order, which has no guaranteed ordering.
+    // Nullable: escapes created before this field existed have no primary.
+    @Column(name = "primary_traveller_uid")
+    private UUID primaryTravellerUid;
+
     private String status;
 
     private LocalDate startDate;

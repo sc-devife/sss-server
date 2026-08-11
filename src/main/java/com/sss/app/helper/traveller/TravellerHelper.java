@@ -4,7 +4,6 @@ import com.sss.app.dto.traveller.TravellerCreateRequestDTO;
 import com.sss.app.dto.traveller.TravellerUpdateRequestDTO;
 import com.sss.app.entity.traveller.Traveller;
 import com.sss.app.entity.users.User;
-import com.sss.app.exception.ConflictException;
 import com.sss.app.exception.NotFoundException;
 import com.sss.app.mapper.traveller.TravellerMapper;
 import com.sss.app.repository.traveller.TravellerRepository;
@@ -28,12 +27,6 @@ public class TravellerHelper {
     }
 
     public Traveller createTraveller(TravellerCreateRequestDTO payload) {
-
-        if (travellerRepository.findByEmail(payload.getEmail()).isPresent()) {
-            throw new ConflictException(
-                    "Traveller with email '" + payload.getEmail() + "' already exists"
-            );
-        }
         Traveller traveller = travellerMapper.toEntityCreate(payload);
         traveller.setOrgId(currentUser().getOrgId());
         return travellerRepository.save(traveller);

@@ -9,8 +9,6 @@ import java.util.UUID;
 
 public interface TravellerRepository extends JpaRepository<Traveller, Long> {
 
-    Optional<Traveller> findByEmail(String email);
-
     Optional<Traveller> findByUid(UUID uid);
 
     List<Traveller> findAllByUidIn(List<UUID> uids);

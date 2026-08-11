@@ -6,6 +6,7 @@ import com.sss.app.dto.escape.EscapeResponseDTO;
 import com.sss.app.dto.escape.EscapeUpdateRequestDTO;
 import com.sss.app.dto.escape.EscapeAdvanceRequestDTO;
 import com.sss.app.dto.escape.EscapeCancelRequestDTO;
+import com.sss.app.dto.traveller.TravellerCreateRequestDTO;
 import com.sss.app.entity.audit.AuditLog;
 import com.sss.app.service.audit.AuditLogService;
 import com.sss.app.service.escape.EscapeService;
@@ -75,6 +76,28 @@ public class EscapeController {
     @PostMapping("/{id}/cancel")
     public ResponseEntity<EscapeResponseDTO> cancel(@PathVariable UUID id, @RequestBody EscapeCancelRequestDTO body) {
         return ResponseEntity.ok(escapeLifecycleService.cancel(id, body.getReason()));
+    }
+
+    // Adds a traveller record to an already-created escape — the Travelers
+    // tab's "collect the 2nd/3rd traveller's details" flow, separate from
+    // the full-object PUT /update/{id} (which would replace the whole
+    // traveller list rather than appending one).
+    @PreAuthorize("@permissionService.hasPermission('trips.write')")
+    @PostMapping("/{id}/travellers")
+    public ResponseEntity<EscapeResponseDTO> addTraveller(@PathVariable UUID id, @Valid @RequestBody TravellerCreateRequestDTO request) {
+        return ResponseEntity.ok(escapeService.addTraveller(id, request));
+    }
+
+    // Detaches the traveller from this escape's roster only — deliberately
+    // NOT the same as DELETE /traveller/{id} (a global hard delete of the
+    // Traveller row, which would violate the escape_traveller FK constraint
+    // whenever the traveller is still linked to any escape, i.e. always in
+    // this UI's "remove from this escape" use case).
+    @PreAuthorize("@permissionService.hasPermission('trips.write')")
+    @DeleteMapping("/{id}/travellers/{travellerUid}")
+    public ResponseEntity<Void> removeTraveller(@PathVariable UUID id, @PathVariable UUID travellerUid) {
+        escapeService.removeTraveller(id, travellerUid);
+        return ResponseEntity.noContent().build();
     }
 
     @PreAuthorize("@permissionService.hasPermission('trips.read')")

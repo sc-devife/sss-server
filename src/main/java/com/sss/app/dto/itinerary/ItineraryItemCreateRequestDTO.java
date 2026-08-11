@@ -3,6 +3,7 @@ package com.sss.app.dto.itinerary;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import java.time.LocalTime;
 import java.util.UUID;
 
 @Data
@@ -15,10 +16,17 @@ public class ItineraryItemCreateRequestDTO {
     private Integer dayNumber;
 
     @NotNull(message = "itemType is required")
-    private String itemType; // hotel / activity / transport
+    private String itemType; // transport/pickup_drop/hotel/activity/sightseeing/meal/free_time/other
 
-    @NotNull(message = "referenceId is required")
+    // Optional — see ItineraryItemHelper.validateReference: either this or
+    // title must be supplied.
     private UUID referenceId;
+
+    // Required if referenceId is absent (cross-field rule, enforced in the
+    // helper rather than via a bean-validation annotation).
+    private String title;
+
+    private LocalTime startTime;
 
     private String notes;
 }

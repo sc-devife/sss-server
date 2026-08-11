@@ -2,6 +2,7 @@ package com.sss.app.helper.escape;
 
 import com.sss.app.dto.escape.EscapeCreateRequestDTO;
 import com.sss.app.dto.escape.EscapeUpdateRequestDTO;
+import com.sss.app.dto.traveller.TravellerCreateRequestDTO;
 import com.sss.app.entity.escape.Escape;
 import com.sss.app.entity.escape.EscapeStatus;
 import com.sss.app.entity.lead.Lead;
@@ -10,6 +11,7 @@ import com.sss.app.entity.library.escapesource.EscapeSource;
 import com.sss.app.entity.traveller.Traveller;
 import com.sss.app.entity.users.User;
 import com.sss.app.exception.NotFoundException;
+import com.sss.app.helper.traveller.TravellerHelper;
 import com.sss.app.mapper.escape.EscapeMapper;
 import com.sss.app.repository.escape.EscapeRepository;
 import com.sss.app.repository.lead.LeadRepository;
@@ -33,6 +35,7 @@ public class EscapeHelper {
     private final EscapeMapper escapeMapper;
     private final LeadRepository leadRepository;
     private final TravellerRepository travellerRepository;
+    private final TravellerHelper travellerHelper;
     private final EscapePointRepository escapePointRepository;
     private final EscapeSourceRepository sourceRepository;
     private final OrgAccessGuard orgAccessGuard;
@@ -58,6 +61,9 @@ public class EscapeHelper {
         trip.setTravellers(
                 new HashSet<>(travellerRepository.findAllByUidIn(request.getTravellerUids()))
         );
+        // First traveller submitted becomes the primary/lead contact — see
+        // Escape.primaryTravellerUid for why this can't be inferred later.
+        trip.setPrimaryTravellerUid(request.getTravellerUids().get(0));
 
         trip.setEscapePoints(
                 new HashSet<>(escapePointRepository.findAllByUidIn(new HashSet<>(request.getEscapePointUids())))
@@ -138,6 +144,30 @@ public class EscapeHelper {
                 .orElseThrow(() -> new NotFoundException("Escape not found with id: " + id));
         orgAccessGuard.requireAccessToOrg(escape.getOrgId());
         return escape;
+    }
+
+    // Adds a new traveller record to an already-created Escape — the
+    // Travelers tab's "collect the 2nd/3rd traveller's details later" flow.
+    // Reuses TravellerHelper.createTraveller (same org/duplicate-email
+    // checks as the standalone /traveller/create endpoint) rather than
+    // duplicating that logic; only appends to the existing set, unlike
+    // updateEscape's travellerUids field which replaces it wholesale.
+    public Escape addTraveller(UUID escapeUid, TravellerCreateRequestDTO request) {
+        Escape escape = getEscapeById(escapeUid);
+        Traveller traveller = travellerHelper.createTraveller(request);
+        escape.getTravellers().add(traveller);
+        return escapeRepository.save(escape);
+    }
+
+    // Detaches a traveller from this escape's roster only (removes the
+    // escape_traveller join row) — does NOT delete the Traveller record
+    // itself, since the same traveller may be linked to other escapes and a
+    // hard delete would violate the escape_traveller FK constraint whenever
+    // it's still referenced anywhere.
+    public Escape removeTraveller(UUID escapeUid, UUID travellerUid) {
+        Escape escape = getEscapeById(escapeUid);
+        escape.getTravellers().removeIf(t -> t.getUid().equals(travellerUid));
+        return escapeRepository.save(escape);
     }
 
     public void deleteEscape(UUID uid) {

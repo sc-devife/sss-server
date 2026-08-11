@@ -2,6 +2,7 @@ package com.sss.app.dto.itinerary;
 
 import lombok.Data;
 
+import java.time.LocalTime;
 import java.util.UUID;
 
 @Data
@@ -11,7 +12,9 @@ public class ItineraryItemResponseDTO {
     private Integer dayNumber;
     private String itemType;
     private UUID referenceId;
-    private String referenceLabel; // resolved at response-build time (hotel/activity/transport name)
+    private String referenceLabel; // resolved at response-build time (library name, or title if ad-hoc)
+    private String title;
+    private LocalTime startTime;
     private String notes;
     private Integer sortOrder;
 }

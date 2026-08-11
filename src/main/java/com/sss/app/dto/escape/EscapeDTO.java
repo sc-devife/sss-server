@@ -8,6 +8,7 @@ import lombok.Data;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 public class EscapeDTO {
@@ -16,6 +17,10 @@ public class EscapeDTO {
     private LeadResponseDTO lead;
 
     private List<TravellerResponseDTO> travellers;
+
+    // uid of the traveller who represents the lead's original/primary
+    // contact — null for escapes created before this field existed.
+    private UUID primaryTravellerUid;
 
     private List<EscapePointResponseDto> escapePoints;
 

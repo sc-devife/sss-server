@@ -11,5 +11,7 @@ public interface ServiceProviderRepository extends JpaRepository<ServiceProvider
 
     Optional<ServiceProvider> findByUid(UUID uid);
 
+    List<ServiceProvider> findAllByUidIn(List<UUID> uids);
+
     List<ServiceProvider> findAllByOrgIdAndDeletedAtIsNull(Long orgId);
 }

@@ -10,6 +10,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.time.LocalTime;
 import java.util.UUID;
 
 @Entity
@@ -40,15 +41,26 @@ public class ItineraryItem extends Auditable {
     @Column(name = "day_number", nullable = false)
     private Integer dayNumber;
 
-    // hotel / activity / transport
+    // transport / pickup_drop / hotel / activity / sightseeing / meal / free_time / other
     @Column(name = "item_type", nullable = false)
     private String itemType;
 
-    // Polymorphic pointer at Hotel/Activity/Transport's uid, resolved at the
-    // application layer based on itemType — no single DB FK is possible
-    // across three different tables.
-    @Column(name = "reference_id", nullable = false)
+    // Polymorphic pointer at Hotel/Activity/Transport/ServiceProvider's uid
+    // depending on itemType, resolved at the application layer — no single
+    // DB FK is possible across four different tables. Optional: an ad-hoc
+    // entry with no matching library record yet supplies only `title`. See
+    // ItineraryItemHelper.validateReference for the "title OR referenceId"
+    // rule.
+    @Column(name = "reference_id")
     private UUID referenceId;
+
+    // Free-text label — required when referenceId is absent, optional
+    // (pre-filled from the library item's name, user-overridable) otherwise.
+    @Column
+    private String title;
+
+    @Column(name = "start_time")
+    private LocalTime startTime;
 
     @Column
     private String notes;
