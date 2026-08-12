@@ -22,6 +22,10 @@ public class UserDto {
     @Pattern(regexp = "^$|^\\+[1-9]\\d{6,14}$", message = "Enter a valid phone number")
     private String contact_number;
 
+    // Cloudinary URL, set via the generic /files/upload endpoint then saved
+    // through this DTO — same two-step pattern as the organization logo.
+    private String profile_picture;
+
     public interface Create {
     }
 }

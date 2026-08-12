@@ -59,6 +59,9 @@ public class User {
     @Column
     private String contact_number;
 
+    @Column(name = "profile_picture")
+    private String profilePicture;
+
     // Section 15 / Lead Assignment Engine (Section 5) fields.
     @Column(name = "is_specialist")
     private Boolean isSpecialist;
@@ -114,6 +117,10 @@ public class User {
 
         if (CompareUtil.hasChanged(dto.getContact_number(), this.contact_number)) {
             this.contact_number = dto.getContact_number();
+        }
+
+        if (CompareUtil.hasChanged(dto.getProfile_picture(), this.profilePicture)) {
+            this.profilePicture = dto.getProfile_picture();
         }
     }
 }
