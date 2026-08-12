@@ -57,6 +57,7 @@ public class UsersServiceImpl implements UsersService {
                         (displayName != null && !displayName.isBlank()) ? displayName : organization.getRegisteredName()
                 );
                 dto.setOrganizationLogo(organization.getLogoFile());
+                dto.setOrganizationLogoShape(organization.getLogoShape());
             });
         }
         return dto;

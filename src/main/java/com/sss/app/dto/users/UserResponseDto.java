@@ -23,6 +23,7 @@ public class UserResponseDto extends UserDto {
     // existing orgId relationship, not duplicated into the users table.
     private String organizationName;
     private String organizationLogo;
+    private String organizationLogoShape;
 
     // Section 5 assignment-engine settings — see UserAssignmentSettingsUpdateRequestDto.
     private Boolean isSpecialist;

@@ -28,6 +28,7 @@ public class OrganizationsDto {
     private String country_code;
     private String default_currency_code;
     private String logo_file;
+    private String logo_shape;
     private OrganizationStatus status;
     private UUID quote_template_id;
     private UUID invoice_template_id;

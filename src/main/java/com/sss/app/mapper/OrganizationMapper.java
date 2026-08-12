@@ -18,6 +18,7 @@ public class OrganizationMapper {
         dto.setCountry_code(orgs.getCountryCode());
         dto.setDefault_currency_code(orgs.getDefaultCurrencyCode());
         dto.setLogo_file(orgs.getLogoFile());
+        dto.setLogo_shape(orgs.getLogoShape());
         dto.setStatus(orgs.getStatus());
         dto.setQuote_template_id(orgs.getQuoteTemplateId());
         dto.setInvoice_template_id(orgs.getInvoiceTemplateId());

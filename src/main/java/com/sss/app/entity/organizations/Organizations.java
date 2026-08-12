@@ -61,6 +61,12 @@ public class Organizations {
 
     private String logoFile;
 
+    // "round" | "square" | "rectangle" — how the header/sidebar render
+    // logoFile; free-form string rather than an enum since it's purely a
+    // display hint, not a value anything branches on server-side.
+    @Builder.Default
+    private String logoShape = "round";
+
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private OrganizationStatus status = OrganizationStatus.ACTIVE;
@@ -104,6 +110,9 @@ public class Organizations {
         builder.countryCode(dto.getCountry_code());
         builder.defaultCurrencyCode(dto.getDefault_currency_code());
         builder.logoFile(dto.getLogo_file());
+        if (dto.getLogo_shape() != null) {
+            builder.logoShape(dto.getLogo_shape());
+        }
 
         return builder.build();
     }
@@ -128,6 +137,9 @@ public class Organizations {
         }
         if (CompareUtil.hasChanged(dto.getLogo_file(), this.logoFile)) {
             this.logoFile = dto.getLogo_file();
+        }
+        if (CompareUtil.hasChanged(dto.getLogo_shape(), this.logoShape)) {
+            this.logoShape = dto.getLogo_shape();
         }
         // quote_template_id was on this DTO from the start (Section 15) but
         // never actually applied here — dead until Phase 5's template
