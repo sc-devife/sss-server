@@ -13,5 +13,5 @@ public interface ItineraryService {
     List<ItineraryResponseDTO> getAllForEscape(UUID escapeUid);
     ItineraryResponseDTO update(UUID uid, ItineraryUpdateRequestDTO request);
     void delete(UUID uid);
-    ItineraryResponseDTO createNewVersion(UUID sourceUid);
+    ItineraryResponseDTO duplicate(UUID sourceUid);
 }

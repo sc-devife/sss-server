@@ -53,8 +53,8 @@ public class ItineraryController {
     }
 
     @PreAuthorize("@permissionService.hasPermission('trips.write')")
-    @PostMapping("/{uid}/new-version")
-    public ResponseEntity<ItineraryResponseDTO> createNewVersion(@PathVariable UUID uid) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(itineraryService.createNewVersion(uid));
+    @PostMapping("/{uid}/duplicate")
+    public ResponseEntity<ItineraryResponseDTO> duplicate(@PathVariable UUID uid) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(itineraryService.duplicate(uid));
     }
 }

@@ -45,7 +45,7 @@ public class ItineraryServiceImpl implements ItineraryService {
     }
 
     @Override
-    public ItineraryResponseDTO createNewVersion(UUID sourceUid) {
-        return itineraryMapper.toResponse(itineraryHelper.createNewVersion(sourceUid));
+    public ItineraryResponseDTO duplicate(UUID sourceUid) {
+        return itineraryMapper.toResponse(itineraryHelper.duplicate(sourceUid));
     }
 }

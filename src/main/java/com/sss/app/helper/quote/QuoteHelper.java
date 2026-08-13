@@ -36,8 +36,18 @@ public class QuoteHelper {
         Quote quote = quoteMapper.toEntityCreate(request);
         quote.setOrgId(currentUser().getOrgId());
         quote.setItinerary(itinerary);
+        if (quote.getName() == null || quote.getName().isBlank()) {
+            quote.setName(buildAutoName(itinerary));
+        }
 
         return quoteRepository.save(quote);
+    }
+
+    // "<itinerary name> - Quote <next number>" — mirrors Itinerary's own
+    // blank-name auto-naming.
+    private String buildAutoName(Itinerary itinerary) {
+        long nextIndex = quoteRepository.findAllByOrgIdAndItinerary_Seqp(currentUser().getOrgId(), itinerary.getSeqp()).size() + 1;
+        return itinerary.getName() + " - Quote " + nextIndex;
     }
 
     public Quote getByUid(UUID uid) {
@@ -70,6 +80,7 @@ public class QuoteHelper {
         Quote revision = Quote.builder()
                 .orgId(source.getOrgId())
                 .itinerary(source.getItinerary())
+                .name(source.getName())
                 .version(source.getVersion() + 1)
                 .status("draft")
                 .currencyCode(source.getCurrencyCode())

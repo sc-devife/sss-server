@@ -45,6 +45,8 @@ public class Quote extends Auditable {
     @JoinColumn(name = "itinerary_id", nullable = false)
     private Itinerary itinerary;
 
+    private String name;
+
     @Column(nullable = false)
     private Integer version;
 

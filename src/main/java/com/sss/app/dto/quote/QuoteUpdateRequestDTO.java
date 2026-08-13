@@ -8,6 +8,7 @@ import java.util.UUID;
 
 @Data
 public class QuoteUpdateRequestDTO {
+    private String name;
     private String currencyCode;
     private BigDecimal fxRateSnapshot;
     private BigDecimal subtotalUsd;

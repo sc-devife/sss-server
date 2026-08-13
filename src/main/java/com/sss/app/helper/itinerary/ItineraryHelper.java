@@ -38,16 +38,31 @@ public class ItineraryHelper {
     public Itinerary create(ItineraryCreateRequestDTO request) {
         // getEscapeById already enforces the escape belongs to the caller's own org.
         Escape trip = escapeHelper.getEscapeById(request.getEscapeUid());
+        String name = (request.getName() == null || request.getName().isBlank())
+                ? buildAutoName(trip)
+                : request.getName();
 
         Itinerary itinerary = Itinerary.builder()
                 .orgId(currentUser().getOrgId())
                 .escape(trip)
-                .name(request.getName())
+                .name(name)
                 .status("draft")
                 .version(1)
                 .build();
 
         return itineraryRepository.save(itinerary);
+    }
+
+    // "<lead name> - Itinerary <next number> (<trip length> Days)" — mirrors
+    // what an agent would otherwise have typed by hand when leaving the name
+    // field blank.
+    private String buildAutoName(Escape trip) {
+        String escapeName = trip.getLead() != null && trip.getLead().getName() != null
+                ? trip.getLead().getName()
+                : "Escape #" + trip.getUid();
+        long nextIndex = itineraryRepository.findAllByOrgIdAndEscape_Seqp(trip.getOrgId(), trip.getSeqp()).size() + 1;
+        String daysPart = trip.getNumberOfDays() != null ? " (" + trip.getNumberOfDays() + " Days)" : "";
+        return escapeName + " - Itinerary " + nextIndex + daysPart;
     }
 
     public Itinerary getByUid(UUID uid) {
@@ -79,30 +94,31 @@ public class ItineraryHelper {
     }
 
     /**
-     * Section 8: "keep every itinerary retained (versioned, not overwritten)"
-     * — a revision is a new row + cloned items, not an edit to the original.
-     * The source itinerary is marked superseded, never deleted.
+     * Itineraries are no longer versioned in place — "New version" is gone.
+     * Duplicate creates a fully independent itinerary (new uid, own
+     * day-plan/content clone) alongside the source; the source is left
+     * untouched, not marked superseded.
      */
     @Transactional
-    public Itinerary createNewVersion(UUID sourceUid) {
+    public Itinerary duplicate(UUID sourceUid) {
         Itinerary source = getByUid(sourceUid);
         List<ItineraryItem> sourceItems = itineraryItemRepository
                 .findAllByItinerary_SeqpOrderByDayNumberAscSortOrderAsc(source.getSeqp());
 
-        Itinerary newVersion = Itinerary.builder()
+        Itinerary copy = Itinerary.builder()
                 .orgId(source.getOrgId())
                 .escape(source.getEscape())
-                .name(source.getName())
+                .name(source.getName() + " (Copy)")
                 .status("draft")
-                .version(source.getVersion() + 1)
+                .version(1)
                 .build();
-        newVersion = itineraryRepository.save(newVersion);
+        copy = itineraryRepository.save(copy);
 
-        Itinerary finalNewVersion = newVersion;
+        Itinerary finalCopy = copy;
         List<ItineraryItem> clonedItems = sourceItems.stream()
                 .map(item -> ItineraryItem.builder()
                         .orgId(item.getOrgId())
-                        .itinerary(finalNewVersion)
+                        .itinerary(finalCopy)
                         .dayNumber(item.getDayNumber())
                         .itemType(item.getItemType())
                         .referenceId(item.getReferenceId())
@@ -119,7 +135,7 @@ public class ItineraryHelper {
         List<ItineraryContentItem> clonedContentItems = sourceContentItems.stream()
                 .map(item -> ItineraryContentItem.builder()
                         .orgId(item.getOrgId())
-                        .itinerary(finalNewVersion)
+                        .itinerary(finalCopy)
                         .type(item.getType())
                         .sourceItemId(item.getSourceItemId())
                         .name(item.getName())
@@ -129,9 +145,6 @@ public class ItineraryHelper {
                 .toList();
         itineraryContentItemRepository.saveAll(clonedContentItems);
 
-        source.setStatus("superseded");
-        itineraryRepository.save(source);
-
-        return newVersion;
+        return copy;
     }
 }

@@ -11,6 +11,7 @@ import java.util.UUID;
 public class QuoteResponseDTO {
     private UUID uid;
     private UUID itineraryUid;
+    private String name;
     private Integer version;
     private String status;
     private String currencyCode;
