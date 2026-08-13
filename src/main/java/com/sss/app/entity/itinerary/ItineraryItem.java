@@ -54,6 +54,13 @@ public class ItineraryItem extends Auditable {
     @Column(name = "reference_id")
     private UUID referenceId;
 
+    // "library" when referenceId points at a Hotel/Activity/Transport/
+    // ServiceProvider record, "custom" for a free-text-only entry — derived
+    // server-side from referenceId's presence (see ItineraryItemHelper), not
+    // client-settable, so it can never drift from what referenceId actually says.
+    @Column(nullable = false)
+    private String source;
+
     // Free-text label — required when referenceId is absent, optional
     // (pre-filled from the library item's name, user-overridable) otherwise.
     @Column
@@ -75,6 +82,9 @@ public class ItineraryItem extends Auditable {
         }
         if (this.sortOrder == null) {
             this.sortOrder = 0;
+        }
+        if (this.source == null) {
+            this.source = referenceId != null ? "library" : "custom";
         }
     }
 }

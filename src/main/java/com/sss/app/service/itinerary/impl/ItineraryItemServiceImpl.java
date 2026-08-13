@@ -64,6 +64,7 @@ public class ItineraryItemServiceImpl implements ItineraryItemService {
         dto.setItemType(item.getItemType());
         dto.setReferenceId(item.getReferenceId());
         dto.setReferenceLabel(referenceLabel);
+        dto.setSource(item.getSource());
         dto.setTitle(item.getTitle());
         dto.setStartTime(item.getStartTime());
         dto.setNotes(item.getNotes());

@@ -94,6 +94,7 @@ public class ItineraryItemHelper {
             item.setItemType(newType);
             item.setReferenceId(newRefId);
             item.setTitle(newTitle);
+            item.setSource(newRefId != null ? "library" : "custom");
         }
         if (request.getDayNumber() != null) {
             item.setDayNumber(request.getDayNumber());
@@ -197,6 +198,12 @@ public class ItineraryItemHelper {
     private void validateReference(String itemType, UUID referenceId, String title) {
         if (!VALID_TYPES.contains(itemType)) {
             throw new BadRequestException("itemType must be one of: " + VALID_TYPES);
+        }
+        // Activity items are always library-linked from the day planner's
+        // "Add Activity" form (no free-text title field for that type) —
+        // enforce it server-side too rather than trusting the client.
+        if ("activity".equals(itemType) && referenceId == null) {
+            throw new BadRequestException("referenceId is required for activity items");
         }
         boolean hasTitle = title != null && !title.isBlank();
         if (referenceId == null) {

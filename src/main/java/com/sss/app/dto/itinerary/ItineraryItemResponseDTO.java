@@ -13,6 +13,7 @@ public class ItineraryItemResponseDTO {
     private String itemType;
     private UUID referenceId;
     private String referenceLabel; // resolved at response-build time (library name, or title if ad-hoc)
+    private String source; // "library" or "custom" — see ItineraryItem.source
     private String title;
     private LocalTime startTime;
     private String notes;
