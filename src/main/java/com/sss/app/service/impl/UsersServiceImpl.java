@@ -4,15 +4,21 @@ import com.sss.app.dto.users.UserAssignmentSettingsUpdateRequestDto;
 import com.sss.app.dto.users.UserCreateRequestDto;
 import com.sss.app.dto.users.UserResponseDto;
 import com.sss.app.dto.users.UserUpdateRequestDto;
+import com.sss.app.entity.UserSession;
 import com.sss.app.entity.users.User;
 import com.sss.app.helper.UsersHelper;
 import com.sss.app.mapper.UserMapper;
 import com.sss.app.repository.OrganizationRepository;
+import com.sss.app.repository.UserRepository;
+import com.sss.app.repository.UserSessionRepository;
 import com.sss.app.service.UsersService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class UsersServiceImpl implements UsersService {
@@ -20,11 +26,16 @@ public class UsersServiceImpl implements UsersService {
     UsersHelper usersHelper;
     UserMapper userMapper;
     OrganizationRepository organizationRepository;
+    UserSessionRepository userSessionRepository;
+    UserRepository userRepository;
 
-    public UsersServiceImpl(UsersHelper usersHelper, UserMapper userMapper, OrganizationRepository organizationRepository) {
+    public UsersServiceImpl(UsersHelper usersHelper, UserMapper userMapper, OrganizationRepository organizationRepository,
+                             UserSessionRepository userSessionRepository, UserRepository userRepository) {
         this.usersHelper = usersHelper;
         this.userMapper = userMapper;
         this.organizationRepository = organizationRepository;
+        this.userSessionRepository = userSessionRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -65,7 +76,32 @@ public class UsersServiceImpl implements UsersService {
 
     @Override
     public List<UserResponseDto> fetchAllUsers(Long companyId) {
-        return userMapper.toUserResponseDtoList(usersHelper.fetchAllUsers(companyId));
+        List<User> users = usersHelper.fetchAllUsers(companyId);
+        List<UserResponseDto> dtos = userMapper.toUserResponseDtoList(users);
+
+        // Sessions are keyed by email (see UserSession/JwtAuthenticationFilter),
+        // not user id — batch-fetch by email rather than one query per row.
+        List<String> emails = users.stream().map(User::getEmail).filter(e -> e != null).toList();
+        Map<String, UserSession> sessionsByEmail = userSessionRepository.findAllById(emails).stream()
+                .collect(Collectors.toMap(UserSession::getUsername, Function.identity()));
+
+        for (int i = 0; i < users.size(); i++) {
+            UserSession session = sessionsByEmail.get(users.get(i).getEmail());
+            if (session != null) {
+                dtos.get(i).setLastActiveAt(session.getLastAccessed());
+            }
+        }
+
+        List<Long> inviterIds = users.stream().map(User::getInvitedBy).filter(id -> id != null).toList();
+        Map<Long, String> inviterNamesBySeqp = userRepository.findAllById(inviterIds).stream()
+                .collect(Collectors.toMap(User::getSeqp, User::getName));
+        for (int i = 0; i < users.size(); i++) {
+            Long inviterId = users.get(i).getInvitedBy();
+            if (inviterId != null) {
+                dtos.get(i).setInvitedByName(inviterNamesBySeqp.get(inviterId));
+            }
+        }
+        return dtos;
     }
 
     @Override

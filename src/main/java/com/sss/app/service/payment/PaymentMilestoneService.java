@@ -11,5 +11,6 @@ public interface PaymentMilestoneService {
     PaymentMilestoneResponseDTO create(PaymentMilestoneCreateRequestDTO request);
     List<PaymentMilestoneResponseDTO> getAllForDeal(UUID dealUid);
     PaymentMilestoneResponseDTO recordPayment(UUID uid, BigDecimal amount);
+    PaymentMilestoneResponseDTO verifyPayment(UUID uid);
     void delete(UUID uid);
 }

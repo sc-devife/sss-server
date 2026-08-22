@@ -7,13 +7,11 @@ import com.sss.app.dto.escape.EscapeUpdateRequestDTO;
 import com.sss.app.dto.escape.EscapeAdvanceRequestDTO;
 import com.sss.app.dto.escape.EscapeCancelRequestDTO;
 import com.sss.app.dto.traveller.TravellerCreateRequestDTO;
-import com.sss.app.entity.audit.AuditLog;
 import com.sss.app.service.audit.AuditLogService;
 import com.sss.app.service.escape.EscapeService;
 import com.sss.app.service.escape.EscapeLifecycleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.BeanUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -104,15 +102,6 @@ public class EscapeController {
     @GetMapping("/{id}/audit-log")
     public ResponseEntity<List<AuditLogResponseDTO>> auditLog(@PathVariable UUID id) {
         Long seqp = escapeService.resolveSeqp(id); // confirms it exists in the caller's own org
-        List<AuditLogResponseDTO> history = auditLogService.history("Escape", seqp).stream()
-                .map(this::toAuditLogResponse)
-                .toList();
-        return ResponseEntity.ok(history);
-    }
-
-    private AuditLogResponseDTO toAuditLogResponse(AuditLog log) {
-        AuditLogResponseDTO dto = new AuditLogResponseDTO();
-        BeanUtils.copyProperties(log, dto);
-        return dto;
+        return ResponseEntity.ok(auditLogService.historyResponses("Escape", seqp));
     }
 }

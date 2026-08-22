@@ -54,7 +54,13 @@ public class SecurityConfig {
                                 "/api/signup",
                                 "/error",
                                 "/files/**",
-                                "/api/integrations/webhook/**",
+                                // Only the actual inbound lead-intake endpoint
+                                // (WebhookLeadController's /{orgUid}/leads) — NOT
+                                // /webhook/connect or /webhook/disconnect, which are
+                                // authenticated admin actions that happen to share this
+                                // channel's URL prefix. A bare "/webhook/**" here let
+                                // those two bypass auth entirely (found 2026-08-21).
+                                "/api/integrations/webhook/*/leads",
                                 "/api/integrations/meta/webhook",
                                 "/api/integrations/meta/webhook/**"
                         ).permitAll()

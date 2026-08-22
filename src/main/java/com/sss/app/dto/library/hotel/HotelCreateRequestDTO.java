@@ -39,6 +39,10 @@ public class HotelCreateRequestDTO {
 
     private String childAgeForExtraBed;
 
+    private java.time.LocalDate rateValidFrom;
+
+    private java.time.LocalDate rateValidTo;
+
     private String address;
 
     private String contactInfo;

@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter
@@ -15,4 +16,6 @@ import java.util.UUID;
 public class EscapeResponseDTO extends EscapeDTO {
     private UUID uid;
     private EscapeSourceResponseDTO source;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

@@ -71,11 +71,10 @@ public class PaymentMilestoneHelper {
     }
 
     /**
-     * Records a (possibly partial) payment and recomputes both this
-     * milestone's status and the trip's own lifecycle stage (Payment
-     * Pending -> Partially Paid -> Fully Paid), forward-only — matches
-     * Section 8's payment stages being driven by real milestone state
-     * rather than a manual status field.
+     * Records a (possibly partial) payment. Lands in "unverified" rather
+     * than "paid"/"partially_paid" directly — an agent recording a payment
+     * isn't the same as finance confirming it landed; verifyPayment() below
+     * is the second step that actually advances the trip's payment stage.
      */
     @Transactional
     public PaymentMilestone recordPayment(UUID uid, BigDecimal amount) {
@@ -86,13 +85,35 @@ public class PaymentMilestoneHelper {
 
         BigDecimal newPaid = milestone.getAmountPaidUsd().add(amount);
         milestone.setAmountPaidUsd(newPaid);
-        milestone.setStatus(newPaid.compareTo(milestone.getAmountUsd()) >= 0 ? "paid" : "partially_paid");
+        milestone.setStatus("unverified");
         milestone.setMarkedPaidBy(currentUser().getSeqp());
         milestone.setMarkedPaidAt(LocalDateTime.now());
         PaymentMilestone saved = paymentMilestoneRepository.save(milestone);
 
         auditLogService.record("Escape", milestone.getDeal().getEscape().getSeqp(), "PAYMENT_RECORDED",
                 milestone.getLabel(), amount);
+
+        return saved;
+    }
+
+    /**
+     * Finance confirms a recorded payment actually landed — only now does
+     * the milestone move to its real paid/partially_paid status and the
+     * trip's own payment lifecycle (Payment Pending -> Partially Paid ->
+     * Fully Paid) get a chance to advance.
+     */
+    @Transactional
+    public PaymentMilestone verifyPayment(UUID uid) {
+        PaymentMilestone milestone = getByUid(uid);
+        if (!"unverified".equals(milestone.getStatus())) {
+            throw new BadRequestException("Only an unverified payment can be verified");
+        }
+
+        milestone.setStatus(milestone.getAmountPaidUsd().compareTo(milestone.getAmountUsd()) >= 0 ? "paid" : "partially_paid");
+        PaymentMilestone saved = paymentMilestoneRepository.save(milestone);
+
+        auditLogService.record("Escape", milestone.getDeal().getEscape().getSeqp(), "PAYMENT_VERIFIED",
+                "unverified", saved.getStatus());
 
         advanceEscapePaymentStatus(milestone.getDeal());
 

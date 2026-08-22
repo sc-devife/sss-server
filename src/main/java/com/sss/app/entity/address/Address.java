@@ -45,6 +45,8 @@ public class Address {
     private String contactNumber;
     private String contactEmail;
     private String tripDestination;
+    private String pan;
+    private String gstin;
 
 
 
@@ -67,6 +69,8 @@ public class Address {
         builder.contactNumber(dto.getContactNumber());
         builder.contactEmail(dto.getContactEmail());
         builder.tripDestination(dto.getTripDestination());
+        builder.pan(dto.getPan());
+        builder.gstin(dto.getGstin());
         return builder.build();
     }
 
@@ -109,6 +113,12 @@ public class Address {
         }
         if (dto.getTripDestination() != null && CompareUtil.hasChanged(dto.getTripDestination(), this.tripDestination)) {
             this.tripDestination = dto.getTripDestination();
+        }
+        if (dto.getPan() != null && CompareUtil.hasChanged(dto.getPan(), this.pan)) {
+            this.pan = dto.getPan();
+        }
+        if (dto.getGstin() != null && CompareUtil.hasChanged(dto.getGstin(), this.gstin)) {
+            this.gstin = dto.getGstin();
         }
     }
 }

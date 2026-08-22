@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 public class AuditLogResponseDTO {
     private String action;
     private Long performedBy;
+    private String performedByName;
     private String previousValue;
     private String newValue;
     private LocalDateTime createdAt;

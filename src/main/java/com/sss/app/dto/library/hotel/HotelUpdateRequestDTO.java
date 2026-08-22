@@ -33,6 +33,10 @@ public class HotelUpdateRequestDTO {
 
     private String childAgeForExtraBed;
 
+    private java.time.LocalDate rateValidFrom;
+
+    private java.time.LocalDate rateValidTo;
+
     private Boolean isActive;
 
     private String address;

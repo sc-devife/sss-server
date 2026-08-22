@@ -39,6 +39,15 @@ public class PaymentMilestoneController {
         return ResponseEntity.ok(paymentMilestoneService.recordPayment(uid, request.getAmount()));
     }
 
+    // Second step after recordPayment — finance confirming the money
+    // actually landed, only after which the milestone moves off "unverified"
+    // and the trip's own payment lifecycle gets a chance to advance.
+    @PreAuthorize("@permissionService.hasPermission('trips.write')")
+    @PostMapping("/{uid}/verify")
+    public ResponseEntity<PaymentMilestoneResponseDTO> verifyPayment(@PathVariable UUID uid) {
+        return ResponseEntity.ok(paymentMilestoneService.verifyPayment(uid));
+    }
+
     @PreAuthorize("@permissionService.hasPermission('trips.write')")
     @DeleteMapping("/{uid}")
     public ResponseEntity<Void> delete(@PathVariable UUID uid) {

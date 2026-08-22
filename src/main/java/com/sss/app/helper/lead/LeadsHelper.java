@@ -176,4 +176,13 @@ public class LeadsHelper {
         return leadRepository.findAllByOrgId(currentUser().getOrgId());
     }
 
+    // Deliberately not a lifecycle action (no status implication) — a plain
+    // field setter, same shape as any other lead detail, so it doesn't need
+    // the audit-logged ceremony the status-changing actions go through.
+    public Lead setFollowUpDueDate(UUID id, LocalDate followUpDueDate) {
+        Lead lead = getLeadById(id);
+        lead.setFollowUpDueDate(followUpDueDate);
+        return leadRepository.save(lead);
+    }
+
 }

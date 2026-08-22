@@ -2,6 +2,7 @@ package com.sss.app.dto.lead;
 
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -15,6 +16,7 @@ public class LeadResponseDTO extends LeadDTO {
     // client-side resolution pattern in LeadDetailModal.tsx.
     private String assignedToUserName;
     private String assignmentReason;
+    private LocalDate followUpDueDate;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

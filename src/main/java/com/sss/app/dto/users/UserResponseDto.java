@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -32,4 +33,14 @@ public class UserResponseDto extends UserDto {
     private Boolean eligibleForPriorityLeads;
     private Boolean acceptingLeads;
     private Boolean blocked;
+
+    // Resolved from UserSession.lastAccessed (keyed by email, refreshed on
+    // every authenticated request — see JwtAuthenticationFilter) rather than
+    // stored on the user record itself. Only populated on fetchAllUsers —
+    // see UsersServiceImpl.
+    private LocalDateTime lastActiveAt;
+
+    // Resolved from User.invitedBy (the inviter's seqp) to a display name —
+    // see UsersServiceImpl. Only populated on fetchAllUsers.
+    private String invitedByName;
 }

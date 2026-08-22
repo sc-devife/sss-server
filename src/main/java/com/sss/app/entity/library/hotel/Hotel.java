@@ -112,6 +112,15 @@ public class Hotel extends Auditable {
 
     private String childAgeForExtraBed; // e.g. "Below 6 years" - kept as String to allow free-form ranges
 
+    // Validity window for the currently-quoted rate — no rate/price field
+    // exists on Hotel itself yet, but stale rates silently going out of date
+    // is a real risk even before that lands, so this is worth tracking now.
+    @Column(name = "rate_valid_from")
+    private java.time.LocalDate rateValidFrom;
+
+    @Column(name = "rate_valid_to")
+    private java.time.LocalDate rateValidTo;
+
     @Builder.Default
     @Column(nullable = false)
     private Boolean isActive = true;

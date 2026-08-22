@@ -1,5 +1,6 @@
 package com.sss.app.entity.escape;
 
+import com.sss.app.entity.common.Auditable;
 import com.sss.app.entity.lead.Lead;
 import com.sss.app.entity.library.escapepoint.EscapePoint;
 import com.sss.app.entity.library.escapesource.EscapeSource;
@@ -21,7 +22,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Escape {
+public class Escape extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

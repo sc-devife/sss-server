@@ -48,6 +48,13 @@ public class AddressHelper {
             AddressConstraint constraint = AddressConstraint.create(org, savedAddress, type, Boolean.TRUE.equals(dto.getPrimaryAddress()));
             constraintRepository.save(constraint);
         }
+        // The constraints just saved above aren't reflected in savedAddress's
+        // in-memory @OneToMany collection (they were persisted via a separate
+        // repository call, not appended to the entity) — refresh so the
+        // caller's mapToDTO(savedAddress) sees the real addressTypes instead
+        // of an empty list.
+        constraintRepository.flush();
+        entityManager.refresh(savedAddress);
         return savedAddress;
     }
 

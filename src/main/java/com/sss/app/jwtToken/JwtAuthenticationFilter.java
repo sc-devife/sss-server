@@ -49,14 +49,21 @@ public class JwtAuthenticationFilter implements Filter {
             // Uploaded images (library items, org logos) are read back via plain
             // <img src> requests, which carry no Authorization header.
             "/sss/files/",
-            // Public, unauthenticated webhook intake — secured by a per-org
-            // shared secret (see WebhookLeadController), not a JWT.
-            "/sss/api/integrations/webhook/",
             // Meta (Facebook/Instagram) Lead Ads webhook — secured by real
             // HMAC signature verification (see MetaSignatureVerifier), not a
             // JWT. Kept in sync with SecurityConfig's requestMatchers().
             "/sss/api/integrations/meta/webhook"
     );
+
+    // The generic-channel webhook lead-intake endpoint (WebhookLeadController's
+    // /{orgUid}/leads) needs its own check rather than a plain prefix in
+    // PUBLIC_PATHS above — IntegrationConnectionController's authenticated
+    // /webhook/connect and /webhook/disconnect admin actions share the same
+    // "/sss/api/integrations/webhook/" prefix, and a bare startsWith() let
+    // those bypass auth entirely (found 2026-08-21). Kept in sync with
+    // SecurityConfig's requestMatchers().
+    private static final String WEBHOOK_LEAD_INTAKE_PREFIX = "/sss/api/integrations/webhook/";
+    private static final String WEBHOOK_LEAD_INTAKE_SUFFIX = "/leads";
 
     @Autowired
     private UserSessionRepository userSessionRepo;
@@ -146,6 +153,9 @@ public class JwtAuthenticationFilter implements Filter {
     }
 
     private boolean isPublicEndpoint(String uri) {
+        if (uri.startsWith(WEBHOOK_LEAD_INTAKE_PREFIX)) {
+            return uri.endsWith(WEBHOOK_LEAD_INTAKE_SUFFIX);
+        }
         return PUBLIC_PATHS.stream().anyMatch(uri::startsWith);
     }
 }

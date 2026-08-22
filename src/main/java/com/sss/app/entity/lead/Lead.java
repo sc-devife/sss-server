@@ -79,6 +79,9 @@ public class Lead extends Auditable {
     @Column(length = 500)
     private String notes;
 
+    @Column(name = "follow_up_due_date")
+    private LocalDate followUpDueDate;
+
     @PrePersist
     protected void onCreate() {
         if (this.uid == null) {

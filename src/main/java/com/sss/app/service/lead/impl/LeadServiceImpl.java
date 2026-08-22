@@ -15,6 +15,7 @@ import com.sss.app.service.lead.LeadService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -83,5 +84,10 @@ public class LeadServiceImpl implements LeadService {
     @Override
     public Long resolveSeqp(UUID id) {
         return leadHelper.getLeadById(id).getSeqp();
+    }
+
+    @Override
+    public LeadResponseDTO setFollowUpDueDate(UUID id, LocalDate followUpDueDate) {
+        return leadMapper.toResponse(leadHelper.setFollowUpDueDate(id, followUpDueDate));
     }
 }

@@ -17,5 +17,6 @@ public class PaymentMilestoneResponseDTO {
     private BigDecimal amountPaidUsd;
     private String status;
     private Long markedPaidBy;
+    private String markedPaidByName;
     private LocalDateTime markedPaidAt;
 }

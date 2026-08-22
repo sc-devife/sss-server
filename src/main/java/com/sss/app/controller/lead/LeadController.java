@@ -5,16 +5,15 @@ import com.sss.app.dto.escape.EscapeCreateRequestDTO;
 import com.sss.app.dto.escape.EscapeResponseDTO;
 import com.sss.app.dto.lead.LeadAssignRequestDTO;
 import com.sss.app.dto.lead.LeadCreateRequestDTO;
+import com.sss.app.dto.lead.LeadFollowUpDueDateRequestDTO;
 import com.sss.app.dto.lead.LeadReasonActionRequestDTO;
 import com.sss.app.dto.lead.LeadResponseDTO;
-import com.sss.app.entity.audit.AuditLog;
 import com.sss.app.service.assignment.LeadAssignmentService;
 import com.sss.app.service.audit.AuditLogService;
 import com.sss.app.service.lead.LeadLifecycleService;
 import com.sss.app.service.lead.LeadService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.BeanUtils;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -101,20 +100,19 @@ public class LeadController {
         return ResponseEntity.ok(leadAssignmentService.manuallyAssign(id, body.getUserId(), body.getReason()));
     }
 
+    // Not a lifecycle action — a plain field, so a direct setter rather than
+    // going through LeadLifecycleService's status-transition machinery.
+    @PreAuthorize("@permissionService.hasPermission('leads.write')")
+    @PutMapping(value = "/{id}/follow-up-due-date", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<LeadResponseDTO> setFollowUpDueDate(@PathVariable UUID id, @RequestBody LeadFollowUpDueDateRequestDTO body) {
+        return ResponseEntity.ok(leadService.setFollowUpDueDate(id, body.getFollowUpDueDate()));
+    }
+
     @PreAuthorize("@permissionService.hasPermission('leads.read')")
     @GetMapping(value = "/{id}/audit-log", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<AuditLogResponseDTO>> auditLog(@PathVariable UUID id) {
         // Confirms the lead exists in the caller's own org before exposing its history.
         Long seqp = leadService.resolveSeqp(id);
-        List<AuditLogResponseDTO> history = auditLogService.history("Lead", seqp).stream()
-                .map(this::toAuditLogResponse)
-                .toList();
-        return ResponseEntity.ok(history);
-    }
-
-    private AuditLogResponseDTO toAuditLogResponse(AuditLog log) {
-        AuditLogResponseDTO dto = new AuditLogResponseDTO();
-        BeanUtils.copyProperties(log, dto);
-        return dto;
+        return ResponseEntity.ok(auditLogService.historyResponses("Lead", seqp));
     }
 }
