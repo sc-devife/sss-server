@@ -33,11 +33,24 @@ public class BankAccountsHelper {
         Organizations org = resolveOrg(orgUid);
         orgAccessGuard.requireAccessToOrg(org.getSeqp());
 
+        if (Boolean.TRUE.equals(dto.getIsDefault())) {
+            bankAccountRepository.clearDefaultForOrg(org.getSeqp());
+        }
+
         OrganizationBankDetails bankAccount = OrganizationBankDetails.create(dto, org);
         bankAccount  = bankAccountRepository.save(bankAccount);
         bankAccountRepository.flush();
         entityManager.refresh(bankAccount);
         return bankAccount;
+    }
+
+    @Transactional
+    public OrganizationBankDetails setDefaultBankAccount(String orgUid, UUID accountUid) {
+        Organizations org = resolveOrg(orgUid);
+        OrganizationBankDetails account = getOwnedAccount(orgUid, accountUid);
+        bankAccountRepository.clearDefaultForOrg(org.getSeqp());
+        account.setIsDefault(true);
+        return bankAccountRepository.save(account);
     }
 
    public List<BankAccountDto> getAccountsForOrg(String orgUid) {
@@ -62,7 +75,7 @@ public class BankAccountsHelper {
                         .accountName(acc.getAccountName())
                         .currency(acc.getCurrency())
                         .status(acc.getStatus())
-                        //  .isPrimary(acc.getIsPrimary())
+                        .isDefault(acc.getIsDefault())
                         .build())
                 .collect(Collectors.toList());
     }

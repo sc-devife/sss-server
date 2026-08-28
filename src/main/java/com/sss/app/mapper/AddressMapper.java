@@ -21,12 +21,13 @@ public class AddressMapper {
                 .contactNumber(address.getContactNumber())
                 .contactEmail(address.getContactEmail())
                 .tripDestination(address.getTripDestination())
-                .pan(address.getPan())
                 .gstin(address.getGstin())
                 .addressTypes(address.getConstraints().stream()
                         .map(com.sss.app.entity.address.AddressConstraint::getAddressType)
                         .distinct()
                         .toList())
+                .primaryAddress(address.getConstraints().stream()
+                        .anyMatch(com.sss.app.entity.address.AddressConstraint::isPrimaryAddress))
                 .build();
     }
 }

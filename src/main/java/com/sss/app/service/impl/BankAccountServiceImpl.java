@@ -39,4 +39,10 @@ public class BankAccountServiceImpl implements BankAccountService {
     public BankAccountDto reactivateBankAccount(String orgUid, UUID accountUid) {
         return accountsMapper.mapToDTO(accountsHelper.reactivateBankAccount(orgUid, accountUid));
     }
+
+    @Transactional
+    @Override
+    public BankAccountDto setDefaultBankAccount(String orgUid, UUID accountUid) {
+        return accountsMapper.mapToDTO(accountsHelper.setDefaultBankAccount(orgUid, accountUid));
+    }
 }

@@ -1,5 +1,6 @@
 package com.sss.app.service;
 
+import com.sss.app.dto.organizations.OrganizationSettingsDto;
 import com.sss.app.dto.organizations.OrganizationsDto;
 
 public interface OrganizationsService {
@@ -9,4 +10,6 @@ public interface OrganizationsService {
     OrganizationsDto createOrganizations(OrganizationsDto createRequest);
     OrganizationsDto updateOrganizations(String uid, OrganizationsDto createRequest);
     void deleteOrganizations(String orgName);
+    OrganizationSettingsDto getMySettings();
+    OrganizationSettingsDto updateMySettings(OrganizationSettingsDto request);
 }

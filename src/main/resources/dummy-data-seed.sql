@@ -42,8 +42,8 @@ BEGIN
     VALUES ('admin', 'Admin User', 'admin@demo.travel', 'Admin', 'User', '+911234567890', v_org_id, now(), true, false)
     RETURNING seqp INTO v_admin_id;
 
-    INSERT INTO user_credentials (seqa, seqa_type, uid, password_hash)
-    VALUES (v_admin_id, 'users', gen_random_uuid(), '$2a$10$99sVliLlwUjmTNDjwdbvm.BdvQAmOvUUQPlEPAY7/O12LOpQWpxey');
+    INSERT INTO user_credentials (user_id, uid, password_hash, failed_login_attempts)
+    VALUES (v_admin_id, gen_random_uuid(), '$2a$10$99sVliLlwUjmTNDjwdbvm.BdvQAmOvUUQPlEPAY7/O12LOpQWpxey', 0);
 
     SELECT seqp INTO v_super_admin_role_id FROM roles WHERE name = 'SUPER_ADMIN';
     INSERT INTO user_role_links (seqa, seqa_type, seqb, seqb_type, uid, is_active, is_archived)
@@ -74,13 +74,13 @@ BEGIN
     INSERT INTO hotels (uid, org_id, name, stars, location_id, destination_id, is_active, status, created_at, updated_at)
     VALUES (gen_random_uuid(), v_org_id, 'Netravati Resort', 4, v_loc_chikka, v_ep_netravati, true, 'active', now(), now());
 
-    -- Leads
-    INSERT INTO leads (org_id, name, email, phone, destination, number_of_people, travel_date, duration_days, budget, status, destination_id, assigned_to_user_id, origin_city, travel_type, is_priority, created_at, updated_at)
-    VALUES (v_org_id, 'Sanat', 'sanat@gmail.com', '+916363356214', 'Crrog', 2, DATE '2026-08-20', 2, 4499, 'Converted', v_ep_crrog, v_admin_id, 'Bengaluru', 'friends', false, now(), now())
+    -- Leads (never individually assigned — see leads schema note in V62)
+    INSERT INTO leads (org_id, name, email, phone, destination, number_of_people, travel_date, duration_days, budget, status, destination_id, source_type, source_channel, origin_city, travel_type, is_priority, created_at, updated_at)
+    VALUES (v_org_id, 'Sanat', 'sanat@gmail.com', '+916363356214', 'Crrog', 2, DATE '2026-08-20', 2, 4499, 'Converted', v_ep_crrog, 'DIRECT', 'manual', 'Bengaluru', 'friends', false, now(), now())
     RETURNING seqp INTO v_lead_sanat;
 
-    INSERT INTO leads (org_id, name, email, phone, destination, number_of_people, travel_date, duration_days, budget, status, destination_id, assigned_to_user_id, origin_city, travel_type, is_priority, created_at, updated_at)
-    VALUES (v_org_id, 'Sangmesh', 'sangmesh@gmail.com', '+916363356215', 'Netravati', 2, DATE '2026-09-05', 2, 15000, 'Converted', v_ep_netravati, v_admin_id, 'Bengaluru', 'friends', false, now(), now())
+    INSERT INTO leads (org_id, name, email, phone, destination, number_of_people, travel_date, duration_days, budget, status, destination_id, source_type, source_channel, origin_city, travel_type, is_priority, created_at, updated_at)
+    VALUES (v_org_id, 'Sangmesh', 'sangmesh@gmail.com', '+916363356215', 'Netravati', 2, DATE '2026-09-05', 2, 15000, 'Converted', v_ep_netravati, 'DIRECT', 'manual', 'Bengaluru', 'friends', false, now(), now())
     RETURNING seqp INTO v_lead_sangmesh;
 
     -- Travellers
@@ -92,13 +92,14 @@ BEGIN
     VALUES (v_org_id, 'Sangmesh', 'Rao', 'sangmesh.rao@example.com', '+916363356215')
     RETURNING seqp INTO v_trav_sangmesh;
 
-    -- Escapes (converted from the leads above)
-    INSERT INTO escapes (org_id, lead_id, status, start_date, number_of_days, end_date)
-    VALUES (v_org_id, v_lead_sanat, 'Quotation Sent', DATE '2026-08-20', 2, DATE '2026-08-22')
+    -- Escapes (converted from the leads above) — assignment lives here now,
+    -- not on the lead (see escapes schema note in V63).
+    INSERT INTO escapes (org_id, lead_id, status, start_date, number_of_days, end_date, assigned_to_user_id)
+    VALUES (v_org_id, v_lead_sanat, 'Quotation Sent', DATE '2026-08-20', 2, DATE '2026-08-22', v_admin_id)
     RETURNING seqp INTO v_escape_1;
 
-    INSERT INTO escapes (org_id, lead_id, status, start_date, number_of_days, end_date)
-    VALUES (v_org_id, v_lead_sangmesh, 'Planning', DATE '2026-09-05', 2, DATE '2026-09-07')
+    INSERT INTO escapes (org_id, lead_id, status, start_date, number_of_days, end_date, assigned_to_user_id)
+    VALUES (v_org_id, v_lead_sangmesh, 'Planning', DATE '2026-09-05', 2, DATE '2026-09-07', v_admin_id)
     RETURNING seqp INTO v_escape_2;
 
     INSERT INTO escape_traveller (escape_id, traveller_id) VALUES (v_escape_1, v_trav_sanat);

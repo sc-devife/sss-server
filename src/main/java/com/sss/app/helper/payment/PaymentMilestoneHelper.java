@@ -7,6 +7,7 @@ import com.sss.app.entity.escape.EscapeStatus;
 import com.sss.app.entity.payment.PaymentMilestone;
 import com.sss.app.entity.users.User;
 import com.sss.app.exception.BadRequestException;
+import com.sss.app.exception.ConflictException;
 import com.sss.app.exception.NotFoundException;
 import com.sss.app.helper.deal.DealHelper;
 import com.sss.app.repository.payment.PaymentMilestoneRepository;
@@ -39,6 +40,9 @@ public class PaymentMilestoneHelper {
 
     public PaymentMilestone create(PaymentMilestoneCreateRequestDTO request) {
         Deal deal = dealHelper.getByUid(request.getDealUid());
+        if ("cancelled".equals(deal.getStatus())) {
+            throw new ConflictException("This deal is cancelled; payment milestones can no longer be added");
+        }
 
         PaymentMilestone milestone = PaymentMilestone.builder()
                 .orgId(deal.getOrgId())
@@ -82,6 +86,9 @@ public class PaymentMilestoneHelper {
             throw new BadRequestException("Payment amount must be greater than zero");
         }
         PaymentMilestone milestone = getByUid(uid);
+        if ("cancelled".equals(milestone.getDeal().getStatus())) {
+            throw new ConflictException("This deal is cancelled; payments can no longer be recorded");
+        }
 
         BigDecimal newPaid = milestone.getAmountPaidUsd().add(amount);
         milestone.setAmountPaidUsd(newPaid);

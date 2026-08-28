@@ -14,4 +14,6 @@ public interface QuoteService {
     QuoteResponseDTO update(UUID uid, QuoteUpdateRequestDTO request);
     void delete(UUID uid);
     QuoteResponseDTO createRevision(UUID sourceUid);
+    QuoteResponseDTO markSent(UUID uid);
+    QuoteResponseDTO markRejected(UUID uid);
 }

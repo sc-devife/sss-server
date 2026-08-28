@@ -21,8 +21,14 @@ public class LeadDTO {
     private Integer durationDays;
     private Double budget;
     private String status;
-    private String sourceCode;
+
+    // DIRECT | AGENCY — see Lead.sourceType. sourceChannel only applies when
+    // DIRECT; agencyDetails only applies when AGENCY.
+    private String sourceType;
+    private String sourceChannel;
     private String sourceRefId;
+    private LeadAgencyDetailsDTO agencyDetails;
+
     private String escapePointId; // EscapePoint uid, resolved manually (see LeadsHelper)
     private Boolean isPriority;
     private String originCity;

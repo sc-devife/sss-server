@@ -14,7 +14,6 @@ public class EscapeUpdateRequestDTO extends EscapeDTO {
 
     @NotNull(message = "Lead ID is required")
     private UUID leadUid;
-    private UUID sourceUid;
 
     private List<UUID> travellerUids;
 

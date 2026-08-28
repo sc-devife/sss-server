@@ -42,10 +42,16 @@ public class Lead extends Auditable {
     private Double budget;          // e.g. 150000.00
     private String status;          // system-managed lifecycle: New/Contacted/Qualified/Converted/Unqualified/Lost/Duplicate
 
-    // Section 7: source_code (manual/whatsapp/instagram/youtube/google_ads/agency)
-    // + the external channel's own id for this lead, for dedup/ack.
-    @Column(name = "source_code")
-    private String sourceCode;
+    // DIRECT | AGENCY — who the lead's business relationship is with. DIRECT
+    // leads carry a sourceChannel (which inbound channel produced them);
+    // AGENCY leads carry a LeadAgencyDetails record instead (see below).
+    @Column(name = "source_type")
+    private String sourceType;
+
+    // Only meaningful when sourceType = DIRECT: manual/whatsapp/instagram/
+    // youtube/google_ads. Null for AGENCY leads.
+    @Column(name = "source_channel")
+    private String sourceChannel;
 
     @Column(name = "source_ref_id")
     private String sourceRefId;
@@ -57,12 +63,6 @@ public class Lead extends Auditable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "destination_id")
     private EscapePoint escapePointRef;
-
-    @Column(name = "assigned_to_user_id")
-    private Long assignedToUserId;
-
-    @Column(name = "assignment_reason")
-    private String assignmentReason;
 
     @Builder.Default
     @Column(name = "is_priority", nullable = false)

@@ -1,5 +1,6 @@
 package com.sss.app.dto.users;
 
+import com.sss.app.dto.team.TeamRefDto;
 import com.sss.app.dto.userrolelinks.UserRoleLinkResponseDto;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -18,6 +19,10 @@ public class UserResponseDto extends UserDto {
     private String userId;
     private String name;
     private List<UserRoleLinkResponseDto> roles;
+
+    // Resolved from UserTeamLink — see UsersServiceImpl. Multi-team
+    // membership (an agent can belong to more than one team at once).
+    private List<TeamRefDto> teams;
 
     // Populated only on the self-service profile endpoints (getCurrentUser /
     // updateCurrentUser) — see UsersServiceImpl. Joined from the User's

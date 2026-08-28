@@ -79,7 +79,7 @@ public class SignupHelper {
         user.setInvitedBy(invitation.getInvitedBy());
         user = userRepository.save(user);
 
-        UserCredential userCredential = UserCredential.create(user.getSeqp(), passwordHash);
+        UserCredential userCredential = UserCredential.create(user, passwordHash);
         userCredentialRepository.save(userCredential);
 
         if (invitation.getRoles() != null && !invitation.getRoles().isEmpty()) {

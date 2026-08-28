@@ -117,4 +117,17 @@ public class DealHelper {
         orgAccessGuard.requireAccessToOrg(deal.getOrgId());
         return deal;
     }
+
+    /** Cancellation is recorded on the trip's own audit trail (mirrors Escape.cancel) rather than new Deal columns. */
+    @Transactional
+    public Deal cancel(UUID uid, String reason) {
+        Deal deal = getByUid(uid);
+        if ("cancelled".equals(deal.getStatus())) {
+            throw new ConflictException("This deal is already cancelled");
+        }
+        deal.setStatus("cancelled");
+        Deal saved = dealRepository.save(deal);
+        auditLogService.record("Escape", deal.getEscape().getSeqp(), "DEAL_CANCELLED", "active", reason);
+        return saved;
+    }
 }

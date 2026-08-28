@@ -1,7 +1,9 @@
 package com.sss.app.controller.deal;
 
+import com.sss.app.dto.deal.DealCancelRequestDTO;
 import com.sss.app.dto.deal.DealResponseDTO;
 import com.sss.app.service.deal.DealService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,5 +35,11 @@ public class DealController {
     @GetMapping
     public ResponseEntity<DealResponseDTO> getForEscape(@RequestParam UUID escapeUid) {
         return ResponseEntity.ok(dealService.getForEscape(escapeUid));
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('trips.write')")
+    @PostMapping("/{uid}/cancel")
+    public ResponseEntity<DealResponseDTO> cancel(@PathVariable UUID uid, @Valid @RequestBody DealCancelRequestDTO request) {
+        return ResponseEntity.ok(dealService.cancel(uid, request.getReason()));
     }
 }

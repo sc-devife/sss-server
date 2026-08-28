@@ -27,6 +27,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
@@ -96,9 +97,16 @@ public class JwtAuthenticationFilter implements Filter {
         // write a second response onto an already-committed one.
         try {
             String username = JwtValidator.extractUsername(token);
+            String sessionIdStr = JwtValidator.extractSessionId(token);
 
-            Optional<UserSession> session = userSessionRepo.findById(username);
-            if (session.isEmpty() || !token.equals(session.get().getJwtToken())) {
+            // A user can hold multiple concurrent sessions (one per device)
+            // now, so "is this token valid" is resolved per-session-id, not
+            // by username alone — a token with no/invalid sessionId claim
+            // (e.g. issued before this feature existed) can't be matched to
+            // any row and is rejected, same as an unknown session.
+            UUID sessionId = parseSessionId(sessionIdStr);
+            Optional<UserSession> session = sessionId == null ? Optional.empty() : userSessionRepo.findById(sessionId);
+            if (session.isEmpty() || !session.get().isActive() || !token.equals(session.get().getJwtToken())) {
                 sendErrorResponse(httpResponse, HttpStatus.UNAUTHORIZED, "Invalid or expired session");
                 return;
             }
@@ -118,7 +126,9 @@ public class JwtAuthenticationFilter implements Filter {
                 return;
             }
             if (Boolean.TRUE.equals(user.getBlocked())) {
-                userSessionRepo.deleteById(username);
+                // Blocked means logged out everywhere, not just this one
+                // device/session.
+                userSessionRepo.revokeAllActiveForUser(user.getSeqp(), now);
                 sendErrorResponse(httpResponse, HttpStatus.FORBIDDEN, "Your account has been blocked. Please contact your organization administrator.");
                 return;
             }
@@ -139,6 +149,17 @@ public class JwtAuthenticationFilter implements Filter {
         }
 
         chain.doFilter(request, response);
+    }
+
+    private UUID parseSessionId(String sessionIdStr) {
+        if (!StringUtils.hasText(sessionIdStr)) {
+            return null;
+        }
+        try {
+            return UUID.fromString(sessionIdStr);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private void sendErrorResponse(HttpServletResponse response, HttpStatus status, String message) throws IOException {

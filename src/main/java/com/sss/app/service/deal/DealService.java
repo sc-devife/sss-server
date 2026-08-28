@@ -8,4 +8,5 @@ public interface DealService {
     DealResponseDTO acceptQuote(UUID quoteUid);
     DealResponseDTO getByUid(UUID uid);
     DealResponseDTO getForEscape(UUID escapeUid);
+    DealResponseDTO cancel(UUID uid, String reason);
 }

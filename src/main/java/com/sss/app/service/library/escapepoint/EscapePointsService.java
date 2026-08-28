@@ -1,6 +1,7 @@
 package com.sss.app.service.library.escapepoint;
 
 import com.sss.app.dto.library.escapepoint.EscapePointCreateRequestDto;
+import com.sss.app.dto.library.escapepoint.EscapePointLocationsUpdateRequestDto;
 import com.sss.app.dto.library.escapepoint.EscapePointResponseDto;
 import com.sss.app.dto.library.escapepoint.EscapePointUpdateRequestDto;
 
@@ -16,5 +17,7 @@ public interface EscapePointsService {
     EscapePointResponseDto updateEscapePoint(String uid, EscapePointUpdateRequestDto payload);
 
     void deleteEscapePoint(String uid);
+
+    EscapePointResponseDto updateLocations(String uid, EscapePointLocationsUpdateRequestDto payload);
 
 }

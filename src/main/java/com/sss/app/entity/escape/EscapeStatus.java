@@ -23,6 +23,10 @@ public final class EscapeStatus {
             PARTIALLY_PAID, FULLY_PAID, ESCAPE_CONFIRMED, ONGOING, COMPLETED
     );
 
+    // Used for assignment-capacity counting (LeadAssignmentServiceImpl) — an
+    // agent's "open" escapes exclude these.
+    public static final List<String> TERMINAL = List.of(COMPLETED, CANCELLED);
+
     public static int indexOf(String status) {
         return ORDER.indexOf(status);
     }

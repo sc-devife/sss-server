@@ -24,5 +24,7 @@ public interface UsersService {
 
     UserResponseDto reassignRoles(String uid, List<String> roles);
 
+    UserResponseDto reassignTeams(String uid, List<String> teamUids);
+
     UserResponseDto setBlocked(String uid, boolean blocked);
 }

@@ -6,6 +6,7 @@ import com.sss.app.dto.library.escapepoint.EscapePointUpdateRequestDto;
 import com.sss.app.entity.library.escapepoint.EscapePoint;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.factory.Mappers;
@@ -24,6 +25,10 @@ public interface EscapePointMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateFromDto(EscapePointUpdateRequestDto dto, @MappingTarget EscapePoint escapePoint);
 
+    // locations/locationLabel resolved separately (batched across all escape
+    // points in a response) — see EscapePointsServiceImpl.
+    @Mapping(target = "locations", ignore = true)
+    @Mapping(target = "locationLabel", ignore = true)
     EscapePointResponseDto toDto(EscapePoint escapePoint);
 
     List<EscapePointResponseDto> toDtoList(List<EscapePoint> entities);

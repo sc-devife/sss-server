@@ -15,7 +15,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 
 @Entity
@@ -57,8 +56,6 @@ public class Organizations {
 
     private String countryCode;
 
-    private String defaultCurrencyCode;
-
     private String logoFile;
 
     // "round" | "square" | "rectangle" — how the header/sidebar render
@@ -71,15 +68,22 @@ public class Organizations {
     @Builder.Default
     private OrganizationStatus status = OrganizationStatus.ACTIVE;
 
-    // Templates don't exist as their own tables yet (Phase 5/6) — these are
-    // forward-looking columns only, no FK until that table is built.
-    private UUID quoteTemplateId;
-    private UUID invoiceTemplateId;
+    // ----- Legal / compliance identity -----
+    // One PAN per legal entity — moved off organization_address (V60), where
+    // it was previously duplicated per-address. GSTIN correctly stays on
+    // Address since GST registration is legitimately per-state in India.
+    private String pan;
+    private String legalEntityType;
+    private String cin;
 
-    // Section 5: "auto-assignment runs when a lead is created if the org
-    // has it enabled; otherwise leads land in an unassigned queue."
-    @Builder.Default
-    private Boolean autoAssignEnabled = true;
+    // ----- Brand / presentation -----
+    private String businessEmail;
+    private String websiteUrl;
+    private String whatsappNumber;
+    private String tagline;
+    @Column(columnDefinition = "text")
+    private String aboutText;
+    private String industryAccreditation;
 
     @CreatedDate
     @Column(updatable = false)
@@ -108,11 +112,19 @@ public class Organizations {
         builder.displayName(dto.getDisplay_name());
         builder.supportPhNum(dto.getSupport_ph_num());
         builder.countryCode(dto.getCountry_code());
-        builder.defaultCurrencyCode(dto.getDefault_currency_code());
         builder.logoFile(dto.getLogo_file());
         if (dto.getLogo_shape() != null) {
             builder.logoShape(dto.getLogo_shape());
         }
+        builder.pan(dto.getPan());
+        builder.legalEntityType(dto.getLegal_entity_type());
+        builder.cin(dto.getCin());
+        builder.businessEmail(dto.getBusiness_email());
+        builder.websiteUrl(dto.getWebsite_url());
+        builder.whatsappNumber(dto.getWhatsapp_number());
+        builder.tagline(dto.getTagline());
+        builder.aboutText(dto.getAbout_text());
+        builder.industryAccreditation(dto.getIndustry_accreditation());
 
         return builder.build();
     }
@@ -123,35 +135,47 @@ public class Organizations {
             this.registeredName = dto.getRegistered_name();
         }
 
-        if (CompareUtil.hasChanged(dto.getDisplay_name(), this.displayName)) {
+        if (dto.getDisplay_name() != null && CompareUtil.hasChanged(dto.getDisplay_name(), this.displayName)) {
             this.displayName = dto.getDisplay_name();
         }
-        if (CompareUtil.hasChanged(dto.getSupport_ph_num(), this.getSupportPhNum())) {
+        if (dto.getSupport_ph_num() != null && CompareUtil.hasChanged(dto.getSupport_ph_num(), this.getSupportPhNum())) {
             this.supportPhNum = dto.getSupport_ph_num();
         }
-        if (CompareUtil.hasChanged(dto.getCountry_code(), this.countryCode)) {
+        if (dto.getCountry_code() != null && CompareUtil.hasChanged(dto.getCountry_code(), this.countryCode)) {
             this.countryCode = dto.getCountry_code();
         }
-        if (CompareUtil.hasChanged(dto.getDefault_currency_code(), this.defaultCurrencyCode)) {
-            this.defaultCurrencyCode = dto.getDefault_currency_code();
-        }
-        if (CompareUtil.hasChanged(dto.getLogo_file(), this.logoFile)) {
+        if (dto.getLogo_file() != null && CompareUtil.hasChanged(dto.getLogo_file(), this.logoFile)) {
             this.logoFile = dto.getLogo_file();
         }
-        if (CompareUtil.hasChanged(dto.getLogo_shape(), this.logoShape)) {
+        if (dto.getLogo_shape() != null && CompareUtil.hasChanged(dto.getLogo_shape(), this.logoShape)) {
             this.logoShape = dto.getLogo_shape();
         }
-        // quote_template_id was on this DTO from the start (Section 15) but
-        // never actually applied here — dead until Phase 5's template
-        // registry gave it something real to reference.
-        if (dto.getQuote_template_id() != null && CompareUtil.hasChanged(dto.getQuote_template_id(), this.quoteTemplateId)) {
-            this.quoteTemplateId = dto.getQuote_template_id();
+        if (dto.getPan() != null && CompareUtil.hasChanged(dto.getPan(), this.pan)) {
+            this.pan = dto.getPan();
         }
-        if (dto.getInvoice_template_id() != null && CompareUtil.hasChanged(dto.getInvoice_template_id(), this.invoiceTemplateId)) {
-            this.invoiceTemplateId = dto.getInvoice_template_id();
+        if (dto.getLegal_entity_type() != null && CompareUtil.hasChanged(dto.getLegal_entity_type(), this.legalEntityType)) {
+            this.legalEntityType = dto.getLegal_entity_type();
         }
-        if (dto.getAuto_assign_enabled() != null && CompareUtil.hasChanged(dto.getAuto_assign_enabled(), this.autoAssignEnabled)) {
-            this.autoAssignEnabled = dto.getAuto_assign_enabled();
+        if (dto.getCin() != null && CompareUtil.hasChanged(dto.getCin(), this.cin)) {
+            this.cin = dto.getCin();
+        }
+        if (dto.getBusiness_email() != null && CompareUtil.hasChanged(dto.getBusiness_email(), this.businessEmail)) {
+            this.businessEmail = dto.getBusiness_email();
+        }
+        if (dto.getWebsite_url() != null && CompareUtil.hasChanged(dto.getWebsite_url(), this.websiteUrl)) {
+            this.websiteUrl = dto.getWebsite_url();
+        }
+        if (dto.getWhatsapp_number() != null && CompareUtil.hasChanged(dto.getWhatsapp_number(), this.whatsappNumber)) {
+            this.whatsappNumber = dto.getWhatsapp_number();
+        }
+        if (dto.getTagline() != null && CompareUtil.hasChanged(dto.getTagline(), this.tagline)) {
+            this.tagline = dto.getTagline();
+        }
+        if (dto.getAbout_text() != null && CompareUtil.hasChanged(dto.getAbout_text(), this.aboutText)) {
+            this.aboutText = dto.getAbout_text();
+        }
+        if (dto.getIndustry_accreditation() != null && CompareUtil.hasChanged(dto.getIndustry_accreditation(), this.industryAccreditation)) {
+            this.industryAccreditation = dto.getIndustry_accreditation();
         }
     }
 }

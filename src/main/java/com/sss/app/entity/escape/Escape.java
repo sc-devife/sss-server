@@ -3,7 +3,6 @@ package com.sss.app.entity.escape;
 import com.sss.app.entity.common.Auditable;
 import com.sss.app.entity.lead.Lead;
 import com.sss.app.entity.library.escapepoint.EscapePoint;
-import com.sss.app.entity.library.escapesource.EscapeSource;
 import com.sss.app.entity.traveller.Traveller;
 import com.sss.app.util.IdGenerator;
 import jakarta.persistence.*;
@@ -37,9 +36,15 @@ public class Escape extends Auditable {
     @JoinColumn(name = "lead_id", nullable = false) //rename
     private Lead lead;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "source_id")
-    private EscapeSource source;
+    // Assignment lives here, not on Lead — decided once, by the assignment
+    // engine, at the moment a lead is converted (see EscapeHelper.createEscape
+    // and LeadAssignmentService). Never inherited from Lead.assignedToUserId,
+    // which no longer exists — leads are never individually assigned.
+    @Column(name = "assigned_to_user_id")
+    private Long assignedToUserId;
+
+    @Column(name = "assignment_reason")
+    private String assignmentReason;
 
     @ManyToMany
     @JoinTable(

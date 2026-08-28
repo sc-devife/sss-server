@@ -7,18 +7,19 @@ import com.sss.app.entity.escape.Escape;
 import com.sss.app.entity.escape.EscapeStatus;
 import com.sss.app.entity.lead.Lead;
 import com.sss.app.entity.library.escapepoint.EscapePoint;
-import com.sss.app.entity.library.escapesource.EscapeSource;
+import com.sss.app.entity.organizations.OrganizationSettings;
 import com.sss.app.entity.traveller.Traveller;
 import com.sss.app.entity.users.User;
 import com.sss.app.exception.NotFoundException;
 import com.sss.app.helper.traveller.TravellerHelper;
 import com.sss.app.mapper.escape.EscapeMapper;
+import com.sss.app.repository.OrganizationSettingsRepository;
 import com.sss.app.repository.escape.EscapeRepository;
 import com.sss.app.repository.lead.LeadRepository;
 import com.sss.app.repository.library.escapepoint.EscapePointRepository;
-import com.sss.app.repository.library.escapesource.EscapeSourceRepository;
 import com.sss.app.repository.traveller.TravellerRepository;
 import com.sss.app.security.OrgAccessGuard;
+import com.sss.app.service.assignment.LeadAssignmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -37,8 +38,9 @@ public class EscapeHelper {
     private final TravellerRepository travellerRepository;
     private final TravellerHelper travellerHelper;
     private final EscapePointRepository escapePointRepository;
-    private final EscapeSourceRepository sourceRepository;
     private final OrgAccessGuard orgAccessGuard;
+    private final OrganizationSettingsRepository organizationSettingsRepository;
+    private final LeadAssignmentService leadAssignmentService;
 
     private User currentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -50,14 +52,10 @@ public class EscapeHelper {
                 .orElseThrow(() -> new NotFoundException("Lead not found"));
         orgAccessGuard.requireAccessToOrg(lead.getOrgId());
 
-        EscapeSource source = request.getSourceUid() == null ? null : sourceRepository.findByUid(request.getSourceUid())
-                .orElseThrow(() -> new NotFoundException("Source not found"));
-
         Escape trip = escapeMapper.toEntityCreate(request);
 
         trip.setOrgId(currentUser().getOrgId());
         trip.setLead(lead);
-        trip.setSource(source);
         trip.setTravellers(
                 new HashSet<>(travellerRepository.findAllByUidIn(request.getTravellerUids()))
         );
@@ -74,7 +72,19 @@ public class EscapeHelper {
 
         trip.setStatus(EscapeStatus.PLANNING);
 
-        return escapeRepository.save(trip);
+        Escape saved = escapeRepository.save(trip);
+
+        // Assignment happens exactly once, here — leads themselves are never
+        // individually assigned. Gated by the org's own setting (Phase 1),
+        // defaulting to on if no settings row exists yet.
+        boolean autoAssignEnabled = organizationSettingsRepository.findById(saved.getOrgId())
+                .map(OrganizationSettings::getAutoAssignEnabled)
+                .orElse(true);
+        if (Boolean.TRUE.equals(autoAssignEnabled)) {
+            leadAssignmentService.autoAssign(saved);
+        }
+
+        return saved;
     }
 
     public List<Escape> getAllEscapes() {
@@ -93,12 +103,6 @@ public class EscapeHelper {
                     .orElseThrow(() -> new NotFoundException("Lead not found"));
             orgAccessGuard.requireAccessToOrg(lead.getOrgId());
             escape.setLead(lead);
-        }
-
-        if (request.getSourceUid() != null) {
-            EscapeSource source = sourceRepository.findByUid(request.getSourceUid())
-                    .orElseThrow(() -> new NotFoundException("Source not found"));
-            escape.setSource(source);
         }
 
         //Update Travellers (Overwrite old ones)

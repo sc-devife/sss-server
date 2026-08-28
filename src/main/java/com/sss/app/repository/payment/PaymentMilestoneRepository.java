@@ -23,8 +23,8 @@ public interface PaymentMilestoneRepository extends JpaRepository<PaymentMilesto
     // Dashboard org metrics: outstanding amount across all open milestones for an org.
     List<PaymentMilestone> findAllByOrgIdAndStatusIn(Long orgId, List<String> statuses);
 
-    // Dashboard "my upcoming payments": milestones on trips whose lead is assigned to me.
-    @Query("SELECT pm FROM PaymentMilestone pm WHERE pm.orgId = :orgId AND pm.deal.escape.lead.assignedToUserId = :userId "
+    // Dashboard "my upcoming payments": milestones on escapes assigned to me.
+    @Query("SELECT pm FROM PaymentMilestone pm WHERE pm.orgId = :orgId AND pm.deal.escape.assignedToUserId = :userId "
             + "AND pm.status IN :statuses ORDER BY pm.dueDate ASC")
     List<PaymentMilestone> findUpcomingForAssignee(@Param("orgId") Long orgId, @Param("userId") Long userId, @Param("statuses") List<String> statuses);
 }

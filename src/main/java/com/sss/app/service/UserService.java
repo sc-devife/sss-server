@@ -96,9 +96,10 @@ public class UserService {
         }
 
         User user = usersHelper.getUserByEmail(resetPasswordDto.getEmail());
-        UserCredential userCredential = userCredentialsHelper.getUserCredentialBySeqa(user.getSeqp());
+        UserCredential userCredential = userCredentialsHelper.getUserCredentialByUserSeqp(user.getSeqp());
 
         userCredential.setPassword_hash(passwordEncoder.encode(resetPasswordDto.getNewPassword()));
+        userCredential.registerSuccessfulLogin();
         userCredentialRepository.save(userCredential);
 
         // Burn the token so the link can't be reused.

@@ -5,13 +5,17 @@ import com.sss.app.dto.escape.EscapeCreateRequestDTO;
 import com.sss.app.dto.escape.EscapeResponseDTO;
 import com.sss.app.dto.escape.EscapeUpdateRequestDTO;
 import com.sss.app.dto.escape.EscapeAdvanceRequestDTO;
+import com.sss.app.dto.escape.EscapeAssignRequestDTO;
 import com.sss.app.dto.escape.EscapeCancelRequestDTO;
+import com.sss.app.dto.escape.EscapeResponseDTO;
 import com.sss.app.dto.traveller.TravellerCreateRequestDTO;
+import com.sss.app.service.assignment.LeadAssignmentService;
 import com.sss.app.service.audit.AuditLogService;
 import com.sss.app.service.escape.EscapeService;
 import com.sss.app.service.escape.EscapeLifecycleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +31,7 @@ public class EscapeController {
     private final EscapeService escapeService;
     private final EscapeLifecycleService escapeLifecycleService;
     private final AuditLogService auditLogService;
+    private final LeadAssignmentService leadAssignmentService;
 
     @PreAuthorize("@permissionService.hasPermission('trips.write')")
     @PostMapping("/create")
@@ -103,5 +108,14 @@ public class EscapeController {
     public ResponseEntity<List<AuditLogResponseDTO>> auditLog(@PathVariable UUID id) {
         Long seqp = escapeService.resolveSeqp(id); // confirms it exists in the caller's own org
         return ResponseEntity.ok(auditLogService.historyResponses("Escape", seqp));
+    }
+
+    // Manual (re)assignment — the auto-assignment engine already runs once
+    // at conversion time (see EscapeHelper.createEscape); this covers
+    // reassigning afterward or picking up an escape that was left unassigned.
+    @PreAuthorize("@permissionService.hasPermission('leads.assign')")
+    @PostMapping(value = "/{id}/assign", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<EscapeResponseDTO> assign(@PathVariable UUID id, @Valid @RequestBody EscapeAssignRequestDTO body) {
+        return ResponseEntity.ok(leadAssignmentService.manuallyAssign(id, body.getUserId(), body.getReason()));
     }
 }

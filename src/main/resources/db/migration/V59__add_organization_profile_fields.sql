@@ -1,0 +1,10 @@
+ALTER TABLE organizations ADD COLUMN pan VARCHAR(20);
+ALTER TABLE organizations ADD COLUMN legal_entity_type VARCHAR(50);
+ALTER TABLE organizations ADD COLUMN cin VARCHAR(30);
+ALTER TABLE organizations ADD COLUMN business_email VARCHAR(255);
+ALTER TABLE organizations ADD COLUMN website_url VARCHAR(255);
+ALTER TABLE organizations ADD COLUMN whatsapp_number VARCHAR(20);
+ALTER TABLE organizations ADD COLUMN tagline VARCHAR(255);
+ALTER TABLE organizations ADD COLUMN about_text TEXT;
+ALTER TABLE organizations ADD COLUMN brand_primary_color VARCHAR(9);
+ALTER TABLE organizations ADD COLUMN industry_accreditation VARCHAR(255);

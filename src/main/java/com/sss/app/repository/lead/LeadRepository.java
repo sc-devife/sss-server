@@ -22,9 +22,6 @@ public interface LeadRepository extends JpaRepository<Lead, Long> {
 
     List<Lead> findAllByOrgId(Long orgId);
 
-    long countByAssignedToUserIdAndStatusNotIn(Long assignedToUserId, List<String> excludedStatuses);
-
-    List<Lead> findAllByOrgIdAndAssignedToUserIdAndStatusNotIn(Long orgId, Long assignedToUserId, List<String> excludedStatuses);
 
     long countByOrgId(Long orgId);
 

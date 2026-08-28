@@ -1,18 +1,23 @@
 package com.sss.app.helper.lead;
 
+import com.sss.app.dto.lead.LeadAgencyDetailsDTO;
 import com.sss.app.dto.lead.LeadCreateRequestDTO;
 import com.sss.app.entity.integration.meta.LeadSourceMetadata;
 import com.sss.app.entity.lead.Lead;
+import com.sss.app.entity.lead.LeadAgencyDetails;
+import com.sss.app.entity.lead.LeadSourceType;
 import com.sss.app.entity.users.User;
 import com.sss.app.exception.NotFoundException;
 import com.sss.app.mapper.lead.LeadMapper;
 import com.sss.app.repository.integration.meta.LeadSourceMetadataRepository;
+import com.sss.app.repository.lead.LeadAgencyDetailsRepository;
 import com.sss.app.repository.lead.LeadRepository;
 import com.sss.app.repository.library.escapepoint.EscapePointRepository;
 import com.sss.app.security.OrgAccessGuard;
 import com.sss.app.service.integration.NormalizedLeadPayload;
 import com.sss.app.service.integration.ProviderLeadMetadata;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
@@ -32,6 +37,7 @@ public class LeadsHelper {
     private final OrgAccessGuard orgAccessGuard;
     private final EscapePointRepository escapePointRepository;
     private final LeadSourceMetadataRepository leadSourceMetadataRepository;
+    private final LeadAgencyDetailsRepository leadAgencyDetailsRepository;
 
     private User currentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -44,14 +50,31 @@ public class LeadsHelper {
         if (lead.getIsPriority() == null) {
             lead.setIsPriority(false);
         }
-        if (lead.getSourceCode() == null || lead.getSourceCode().isBlank()) {
-            lead.setSourceCode("manual");
+        if (lead.getSourceType() == null || lead.getSourceType().isBlank()) {
+            lead.setSourceType(LeadSourceType.DIRECT);
+        }
+        if (LeadSourceType.DIRECT.equals(lead.getSourceType())
+                && (lead.getSourceChannel() == null || lead.getSourceChannel().isBlank())) {
+            lead.setSourceChannel("manual");
+        }
+        if (LeadSourceType.AGENCY.equals(lead.getSourceType())) {
+            lead.setSourceChannel(null);
         }
         if (payload.getEscapePointId() != null && !payload.getEscapePointId().isBlank()) {
             escapePointRepository.findByUid(payload.getEscapePointId())
                     .ifPresent(lead::setEscapePointRef);
         }
-        return leadRepository.save(lead);
+        Lead saved = leadRepository.save(lead);
+
+        if (LeadSourceType.AGENCY.equals(saved.getSourceType()) && payload.getAgencyDetails() != null) {
+            LeadAgencyDetailsDTO agencyDto = payload.getAgencyDetails();
+            LeadAgencyDetails agencyDetails = new LeadAgencyDetails();
+            BeanUtils.copyProperties(agencyDto, agencyDetails);
+            agencyDetails.setLeadId(saved.getSeqp());
+            leadAgencyDetailsRepository.save(agencyDetails);
+        }
+
+        return saved;
     }
 
     /**
@@ -72,7 +95,8 @@ public class LeadsHelper {
                 .numberOfPeople(numberOfPeople)
                 .durationDays(durationDays)
                 .status("New")
-                .sourceCode(channelCode)
+                .sourceType(LeadSourceType.DIRECT)
+                .sourceChannel(channelCode)
                 .sourceRefId(sourceRefId)
                 .build();
         return leadRepository.save(lead);
@@ -107,7 +131,8 @@ public class LeadsHelper {
                 .numberOfPeople(payload.getNumberOfPeople())
                 .durationDays(payload.getDurationDays())
                 .status("New")
-                .sourceCode(channelCode)
+                .sourceType(LeadSourceType.DIRECT)
+                .sourceChannel(channelCode)
                 .sourceRefId(payload.getSourceRefId())
                 .notes(truncateNotes(payload.getNotes()))
                 .build();

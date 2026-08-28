@@ -9,6 +9,9 @@ import lombok.Data;
 import java.time.LocalDate;
 @Data
 public class TravellerDTO {
+    // ADULT / CHILD / INFANT — optional (a lot of existing rows predate this
+    // field being wired up), but must be one of the three values if given.
+    @Pattern(regexp = "^$|ADULT|CHILD|INFANT", message = "Type must be ADULT, CHILD, or INFANT")
     private String type;
     private String salutation;
 
@@ -29,6 +32,13 @@ public class TravellerDTO {
 
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate dateOfBirth;
-    private String age;
+    private Integer age;
     private String nationality;
+
+    private String passportNumber;
+
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate passportExpiry;
+
+    private String passportIssuingCountry;
 }

@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Data
 @AllArgsConstructor
@@ -26,13 +25,25 @@ public class OrganizationsDto {
     @Pattern(regexp = "^$|^\\+[1-9]\\d{6,14}$", message = "Enter a valid phone number")
     private String support_ph_num;
     private String country_code;
-    private String default_currency_code;
     private String logo_file;
     private String logo_shape;
     private OrganizationStatus status;
-    private UUID quote_template_id;
-    private UUID invoice_template_id;
-    private Boolean auto_assign_enabled;
+
+    private String pan;
+    private String legal_entity_type;
+    private String cin;
+    private String business_email;
+    private String website_url;
+    private String whatsapp_number;
+    private String tagline;
+    private String about_text;
+    private String industry_accreditation;
+
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
+
+    // Nested rather than a flat merge — keeps the profile/settings split
+    // visible on the wire too, not just in the DB. Populated on read;
+    // updateOrganizations() applies it via a separate settings update path.
+    private OrganizationSettingsDto settings;
 }

@@ -70,6 +70,14 @@ public class UsersController {
         return ResponseEntity.ok(usersService.reassignRoles(uid, roles));
     }
 
+    // Unlike reassignRoles, an empty list is a valid payload here (a user can
+    // belong to zero teams) — no @NotEmpty/@Valid guard.
+    @PreAuthorize("@permissionService.hasPermission('users.write')")
+    @PutMapping(value = "{uid}/assign/teams", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UserResponseDto> reassignTeams(@PathVariable String uid, @RequestBody List<String> teamUids) {
+        return ResponseEntity.ok(usersService.reassignTeams(uid, teamUids));
+    }
+
     @PreAuthorize("@permissionService.hasPermission('users.write')")
     @PutMapping(value = "{uid}/block", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<UserResponseDto> blockUser(@PathVariable String uid) {

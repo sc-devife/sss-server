@@ -30,4 +30,9 @@ public class DealServiceImpl implements DealService {
     public DealResponseDTO getForEscape(UUID escapeUid) {
         return dealMapper.toResponse(dealHelper.getForEscape(escapeUid));
     }
+
+    @Override
+    public DealResponseDTO cancel(UUID uid, String reason) {
+        return dealMapper.toResponse(dealHelper.cancel(uid, reason));
+    }
 }

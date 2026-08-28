@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "sss-web-app",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "C:\\Users\\sacch\\Documents\\sss\\development\\frontend\\sss-web-app", "run", "dev"],
+      "port": 3000
+    }
+  ]
+}

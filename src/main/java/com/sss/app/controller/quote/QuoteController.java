@@ -67,4 +67,16 @@ public class QuoteController {
     public ResponseEntity<QuoteComputeResponseDTO> compute(@PathVariable UUID uid, @RequestBody QuoteComputeRequestDTO request) {
         return ResponseEntity.ok(quoteComputationService.compute(uid, request));
     }
+
+    @PreAuthorize("@permissionService.hasPermission('trips.write')")
+    @PostMapping("/{uid}/mark-sent")
+    public ResponseEntity<QuoteResponseDTO> markSent(@PathVariable UUID uid) {
+        return ResponseEntity.ok(quoteService.markSent(uid));
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('trips.write')")
+    @PostMapping("/{uid}/mark-rejected")
+    public ResponseEntity<QuoteResponseDTO> markRejected(@PathVariable UUID uid) {
+        return ResponseEntity.ok(quoteService.markRejected(uid));
+    }
 }

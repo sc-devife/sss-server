@@ -45,18 +45,6 @@ public class EscapePoint extends Auditable {
     private String nick_name;
 
     @Column
-    private String city;
-
-    @Column
-    private String province;
-
-    @Column
-    private String country;
-
-    @Column
-    private String region;
-
-    @Column
     private String nearest_airport;
 
     @Column
@@ -70,17 +58,6 @@ public class EscapePoint extends Auditable {
 
     @Column
     private String remarks;
-
-    // Section 14 reference-data fields: stable codes only (see EscapePointDto
-    // for why these live alongside the older free-text city/province/country).
-    @Column(name = "country_code")
-    private String countryCode;
-
-    @Column(name = "region_code")
-    private String regionCode;
-
-    @Column(name = "city_code")
-    private String cityCode;
 
     @Column
     private String description;

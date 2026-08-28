@@ -53,6 +53,16 @@ public class QuoteServiceImpl implements QuoteService {
         return toResponse(quoteHelper.createRevision(sourceUid));
     }
 
+    @Override
+    public QuoteResponseDTO markSent(UUID uid) {
+        return toResponse(quoteHelper.markSent(uid));
+    }
+
+    @Override
+    public QuoteResponseDTO markRejected(UUID uid) {
+        return toResponse(quoteHelper.markRejected(uid));
+    }
+
     // Wraps the MapStruct mapping to resolve createdBy -> a display name —
     // MapStruct can't do that lookup declaratively, so it's done here once
     // rather than at every call site.

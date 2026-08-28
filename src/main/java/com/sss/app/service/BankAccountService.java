@@ -12,5 +12,6 @@ public interface BankAccountService {
    BankAccountDto createBankAccount(String orgUid, BankAccountDto dto);
    BankAccountDto deactivateBankAccount(String orgUid, UUID accountUid);
    BankAccountDto reactivateBankAccount(String orgUid, UUID accountUid);
+   BankAccountDto setDefaultBankAccount(String orgUid, UUID accountUid);
 
 }

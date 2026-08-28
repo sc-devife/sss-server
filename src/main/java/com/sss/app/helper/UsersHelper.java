@@ -5,6 +5,8 @@ import com.sss.app.dto.users.UserCreateRequestDto;
 import com.sss.app.dto.users.UserUpdateRequestDto;
 import com.sss.app.entity.UserCredential;
 import com.sss.app.entity.roles.Role;
+import com.sss.app.entity.team.Team;
+import com.sss.app.entity.team.UserTeamLink;
 import com.sss.app.entity.userrolelinks.UserRoleLink;
 import com.sss.app.entity.users.User;
 import com.sss.app.exception.ConflictException;
@@ -13,6 +15,8 @@ import com.sss.app.repository.RoleRepository;
 import com.sss.app.repository.UserCredentialRepository;
 import com.sss.app.repository.UserRepository;
 import com.sss.app.repository.UserRoleLinkRepository;
+import com.sss.app.repository.team.TeamRepository;
+import com.sss.app.repository.team.UserTeamLinkRepository;
 import com.sss.app.security.OrgAccessGuard;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -36,6 +40,8 @@ public class UsersHelper {
     private final RoleRepository roleRepository;
 
     private final UserRoleLinkRepository userRoleLinkRepository;
+    private final TeamRepository teamRepository;
+    private final UserTeamLinkRepository userTeamLinkRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final OrgAccessGuard orgAccessGuard;
 
@@ -76,8 +82,7 @@ public class UsersHelper {
         user = userRepository.save(user);
         entityManager.refresh(user);
 
-        // userCredential.setPassword_hash(passwordEncoder.encode(payload.getPassword()));
-        UserCredential userCredential = UserCredential.create(user.getSeqp(), passwordEncoder.encode(payload.getPassword()));
+        UserCredential userCredential = UserCredential.create(user, passwordEncoder.encode(payload.getPassword()));
         userCredentialRepository.save(userCredential);
         entityManager.refresh(userCredential);
 
@@ -209,6 +214,35 @@ public class UsersHelper {
         entityManager.flush();
         entityManager.clear();
         return getUserByUid(uid);
+    }
+
+    // Multi-team membership — unlike reassignRoles, an empty list is valid
+    // here (a user can belong to zero teams). No @OneToMany collection on
+    // User backs this, so there's no cascade-collection fragility to work
+    // around (see reassignRoles' comments) — plain repository operations.
+    @Transactional
+    public User reassignTeams(String uid, List<String> teamUids) {
+        User user = getUserByUid(uid);
+
+        List<java.util.UUID> parsedUids = teamUids.stream().map(java.util.UUID::fromString).toList();
+        List<Team> teams = teamRepository.findAllByUidIn(parsedUids);
+        if (teams.size() != parsedUids.size()) {
+            throw new IllegalArgumentException("One or more teams not found");
+        }
+
+        List<UserTeamLink> current = userTeamLinkRepository.findAllByUser_Seqp(user.getSeqp());
+
+        List<UserTeamLink> toDelete = current.stream()
+                .filter(link -> teams.stream().noneMatch(t -> t.getSeqp().equals(link.getTeam().getSeqp())))
+                .toList();
+        List<Team> toAdd = teams.stream()
+                .filter(t -> current.stream().noneMatch(link -> link.getTeam().getSeqp().equals(t.getSeqp())))
+                .toList();
+
+        userTeamLinkRepository.deleteAll(toDelete);
+        userTeamLinkRepository.saveAll(toAdd.stream().map(t -> UserTeamLink.create(user, t)).toList());
+
+        return user;
     }
 }
 

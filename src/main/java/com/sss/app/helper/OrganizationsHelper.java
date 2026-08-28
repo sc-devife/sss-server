@@ -1,10 +1,13 @@
 package com.sss.app.helper;
 
+import com.sss.app.dto.organizations.OrganizationSettingsDto;
 import com.sss.app.dto.organizations.OrganizationsDto;
+import com.sss.app.entity.organizations.OrganizationSettings;
 import com.sss.app.entity.organizations.Organizations;
 import com.sss.app.entity.users.User;
 import com.sss.app.exception.NotFoundException;
 import com.sss.app.repository.OrganizationRepository;
+import com.sss.app.repository.OrganizationSettingsRepository;
 import com.sss.app.service.files.CloudinaryService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -17,13 +20,22 @@ import java.util.Objects;
 @Component
 public class OrganizationsHelper {
     private final OrganizationRepository organizationRepository;
+    private final OrganizationSettingsRepository organizationSettingsRepository;
     private final CloudinaryService cloudinaryService;
     @PersistenceContext
     private EntityManager entityManager;
 
-    public OrganizationsHelper(OrganizationRepository organizationRepository, CloudinaryService cloudinaryService) {
+    public OrganizationsHelper(OrganizationRepository organizationRepository,
+                                OrganizationSettingsRepository organizationSettingsRepository,
+                                CloudinaryService cloudinaryService) {
         this.organizationRepository = organizationRepository;
+        this.organizationSettingsRepository = organizationSettingsRepository;
         this.cloudinaryService = cloudinaryService;
+    }
+
+    public OrganizationSettings getSettings(Long orgId) {
+        return organizationSettingsRepository.findById(orgId)
+                .orElseGet(() -> organizationSettingsRepository.save(OrganizationSettings.createDefault(orgId)));
     }
 
     public Organizations getMyOrganization() {
@@ -54,6 +66,7 @@ public class OrganizationsHelper {
         organization = organizationRepository.save(organization);
         entityManager.flush();
         entityManager.refresh(organization);
+        organizationSettingsRepository.save(OrganizationSettings.createDefault(organization.getSeqp()));
         return organization;
     }
 
@@ -87,6 +100,15 @@ public class OrganizationsHelper {
         }
 
         return organization;
+    }
+
+    // Behavioral/config updates go through here, not updateOrganizations() —
+    // dedicated /organizations/settings endpoint, dedicated table.
+    @Transactional
+    public OrganizationSettings updateSettings(Long orgId, OrganizationSettingsDto request) {
+        OrganizationSettings settings = getSettings(orgId);
+        settings.update(request);
+        return organizationSettingsRepository.save(settings);
     }
 
     @Transactional

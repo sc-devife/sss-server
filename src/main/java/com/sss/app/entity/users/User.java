@@ -62,6 +62,12 @@ public class User {
     @Column(name = "profile_picture")
     private String profilePicture;
 
+    @Column
+    private String designation;
+
+    @Column
+    private String signature;
+
     // Section 15 / Lead Assignment Engine (Section 5) fields.
     @Column(name = "is_specialist")
     private Boolean isSpecialist;
@@ -102,6 +108,8 @@ public class User {
         builder.first_name(dto.getFirst_name());
         builder.last_name(dto.getLast_name());
         builder.contact_number(dto.getContact_number());
+        builder.designation(dto.getDesignation());
+        builder.signature(dto.getSignature());
 
         return builder.build();
     }
@@ -121,6 +129,14 @@ public class User {
 
         if (CompareUtil.hasChanged(dto.getProfile_picture(), this.profilePicture)) {
             this.profilePicture = dto.getProfile_picture();
+        }
+
+        if (CompareUtil.hasChanged(dto.getDesignation(), this.designation)) {
+            this.designation = dto.getDesignation();
+        }
+
+        if (CompareUtil.hasChanged(dto.getSignature(), this.signature)) {
+            this.signature = dto.getSignature();
         }
     }
 }

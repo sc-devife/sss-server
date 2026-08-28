@@ -50,4 +50,11 @@ public class BankAccountController {
                                                                  @PathVariable UUID accountId) {
         return ResponseEntity.ok(bankAccountService.reactivateBankAccount(orgId, accountId));
     }
+
+    @PreAuthorize("@permissionService.hasPermission('bank_accounts.write')")
+    @PatchMapping("/{orgId}/{accountId}/set-default")
+    public ResponseEntity<BankAccountDto> setDefaultBankAccount(@PathVariable String orgId,
+                                                                  @PathVariable UUID accountId) {
+        return ResponseEntity.ok(bankAccountService.setDefaultBankAccount(orgId, accountId));
+    }
 }

@@ -1,6 +1,7 @@
 package com.sss.app.controller.library.escapepoint;
 
 import com.sss.app.dto.library.escapepoint.EscapePointCreateRequestDto;
+import com.sss.app.dto.library.escapepoint.EscapePointLocationsUpdateRequestDto;
 import com.sss.app.dto.library.escapepoint.EscapePointResponseDto;
 import com.sss.app.dto.library.escapepoint.EscapePointUpdateRequestDto;
 import com.sss.app.service.library.escapepoint.EscapePointsService;
@@ -53,5 +54,11 @@ public class EscapePointsController {
     public ResponseEntity<Void> deleteEscapePoint(@PathVariable String uid) {
         escapePointsService.deleteEscapePoint(uid);
         return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('library.write')")
+    @PutMapping(value = "{uid}/locations", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<EscapePointResponseDto> updateLocations(@PathVariable String uid, @RequestBody EscapePointLocationsUpdateRequestDto payload) {
+        return ResponseEntity.ok(escapePointsService.updateLocations(uid, payload));
     }
 }

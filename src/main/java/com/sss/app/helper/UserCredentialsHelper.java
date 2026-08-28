@@ -14,9 +14,12 @@ public class UserCredentialsHelper {
         this.userCredentialRepository = userCredentialRepository;
     }
 
-    public UserCredential getUserCredentialBySeqa(Long seqa) {
-        return userCredentialRepository.findBySeqa(seqa)
+    public UserCredential getUserCredentialByUserSeqp(Long userSeqp) {
+        return userCredentialRepository.findByUser_Seqp(userSeqp)
                 .orElseThrow(() -> new NotFoundException("Credentials not found."));
     }
-}
 
+    public UserCredential save(UserCredential credential) {
+        return userCredentialRepository.save(credential);
+    }
+}

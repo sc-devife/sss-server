@@ -25,9 +25,12 @@ public class EscapePointImportSchema implements BulkImportSchema {
         return "escape-points";
     }
 
+    // countryCode/regionCode/cityCode dropped along with the EscapePoint
+    // fields they populated — location coverage is now set via the
+    // EscapePoint <-> Location relation (Locations panel), not bulk import.
     @Override
     public List<String> columns() {
-        return List.of("code", "name", "countryCode", "regionCode", "cityCode", "description", "status");
+        return List.of("code", "name", "description", "status");
     }
 
     @Override
@@ -50,9 +53,6 @@ public class EscapePointImportSchema implements BulkImportSchema {
         EscapePointCreateRequestDto dto = new EscapePointCreateRequestDto();
         dto.setId(row.get("code"));
         dto.setName(row.get("name"));
-        dto.setCountryCode(blankToNull(row.get("countryCode")));
-        dto.setRegionCode(blankToNull(row.get("regionCode")));
-        dto.setCityCode(blankToNull(row.get("cityCode")));
         dto.setDescription(blankToNull(row.get("description")));
         dto.setStatus(blankToNull(row.get("status")));
         escapePointsService.createEscapePoint(dto);

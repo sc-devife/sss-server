@@ -31,10 +31,9 @@ public class AddressDto {
     private String contactEmail;
     private String tripDestination;
 
-    // India-specific billing tax identifiers — optional, only meaningful on
-    // billing addresses, but kept as plain fields rather than gated by
-    // addressTypes so validation stays simple.
-    private String pan;
+    // India-specific billing tax identifier — GST registration is
+    // legitimately per-state, unlike PAN which is one per legal entity and
+    // now lives on Organizations instead (V60).
     private String gstin;
 
     // allows multiple roles (Billing, Contact, etc.)

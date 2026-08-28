@@ -5,6 +5,7 @@ import com.sss.app.dto.quote.QuoteUpdateRequestDTO;
 import com.sss.app.entity.itinerary.Itinerary;
 import com.sss.app.entity.quote.Quote;
 import com.sss.app.entity.users.User;
+import com.sss.app.exception.ConflictException;
 import com.sss.app.exception.NotFoundException;
 import com.sss.app.helper.itinerary.ItineraryHelper;
 import com.sss.app.mapper.quote.QuoteMapper;
@@ -15,6 +16,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Component
@@ -100,5 +102,25 @@ public class QuoteHelper {
         quoteRepository.save(source);
 
         return revision;
+    }
+
+    /** Draft -> sent: the point at which a quote is shared with the customer. */
+    public Quote markSent(UUID uid) {
+        Quote quote = getByUid(uid);
+        if (!"draft".equals(quote.getStatus())) {
+            throw new ConflictException("Only a draft quote can be marked as sent");
+        }
+        quote.setStatus("sent");
+        return quoteRepository.save(quote);
+    }
+
+    /** Draft or sent -> rejected: the customer declined this quote. */
+    public Quote markRejected(UUID uid) {
+        Quote quote = getByUid(uid);
+        if (!Set.of("draft", "sent").contains(quote.getStatus())) {
+            throw new ConflictException("Only a draft or sent quote can be marked as rejected");
+        }
+        quote.setStatus("rejected");
+        return quoteRepository.save(quote);
     }
 }

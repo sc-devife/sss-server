@@ -10,7 +10,6 @@ import java.util.UUID;
 public class EscapeCreateRequestDTO extends EscapeDTO {
     @NotNull
     private UUID leadUid;
-    private UUID sourceUid;
     @NotEmpty
     private java.util.List<UUID> travellerUids;
 

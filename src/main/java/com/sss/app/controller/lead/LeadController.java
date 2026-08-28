@@ -3,12 +3,10 @@ package com.sss.app.controller.lead;
 import com.sss.app.dto.audit.AuditLogResponseDTO;
 import com.sss.app.dto.escape.EscapeCreateRequestDTO;
 import com.sss.app.dto.escape.EscapeResponseDTO;
-import com.sss.app.dto.lead.LeadAssignRequestDTO;
 import com.sss.app.dto.lead.LeadCreateRequestDTO;
 import com.sss.app.dto.lead.LeadFollowUpDueDateRequestDTO;
 import com.sss.app.dto.lead.LeadReasonActionRequestDTO;
 import com.sss.app.dto.lead.LeadResponseDTO;
-import com.sss.app.service.assignment.LeadAssignmentService;
 import com.sss.app.service.audit.AuditLogService;
 import com.sss.app.service.lead.LeadLifecycleService;
 import com.sss.app.service.lead.LeadService;
@@ -28,7 +26,6 @@ import java.util.UUID;
 public class LeadController {
     private final LeadService leadService;
     private final LeadLifecycleService leadLifecycleService;
-    private final LeadAssignmentService leadAssignmentService;
     private final AuditLogService auditLogService;
 
     @PreAuthorize("@permissionService.hasPermission('leads.write')")
@@ -92,12 +89,6 @@ public class LeadController {
     @PostMapping(value = "/{id}/actions/toggle-priority", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<LeadResponseDTO> togglePriority(@PathVariable UUID id) {
         return ResponseEntity.ok(leadLifecycleService.togglePriority(id));
-    }
-
-    @PreAuthorize("@permissionService.hasPermission('leads.assign')")
-    @PostMapping(value = "/{id}/assign", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<LeadResponseDTO> assign(@PathVariable UUID id, @Valid @RequestBody LeadAssignRequestDTO body) {
-        return ResponseEntity.ok(leadAssignmentService.manuallyAssign(id, body.getUserId(), body.getReason()));
     }
 
     // Not a lifecycle action — a plain field, so a direct setter rather than

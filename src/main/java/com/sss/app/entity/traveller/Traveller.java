@@ -25,6 +25,8 @@ public class Traveller {
 
     private Long orgId;
 
+    // ADULT / CHILD / INFANT (see TravellerType) — drives per-traveller
+    // quote pricing once that's wired up; optional today.
     private String type;
 
     private String salutation;
@@ -38,13 +40,23 @@ public class Traveller {
     //@Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 
-    private String age;
+    private Integer age;
     private String nationality;
 
     @Column
     private String email;
 
     private String phone;
+
+    @Column(name = "passport_number")
+    private String passportNumber;
+
+    @Column(name = "passport_expiry")
+    private LocalDate passportExpiry;
+
+    // Country code (matches the app's other country-code fields), not a full name.
+    @Column(name = "passport_issuing_country")
+    private String passportIssuingCountry;
 
     //@Column(name = "is_deleted")
     //private Boolean isDeleted = false;

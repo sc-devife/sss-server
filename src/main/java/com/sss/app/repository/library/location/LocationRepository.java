@@ -11,6 +11,8 @@ public interface LocationRepository extends JpaRepository<Location, Long> {
 
     Optional<Location> findByUid(UUID uid);
 
+    List<Location> findAllByUidIn(List<UUID> uids);
+
     Optional<Location> findByDisplayNameIgnoreCase(String displayName);
 
     boolean existsByDisplayNameIgnoreCase(String displayName);

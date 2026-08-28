@@ -26,6 +26,12 @@ public class UserDto {
     // through this DTO — same two-step pattern as the organization logo.
     private String profile_picture;
 
+    // Section 5 / User-Team metadata pass — job title and a signature line
+    // for outgoing quotes/documents. Both optional, self-service.
+    private String designation;
+
+    private String signature;
+
     public interface Create {
     }
 }

@@ -25,4 +25,5 @@ public class BankAccountDto {
     private String accountName;
     private String currency;
     private String status;
+    private Boolean isDefault;
 }

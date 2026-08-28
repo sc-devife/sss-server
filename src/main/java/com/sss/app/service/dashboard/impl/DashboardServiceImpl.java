@@ -3,13 +3,11 @@ package com.sss.app.service.dashboard.impl;
 import com.sss.app.dto.dashboard.DashboardOrgMetricsDTO;
 import com.sss.app.dto.dashboard.DashboardResponseDTO;
 import com.sss.app.dto.escape.EscapeResponseDTO;
-import com.sss.app.dto.lead.LeadResponseDTO;
 import com.sss.app.dto.payment.PaymentMilestoneResponseDTO;
 import com.sss.app.entity.escape.EscapeStatus;
 import com.sss.app.entity.lead.LeadStatus;
 import com.sss.app.entity.users.User;
 import com.sss.app.mapper.escape.EscapeMapper;
-import com.sss.app.mapper.lead.LeadMapper;
 import com.sss.app.mapper.payment.PaymentMilestoneMapper;
 import com.sss.app.repository.escape.EscapeRepository;
 import com.sss.app.repository.lead.LeadRepository;
@@ -41,7 +39,6 @@ public class DashboardServiceImpl implements DashboardService {
     private final LeadRepository leadRepository;
     private final EscapeRepository escapeRepository;
     private final PaymentMilestoneRepository paymentMilestoneRepository;
-    private final LeadMapper leadMapper;
     private final EscapeMapper escapeMapper;
     private final PaymentMilestoneMapper paymentMilestoneMapper;
     private final PermissionService permissionService;
@@ -71,12 +68,8 @@ public class DashboardServiceImpl implements DashboardService {
         Long userId = user.getSeqp();
         boolean canReadOrgMetrics = permissionService.hasPermission("organizations.read");
 
-        CompletableFuture<List<LeadResponseDTO>> leadsFuture = CompletableFuture.supplyAsync(() ->
-                leadRepository.findAllByOrgIdAndAssignedToUserIdAndStatusNotIn(orgId, userId, LeadStatus.TERMINAL)
-                        .stream().map(leadMapper::toResponse).toList());
-
         CompletableFuture<List<EscapeResponseDTO>> escapesFuture = CompletableFuture.supplyAsync(() ->
-                escapeRepository.findAllByOrgIdAndLead_AssignedToUserIdAndStatusNotIn(orgId, userId, INACTIVE_ESCAPE_STATUSES)
+                escapeRepository.findAllByOrgIdAndAssignedToUserIdAndStatusNotIn(orgId, userId, INACTIVE_ESCAPE_STATUSES)
                         .stream().map(escapeMapper::toResponse).toList());
 
         CompletableFuture<List<PaymentMilestoneResponseDTO>> milestonesFuture = CompletableFuture.supplyAsync(() ->
@@ -87,10 +80,9 @@ public class DashboardServiceImpl implements DashboardService {
                 ? CompletableFuture.supplyAsync(() -> buildOrgMetrics(orgId))
                 : CompletableFuture.completedFuture(null);
 
-        CompletableFuture.allOf(leadsFuture, escapesFuture, milestonesFuture, orgMetricsFuture).join();
+        CompletableFuture.allOf(escapesFuture, milestonesFuture, orgMetricsFuture).join();
 
         DashboardResponseDTO response = new DashboardResponseDTO();
-        response.setMyOpenLeads(leadsFuture.join());
         response.setMyOpenEscapes(escapesFuture.join());
         response.setMyUpcomingPaymentMilestones(milestonesFuture.join());
         response.setOrgMetrics(orgMetricsFuture.join());

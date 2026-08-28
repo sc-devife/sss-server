@@ -26,7 +26,7 @@ public class BankAccountsMapper {
                 .accountName(accounts.getAccountName())
                 .currency(accounts.getCurrency())
                 .status(accounts.getStatus())
-               // .isPrimary(accounts.getIsPrimary())
+                .isDefault(accounts.getIsDefault())
                 .build();
     }
 }
