@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -27,4 +29,16 @@ public interface PaymentMilestoneRepository extends JpaRepository<PaymentMilesto
     @Query("SELECT pm FROM PaymentMilestone pm WHERE pm.orgId = :orgId AND pm.deal.escape.assignedToUserId = :userId "
             + "AND pm.status IN :statuses ORDER BY pm.dueDate ASC")
     List<PaymentMilestone> findUpcomingForAssignee(@Param("orgId") Long orgId, @Param("userId") Long userId, @Param("statuses") List<String> statuses);
+
+    // Dashboard Revenue & Payments — one row per status actually present,
+    // with both billed (amountUsd) and collected (amountPaidUsd) totals so
+    // the same query backs the donut, the KPI totals, and the overdue card.
+    @Query("SELECT pm.status, COUNT(pm), SUM(pm.amountUsd), SUM(pm.amountPaidUsd) "
+            + "FROM PaymentMilestone pm WHERE pm.orgId = :orgId GROUP BY pm.status")
+    List<Object[]> aggregateByStatusForOrg(@Param("orgId") Long orgId);
+
+    // Dashboard "Revenue Collected vs previous period" trend arrow.
+    @Query("SELECT COALESCE(SUM(pm.amountPaidUsd), 0) FROM PaymentMilestone pm "
+            + "WHERE pm.orgId = :orgId AND pm.markedPaidAt BETWEEN :start AND :end")
+    BigDecimal sumPaidBetween(@Param("orgId") Long orgId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }

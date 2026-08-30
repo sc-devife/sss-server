@@ -3,6 +3,7 @@ package com.sss.app.dto.dashboard;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * Section 4: "Super Admin/Admin see org-wide metrics (leads in, conversion
@@ -15,4 +16,24 @@ public class DashboardOrgMetricsDTO {
     private double conversionRatePercent;
     private long escapesInProgress;
     private BigDecimal revenuePipelineUsd;
+
+    // Trend-arrow comparisons — only for genuine period-flow metrics (a
+    // count/sum accrued *within* a window). Point-in-time gauges like
+    // escapesInProgress/revenuePipelineUsd have no historical snapshot to
+    // compare against, so they intentionally have no previous-period field.
+    private long previousPeriodLeadsCount;
+    private BigDecimal previousPeriodRevenueCollectedUsd;
+
+    private BigDecimal revenueCollectedUsd;
+    private long overduePaymentsCount;
+    private BigDecimal overduePaymentsAmountUsd;
+    /** Sum of totalUsd across accepted quotes — the org's booked revenue. */
+    private BigDecimal totalRevenueUsd;
+
+    private List<StatusCountDTO> leadFunnel;
+    private List<NameCountDTO> leadSourceBreakdown;
+    private List<StatusCountDTO> escapePipeline;
+    private List<NameCountDTO> topEscapePoints;
+    private List<PaymentStatusBreakdownDTO> paymentBreakdown;
+    private QuoteAnalyticsDTO quoteAnalytics;
 }
