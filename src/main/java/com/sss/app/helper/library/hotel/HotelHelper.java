@@ -1,11 +1,13 @@
 package com.sss.app.helper.library.hotel;
 
+import com.sss.app.entity.library.activity.Activity;
 import com.sss.app.entity.library.escapepoint.EscapePoint;
 import com.sss.app.entity.library.hotel.Hotel;
 import com.sss.app.entity.library.location.Location;
 import com.sss.app.entity.library.mealplan.MealPlan;
 import com.sss.app.entity.library.roomtype.RoomType;
 import com.sss.app.exception.ResourceNotFoundException;
+import com.sss.app.repository.library.activity.ActivityRepository;
 import com.sss.app.repository.library.escapepoint.EscapePointRepository;
 import com.sss.app.repository.library.location.LocationRepository;
 import com.sss.app.repository.library.mealplan.MealPlanRepository;
@@ -30,6 +32,7 @@ public class HotelHelper {
     private final EscapePointRepository escapePointRepository;
     private final MealPlanRepository mealPlanRepository;
     private final RoomTypeRepository roomTypeRepository;
+    private final ActivityRepository activityRepository;
 
     public Location resolveLocation(UUID locationId) {
         return locationRepository.findByUid(locationId)
@@ -68,6 +71,15 @@ public class HotelHelper {
         return roomTypes;
     }
 
+    public Set<Activity> resolveActivities(Set<UUID> activityIds) {
+        if (activityIds == null || activityIds.isEmpty()) {
+            return new HashSet<>();
+        }
+        Set<Activity> activities = new HashSet<>(activityRepository.findAllByUidIn(new java.util.ArrayList<>(activityIds)));
+        validateAllFound(activityIds, activities.size(), "Activity");
+        return activities;
+    }
+
     /**
      * Applies all relations onto a Hotel entity in one go. Used by both create and update flows.
      * Pass null for any relation you don't want touched (relevant for partial updates).
@@ -77,7 +89,8 @@ public class HotelHelper {
                                 String escapePointId,
                                 Set<String> escapePointIds,
                                 Set<UUID> mealPlanIds,
-                                Set<UUID> roomTypeIds) {
+                                Set<UUID> roomTypeIds,
+                                Set<UUID> activityIds) {
         if (locationId != null) {
             hotel.setLocation(resolveLocation(locationId));
         }
@@ -92,6 +105,9 @@ public class HotelHelper {
         }
         if (roomTypeIds != null) {
             hotel.setRoomTypes(resolveRoomTypes(roomTypeIds));
+        }
+        if (activityIds != null) {
+            hotel.setActivities(resolveActivities(activityIds));
         }
     }
 

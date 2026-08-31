@@ -23,6 +23,7 @@ public interface HotelMapper {
     @Mapping(target = "escapePoints", ignore = true)
     @Mapping(target = "mealPlans", ignore = true)
     @Mapping(target = "roomTypes", ignore = true)
+    @Mapping(target = "activities", ignore = true)
     Hotel toEntityCreate(HotelCreateRequestDTO dto);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
@@ -31,6 +32,7 @@ public interface HotelMapper {
     @Mapping(target = "escapePoints", ignore = true)
     @Mapping(target = "mealPlans", ignore = true)
     @Mapping(target = "roomTypes", ignore = true)
+    @Mapping(target = "activities", ignore = true)
     void updateEntityFromDto(HotelUpdateRequestDTO dto, @MappingTarget Hotel entity);
 
     HotelResponseDTO toResponse(Hotel entity);

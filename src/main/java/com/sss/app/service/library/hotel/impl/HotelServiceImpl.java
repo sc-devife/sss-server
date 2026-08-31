@@ -1,13 +1,18 @@
 package com.sss.app.service.library.hotel.impl;
 
+import com.sss.app.dto.library.hotel.HotelBookingDTO;
 import com.sss.app.dto.library.hotel.HotelCreateRequestDTO;
 import com.sss.app.dto.library.hotel.HotelResponseDTO;
 import com.sss.app.dto.library.hotel.HotelUpdateRequestDTO;
+import com.sss.app.entity.escape.Escape;
+import com.sss.app.entity.itinerary.Itinerary;
+import com.sss.app.entity.itinerary.ItineraryItem;
 import com.sss.app.entity.library.hotel.Hotel;
 import com.sss.app.entity.users.User;
 import com.sss.app.exception.ResourceNotFoundException;
 import com.sss.app.helper.library.hotel.HotelHelper;
 import com.sss.app.mapper.library.hotel.HotelMapper;
+import com.sss.app.repository.itinerary.ItineraryItemRepository;
 import com.sss.app.repository.library.hotel.HotelRepository;
 import com.sss.app.security.OrgAccessGuard;
 import com.sss.app.service.files.CloudinaryService;
@@ -31,6 +36,7 @@ public class HotelServiceImpl implements HotelService {
     private final HotelHelper hotelHelper;
     private final OrgAccessGuard orgAccessGuard;
     private final CloudinaryService cloudinaryService;
+    private final ItineraryItemRepository itineraryItemRepository;
 
     private User currentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -48,7 +54,8 @@ public class HotelServiceImpl implements HotelService {
                 dto.getEscapePointId(),
                 dto.getEscapePointIds(),
                 dto.getMealPlanIds(),
-                dto.getRoomTypeIds()
+                dto.getRoomTypeIds(),
+                dto.getActivityIds()
         );
 
         Hotel saved = hotelRepository.save(hotel);
@@ -85,7 +92,8 @@ public class HotelServiceImpl implements HotelService {
                 dto.getEscapePointId(),
                 dto.getEscapePointIds(),
                 dto.getMealPlanIds(),
-                dto.getRoomTypeIds()
+                dto.getRoomTypeIds(),
+                dto.getActivityIds()
         );
 
         Hotel saved = hotelRepository.save(hotel);
@@ -98,6 +106,32 @@ public class HotelServiceImpl implements HotelService {
         Hotel hotel = findEntityById(id);
         hotel.setDeletedAt(java.time.LocalDateTime.now());
         hotel.setStatus("archived");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<HotelBookingDTO> getBookings(UUID id) {
+        Hotel hotel = findEntityById(id);
+        return itineraryItemRepository.findAllHotelBookings(hotel.getUid())
+                .stream()
+                .map(this::toBookingDTO)
+                .toList();
+    }
+
+    private HotelBookingDTO toBookingDTO(ItineraryItem item) {
+        Itinerary itinerary = item.getItinerary();
+        Escape escape = itinerary.getEscape();
+        return new HotelBookingDTO(
+                item.getUid(),
+                escape.getUid(),
+                escape.getStatus(),
+                escape.getStartDate(),
+                escape.getEndDate(),
+                escape.getLead() != null ? escape.getLead().getName() : null,
+                item.getDayNumber(),
+                item.getStartTime(),
+                item.getNotes()
+        );
     }
 
     private Hotel findEntityById(UUID id) {

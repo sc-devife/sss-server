@@ -25,6 +25,8 @@ public class HotelUpdateRequestDTO {
 
     private Set<UUID> roomTypeIds;
 
+    private Set<UUID> activityIds;
+
     @JsonFormat(pattern = "HH:mm")
     private LocalTime checkInTime;
 
@@ -48,4 +50,6 @@ public class HotelUpdateRequestDTO {
     private List<String> amenities;
 
     private String status;
+
+    private String notes;
 }

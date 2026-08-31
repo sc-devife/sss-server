@@ -1,5 +1,6 @@
 package com.sss.app.controller.library.hotel;
 
+import com.sss.app.dto.library.hotel.HotelBookingDTO;
 import com.sss.app.dto.library.hotel.HotelCreateRequestDTO;
 import com.sss.app.dto.library.hotel.HotelResponseDTO;
 import com.sss.app.dto.library.hotel.HotelUpdateRequestDTO;
@@ -51,5 +52,11 @@ public class HotelController {
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         hotelService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('library.read')")
+    @GetMapping("/{id}/bookings")
+    public ResponseEntity<List<HotelBookingDTO>> getBookings(@PathVariable UUID id) {
+        return ResponseEntity.ok(hotelService.getBookings(id));
     }
 }

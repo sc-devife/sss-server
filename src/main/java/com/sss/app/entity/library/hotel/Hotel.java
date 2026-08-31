@@ -1,6 +1,7 @@
 package com.sss.app.entity.library.hotel;
 
 import com.sss.app.entity.common.Auditable;
+import com.sss.app.entity.library.activity.Activity;
 import com.sss.app.entity.library.escapepoint.EscapePoint;
 import com.sss.app.entity.library.location.Location;
 import com.sss.app.entity.library.mealplan.MealPlan;
@@ -105,6 +106,19 @@ public class Hotel extends Auditable {
     @Builder.Default
     private Set<RoomType> roomTypes = new HashSet<>();
 
+    // ----- Activities: ManyToMany (only activities specifically offered at
+    // this hotel, not every activity in its escape point/destination) -----
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "hotel_activities",
+            joinColumns = @JoinColumn(name = "hotel_id"),
+            inverseJoinColumns = @JoinColumn(name = "activity_id")
+    )
+    @Builder.Default
+    private Set<Activity> activities = new HashSet<>();
+
     // ----- Services (per the "Services" form section) -----
     private LocalTime checkInTime;
 
@@ -142,6 +156,9 @@ public class Hotel extends Auditable {
 
     @Column
     private String status;
+
+    @Column(columnDefinition = "TEXT")
+    private String notes;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;

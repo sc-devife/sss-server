@@ -1,5 +1,6 @@
 package com.sss.app.service.library.hotel;
 
+import com.sss.app.dto.library.hotel.HotelBookingDTO;
 import com.sss.app.dto.library.hotel.HotelCreateRequestDTO;
 import com.sss.app.dto.library.hotel.HotelResponseDTO;
 import com.sss.app.dto.library.hotel.HotelUpdateRequestDTO;
@@ -18,4 +19,6 @@ public interface HotelService {
     HotelResponseDTO update(UUID id, HotelUpdateRequestDTO dto);
 
     void delete(UUID id);
+
+    List<HotelBookingDTO> getBookings(UUID id);
 }
