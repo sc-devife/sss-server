@@ -23,4 +23,6 @@ public class ActivityUpdateRequestDTO {
     private BigDecimal basePrice;
 
     private String status;
+
+    private String notes;
 }

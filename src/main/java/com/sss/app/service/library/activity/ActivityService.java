@@ -1,5 +1,6 @@
 package com.sss.app.service.library.activity;
 
+import com.sss.app.dto.library.activity.ActivityBookingDTO;
 import com.sss.app.dto.library.activity.ActivityCreateRequestDTO;
 import com.sss.app.dto.library.activity.ActivityResponseDTO;
 import com.sss.app.dto.library.activity.ActivityUpdateRequestDTO;
@@ -17,4 +18,6 @@ public interface ActivityService {
     ActivityResponseDTO update(UUID id, ActivityUpdateRequestDTO dto);
 
     void delete(UUID id);
+
+    List<ActivityBookingDTO> getBookings(UUID id);
 }

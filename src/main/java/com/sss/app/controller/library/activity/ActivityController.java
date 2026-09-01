@@ -1,5 +1,6 @@
 package com.sss.app.controller.library.activity;
 
+import com.sss.app.dto.library.activity.ActivityBookingDTO;
 import com.sss.app.dto.library.activity.ActivityCreateRequestDTO;
 import com.sss.app.dto.library.activity.ActivityResponseDTO;
 import com.sss.app.dto.library.activity.ActivityUpdateRequestDTO;
@@ -51,5 +52,11 @@ public class ActivityController {
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         activityService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('library.read')")
+    @GetMapping("/{id}/bookings")
+    public ResponseEntity<List<ActivityBookingDTO>> getBookings(@PathVariable UUID id) {
+        return ResponseEntity.ok(activityService.getBookings(id));
     }
 }

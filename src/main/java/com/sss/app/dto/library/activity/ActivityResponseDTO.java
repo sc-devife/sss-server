@@ -29,6 +29,8 @@ public class ActivityResponseDTO {
 
     private String status;
 
+    private String notes;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;

@@ -65,6 +65,9 @@ public class Activity extends Auditable {
     @Column
     private String status;
 
+    @Column
+    private String notes;
+
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 

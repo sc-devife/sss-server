@@ -1,13 +1,18 @@
 package com.sss.app.service.library.activity.impl;
 
+import com.sss.app.dto.library.activity.ActivityBookingDTO;
 import com.sss.app.dto.library.activity.ActivityCreateRequestDTO;
 import com.sss.app.dto.library.activity.ActivityResponseDTO;
 import com.sss.app.dto.library.activity.ActivityUpdateRequestDTO;
+import com.sss.app.entity.escape.Escape;
+import com.sss.app.entity.itinerary.Itinerary;
+import com.sss.app.entity.itinerary.ItineraryItem;
 import com.sss.app.entity.library.activity.Activity;
 import com.sss.app.entity.users.User;
 import com.sss.app.exception.ResourceNotFoundException;
 import com.sss.app.helper.library.activity.ActivityHelper;
 import com.sss.app.mapper.library.activity.ActivityMapper;
+import com.sss.app.repository.itinerary.ItineraryItemRepository;
 import com.sss.app.repository.library.activity.ActivityRepository;
 import com.sss.app.security.OrgAccessGuard;
 import com.sss.app.service.files.CloudinaryService;
@@ -32,6 +37,7 @@ public class ActivityServiceImpl implements ActivityService {
     private final ActivityHelper activityHelper;
     private final OrgAccessGuard orgAccessGuard;
     private final CloudinaryService cloudinaryService;
+    private final ItineraryItemRepository itineraryItemRepository;
 
     private User currentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -81,6 +87,32 @@ public class ActivityServiceImpl implements ActivityService {
         Activity activity = findEntityById(id);
         activity.setDeletedAt(LocalDateTime.now());
         activity.setStatus("archived");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ActivityBookingDTO> getBookings(UUID id) {
+        Activity activity = findEntityById(id);
+        return itineraryItemRepository.findAllActivityBookings(activity.getUid())
+                .stream()
+                .map(this::toBookingDTO)
+                .toList();
+    }
+
+    private ActivityBookingDTO toBookingDTO(ItineraryItem item) {
+        Itinerary itinerary = item.getItinerary();
+        Escape escape = itinerary.getEscape();
+        return new ActivityBookingDTO(
+                item.getUid(),
+                escape.getUid(),
+                escape.getStatus(),
+                escape.getStartDate(),
+                escape.getEndDate(),
+                escape.getLead() != null ? escape.getLead().getName() : null,
+                item.getDayNumber(),
+                item.getStartTime(),
+                item.getNotes()
+        );
     }
 
     private Activity findEntityById(UUID id) {
