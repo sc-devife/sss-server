@@ -10,7 +10,7 @@ import java.util.UUID;
 public interface PaymentMilestoneService {
     PaymentMilestoneResponseDTO create(PaymentMilestoneCreateRequestDTO request);
     List<PaymentMilestoneResponseDTO> getAllForDeal(UUID dealUid);
-    PaymentMilestoneResponseDTO recordPayment(UUID uid, BigDecimal amount);
+    PaymentMilestoneResponseDTO recordPayment(UUID uid, BigDecimal amount, String paymentMethod, String paymentReference);
     PaymentMilestoneResponseDTO verifyPayment(UUID uid);
     void delete(UUID uid);
 }

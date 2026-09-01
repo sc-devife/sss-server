@@ -3,13 +3,19 @@ package com.sss.app.service.quote.impl;
 import com.sss.app.dto.quote.QuoteComputeRequestDTO;
 import com.sss.app.dto.quote.QuoteComputeResponseDTO;
 import com.sss.app.entity.itinerary.ItineraryItem;
+import com.sss.app.entity.itinerary.ItineraryItemHotelDetail;
+import com.sss.app.entity.itinerary.ItineraryItemHotelInclusion;
+import com.sss.app.entity.itinerary.ItineraryItemTransportDetail;
 import com.sss.app.entity.quote.Quote;
 import com.sss.app.entity.taxprofile.TaxProfile;
 import com.sss.app.exception.BadRequestException;
 import com.sss.app.helper.quote.QuoteHelper;
 import com.sss.app.helper.taxprofile.TaxProfileHelper;
 import com.sss.app.mapper.quote.QuoteMapper;
+import com.sss.app.repository.itinerary.ItineraryItemHotelDetailRepository;
+import com.sss.app.repository.itinerary.ItineraryItemHotelInclusionRepository;
 import com.sss.app.repository.itinerary.ItineraryItemRepository;
+import com.sss.app.repository.itinerary.ItineraryItemTransportDetailRepository;
 import com.sss.app.repository.library.activity.ActivityRepository;
 import com.sss.app.repository.library.transport.TransportRepository;
 import com.sss.app.repository.quote.QuoteRepository;
@@ -25,14 +31,21 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Section 6 Quotation Engine — deliberately v1-scoped: sums pricing from
- * itinerary items that resolve to a priced library item (Activity/Transport
- * have base_price; Hotel doesn't have a price field yet, so hotel line
- * items are reported as excluded rather than silently treated as free).
- * Tax comes from a real, org-configurable TaxProfile. FX conversion uses a
- * manually-entered, frozen rate rather than a live provider (no FX rate API
- * integration has been requested/authorized yet). Base/storage currency is
- * INR — a display currency other than INR requires an FX rate snapshot.
+ * Section 6 Quotation Engine — sums pricing from itinerary items, preferring
+ * whatever price was actually agreed for that specific booking over the
+ * library's generic default: Activity reads its own item.price (falling
+ * back to the library Activity's base_price); Transport reads its own
+ * booking-detail row's sellingPrice (x pax count when marked per-person) or
+ * flat price (falling back to the library Transport's base_price); Hotel
+ * reads its own booking-detail row (total_price, or price x room_count when
+ * total_price wasn't set) plus any add-on services
+ * (ItineraryItemHotelInclusion) attached to that stay. A custom (non-library)
+ * item has no base_price to fall back to, so it's excluded if its own price
+ * was never filled in. Tax comes from a real, org-configurable TaxProfile.
+ * FX conversion uses a manually-entered, frozen rate rather than a live
+ * provider (no FX rate API integration has been requested/authorized yet).
+ * Base/storage currency is INR — a display currency other than INR requires
+ * an FX rate snapshot.
  */
 @Service
 @RequiredArgsConstructor
@@ -46,6 +59,9 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
     private final ItineraryItemRepository itineraryItemRepository;
     private final ActivityRepository activityRepository;
     private final TransportRepository transportRepository;
+    private final ItineraryItemHotelDetailRepository hotelDetailRepository;
+    private final ItineraryItemHotelInclusionRepository hotelInclusionRepository;
+    private final ItineraryItemTransportDetailRepository transportDetailRepository;
 
     @Override
     public QuoteComputeResponseDTO compute(UUID quoteUid, QuoteComputeRequestDTO request) {
@@ -117,6 +133,16 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
     private BigDecimal resolvePrice(ItineraryItem item, List<String> warnings) {
         switch (item.getItemType()) {
             case "activity" -> {
+                // This specific booking's own price wins over the library's
+                // generic default — an agent may well have negotiated or
+                // overridden it for this itinerary.
+                if (item.getPrice() != null) {
+                    return item.getPrice();
+                }
+                if (item.getReferenceId() == null) {
+                    warnings.add("Custom activity on day " + item.getDayNumber() + " has no price set — excluded");
+                    return null;
+                }
                 var activity = activityRepository.findByUid(item.getReferenceId()).orElse(null);
                 if (activity == null) {
                     warnings.add("An activity referenced on day " + item.getDayNumber() + " no longer exists — excluded");
@@ -129,6 +155,15 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
                 return activity.getBasePrice();
             }
             case "transport" -> {
+                ItineraryItemTransportDetail detail = transportDetailRepository.findByItineraryItem_Seqp(item.getSeqp()).orElse(null);
+                BigDecimal detailPrice = resolveTransportDetailPrice(detail);
+                if (detailPrice != null) {
+                    return detailPrice;
+                }
+                if (item.getReferenceId() == null) {
+                    warnings.add("Custom transport on day " + item.getDayNumber() + " has no price set — excluded");
+                    return null;
+                }
                 var transport = transportRepository.findByUid(item.getReferenceId()).orElse(null);
                 if (transport == null) {
                     warnings.add("A transport item referenced on day " + item.getDayNumber() + " no longer exists — excluded");
@@ -141,12 +176,55 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
                 return transport.getBasePrice();
             }
             case "hotel" -> {
-                warnings.add("Hotel on day " + item.getDayNumber() + " has no per-night pricing yet (not built) — excluded");
-                return null;
+                ItineraryItemHotelDetail detail = hotelDetailRepository.findByItineraryItem_Seqp(item.getSeqp()).orElse(null);
+                if (detail == null) {
+                    warnings.add("Hotel on day " + item.getDayNumber() + " has no booking details set — excluded");
+                    return null;
+                }
+                BigDecimal stayPrice = detail.getTotalPrice() != null
+                        ? detail.getTotalPrice()
+                        : (detail.getPrice() != null && detail.getRoomCount() != null
+                                ? detail.getPrice().multiply(BigDecimal.valueOf(detail.getRoomCount()))
+                                : null);
+                if (stayPrice == null) {
+                    warnings.add("Hotel on day " + item.getDayNumber() + " has no price or room count set — excluded");
+                    return null;
+                }
+                BigDecimal inclusionsTotal = hotelInclusionRepository
+                        .findAllByItineraryItem_SeqpOrderBySeqpAsc(item.getSeqp()).stream()
+                        .map(ItineraryItemHotelInclusion::getTotalPrice)
+                        .filter(java.util.Objects::nonNull)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                return stayPrice.add(inclusionsTotal);
             }
             default -> {
                 return null;
             }
         }
+    }
+
+    // Selling price (what the customer is charged) wins over the flat
+    // price, since a flight's detail form only ever populates one or the
+    // other (see TransportDetailFields.tsx: cost/selling split is
+    // flight-only, every other mode uses the plain flat price). Cost price
+    // is deliberately never read here — it's the agency's internal margin
+    // figure, not something that belongs in a customer-facing quote.
+    private BigDecimal resolveTransportDetailPrice(ItineraryItemTransportDetail detail) {
+        if (detail == null) {
+            return null;
+        }
+        if (detail.getSellingPrice() != null) {
+            int totalPax = nullToZero(detail.getAdultsCount()) + nullToZero(detail.getChildrenCount()) + nullToZero(detail.getInfantsCount());
+            int payingPax = Math.max(totalPax, 1);
+            BigDecimal multiplier = Boolean.TRUE.equals(detail.getSellingPricePerPerson())
+                    ? BigDecimal.valueOf(payingPax)
+                    : BigDecimal.ONE;
+            return detail.getSellingPrice().multiply(multiplier);
+        }
+        return detail.getPrice();
+    }
+
+    private int nullToZero(Integer value) {
+        return value != null ? value : 0;
     }
 }

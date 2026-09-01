@@ -81,7 +81,7 @@ public class PaymentMilestoneHelper {
      * is the second step that actually advances the trip's payment stage.
      */
     @Transactional
-    public PaymentMilestone recordPayment(UUID uid, BigDecimal amount) {
+    public PaymentMilestone recordPayment(UUID uid, BigDecimal amount, String paymentMethod, String paymentReference) {
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new BadRequestException("Payment amount must be greater than zero");
         }
@@ -95,10 +95,12 @@ public class PaymentMilestoneHelper {
         milestone.setStatus("unverified");
         milestone.setMarkedPaidBy(currentUser().getSeqp());
         milestone.setMarkedPaidAt(LocalDateTime.now());
+        milestone.setPaymentMethod(paymentMethod);
+        milestone.setPaymentReference(paymentReference);
         PaymentMilestone saved = paymentMilestoneRepository.save(milestone);
 
         auditLogService.record("Escape", milestone.getDeal().getEscape().getSeqp(), "PAYMENT_RECORDED",
-                milestone.getLabel(), amount);
+                milestone.getLabel(), amount + " via " + paymentMethod + " (ref: " + paymentReference + ")");
 
         return saved;
     }

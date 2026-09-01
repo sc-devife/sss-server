@@ -63,6 +63,18 @@ public class PaymentMilestone extends Auditable {
     @Column(name = "marked_paid_at")
     private LocalDateTime markedPaidAt;
 
+    // upi / neft / rtgs / imps / bank_transfer / card / cash / cheque / other
+    // — how the customer actually paid this instalment, captured at
+    // record-payment time.
+    @Column(name = "payment_method")
+    private String paymentMethod;
+
+    // The customer's own proof-of-payment reference — a UPI transaction ID,
+    // a bank UTR number, a cheque number, etc. Free text since the format
+    // varies by paymentMethod.
+    @Column(name = "payment_reference")
+    private String paymentReference;
+
     @PrePersist
     protected void onCreate() {
         if (this.uid == null) {

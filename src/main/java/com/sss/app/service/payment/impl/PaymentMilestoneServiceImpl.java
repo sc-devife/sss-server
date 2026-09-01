@@ -34,8 +34,8 @@ public class PaymentMilestoneServiceImpl implements PaymentMilestoneService {
     }
 
     @Override
-    public PaymentMilestoneResponseDTO recordPayment(UUID uid, BigDecimal amount) {
-        return toResponse(paymentMilestoneHelper.recordPayment(uid, amount));
+    public PaymentMilestoneResponseDTO recordPayment(UUID uid, BigDecimal amount, String paymentMethod, String paymentReference) {
+        return toResponse(paymentMilestoneHelper.recordPayment(uid, amount, paymentMethod, paymentReference));
     }
 
     @Override

@@ -19,4 +19,6 @@ public class PaymentMilestoneResponseDTO {
     private Long markedPaidBy;
     private String markedPaidByName;
     private LocalDateTime markedPaidAt;
+    private String paymentMethod;
+    private String paymentReference;
 }
