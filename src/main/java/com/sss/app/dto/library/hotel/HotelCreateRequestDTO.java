@@ -31,7 +31,7 @@ public class HotelCreateRequestDTO {
 
     private Set<UUID> roomTypeIds;
 
-    private Set<UUID> activityIds;
+    private Set<UUID> serviceIds;
 
     @JsonFormat(pattern = "HH:mm")
     private LocalTime checkInTime;

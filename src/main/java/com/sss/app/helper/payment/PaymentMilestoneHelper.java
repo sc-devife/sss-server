@@ -49,8 +49,8 @@ public class PaymentMilestoneHelper {
                 .deal(deal)
                 .label(request.getLabel())
                 .dueDate(request.getDueDate())
-                .amountUsd(request.getAmountUsd())
-                .amountPaidUsd(BigDecimal.ZERO)
+                .amountInr(request.getAmountInr())
+                .amountPaidInr(BigDecimal.ZERO)
                 .status("pending")
                 .build();
 
@@ -90,8 +90,8 @@ public class PaymentMilestoneHelper {
             throw new ConflictException("This deal is cancelled; payments can no longer be recorded");
         }
 
-        BigDecimal newPaid = milestone.getAmountPaidUsd().add(amount);
-        milestone.setAmountPaidUsd(newPaid);
+        BigDecimal newPaid = milestone.getAmountPaidInr().add(amount);
+        milestone.setAmountPaidInr(newPaid);
         milestone.setStatus("unverified");
         milestone.setMarkedPaidBy(currentUser().getSeqp());
         milestone.setMarkedPaidAt(LocalDateTime.now());
@@ -116,7 +116,7 @@ public class PaymentMilestoneHelper {
             throw new BadRequestException("Only an unverified payment can be verified");
         }
 
-        milestone.setStatus(milestone.getAmountPaidUsd().compareTo(milestone.getAmountUsd()) >= 0 ? "paid" : "partially_paid");
+        milestone.setStatus(milestone.getAmountPaidInr().compareTo(milestone.getAmountInr()) >= 0 ? "paid" : "partially_paid");
         PaymentMilestone saved = paymentMilestoneRepository.save(milestone);
 
         auditLogService.record("Escape", milestone.getDeal().getEscape().getSeqp(), "PAYMENT_VERIFIED",
@@ -133,7 +133,7 @@ public class PaymentMilestoneHelper {
         if (allMilestones.isEmpty()) return;
 
         boolean allPaid = allMilestones.stream().allMatch(m -> "paid".equals(m.getStatus()));
-        boolean anyPayment = allMilestones.stream().anyMatch(m -> m.getAmountPaidUsd().compareTo(BigDecimal.ZERO) > 0);
+        boolean anyPayment = allMilestones.stream().anyMatch(m -> m.getAmountPaidInr().compareTo(BigDecimal.ZERO) > 0);
 
         String target = allPaid ? EscapeStatus.FULLY_PAID : anyPayment ? EscapeStatus.PARTIALLY_PAID : null;
         if (target == null) return;

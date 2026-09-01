@@ -12,11 +12,19 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class ItineraryItemServiceImpl implements ItineraryItemService {
+
+    // referenceId points at a Transport library record for these two types —
+    // see ItineraryItemHelper.REF_KIND_BY_TYPE. Only these two are worth a
+    // transport-detail lookup per item.
+    private static final Set<String> TRANSPORT_ITEM_TYPES = Set.of("transport", "pickup_drop");
+
+    private static final Set<String> HOTEL_ITEM_TYPES = Set.of("hotel");
 
     private final ItineraryItemHelper itineraryItemHelper;
 
@@ -68,7 +76,14 @@ public class ItineraryItemServiceImpl implements ItineraryItemService {
         dto.setTitle(item.getTitle());
         dto.setStartTime(item.getStartTime());
         dto.setNotes(item.getNotes());
+        dto.setPrice(item.getPrice());
         dto.setSortOrder(item.getSortOrder());
+        if (TRANSPORT_ITEM_TYPES.contains(item.getItemType())) {
+            dto.setTransportDetail(itineraryItemHelper.getTransportDetail(item));
+        }
+        if (HOTEL_ITEM_TYPES.contains(item.getItemType())) {
+            dto.setHotelDetail(itineraryItemHelper.getHotelDetail(item));
+        }
         return dto;
     }
 }

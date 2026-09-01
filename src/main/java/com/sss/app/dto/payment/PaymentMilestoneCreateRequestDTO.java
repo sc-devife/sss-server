@@ -20,6 +20,6 @@ public class PaymentMilestoneCreateRequestDTO {
     @NotNull(message = "dueDate is required")
     private LocalDate dueDate;
 
-    @NotNull(message = "amountUsd is required")
-    private BigDecimal amountUsd;
+    @NotNull(message = "amountInr is required")
+    private BigDecimal amountInr;
 }

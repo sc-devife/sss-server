@@ -15,6 +15,6 @@ public interface QuoteRepository extends JpaRepository<Quote, Long> {
 
     // Dashboard Quote Analytics — quotes/org is low-volume (one row per
     // itinerary version), so aggregating in Java is fine, consistent with
-    // the existing revenuePipelineUsd calculation's style.
+    // the existing revenuePipelineInr calculation's style.
     List<Quote> findAllByOrgId(Long orgId);
 }

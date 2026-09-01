@@ -1,23 +1,41 @@
 package com.sss.app.helper.itinerary;
 
+import com.sss.app.dto.itinerary.HotelDetailDTO;
+import com.sss.app.dto.itinerary.HotelInclusionDTO;
 import com.sss.app.dto.itinerary.ItineraryItemCreateRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryItemReorderRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryItemUpdateRequestDTO;
+import com.sss.app.dto.itinerary.TransportDetailDTO;
+import com.sss.app.dto.itinerary.TransportLegDTO;
 import com.sss.app.entity.itinerary.Itinerary;
 import com.sss.app.entity.itinerary.ItineraryItem;
+import com.sss.app.entity.itinerary.ItineraryItemHotelDetail;
+import com.sss.app.entity.itinerary.ItineraryItemHotelInclusion;
+import com.sss.app.entity.itinerary.ItineraryItemTransportDetail;
+import com.sss.app.entity.itinerary.ItineraryItemTransportLeg;
+import com.sss.app.entity.library.mealplan.MealPlan;
+import com.sss.app.entity.library.roomtype.RoomType;
 import com.sss.app.entity.users.User;
 import com.sss.app.exception.BadRequestException;
 import com.sss.app.exception.NotFoundException;
+import com.sss.app.repository.itinerary.ItineraryItemHotelDetailRepository;
+import com.sss.app.repository.itinerary.ItineraryItemHotelInclusionRepository;
 import com.sss.app.repository.itinerary.ItineraryItemRepository;
+import com.sss.app.repository.itinerary.ItineraryItemTransportDetailRepository;
+import com.sss.app.repository.itinerary.ItineraryItemTransportLegRepository;
 import com.sss.app.repository.library.activity.ActivityRepository;
 import com.sss.app.repository.library.hotel.HotelRepository;
+import com.sss.app.repository.library.mealplan.MealPlanRepository;
+import com.sss.app.repository.library.roomtype.RoomTypeRepository;
 import com.sss.app.repository.library.serviceprovider.ServiceProviderRepository;
 import com.sss.app.repository.library.transport.TransportRepository;
 import com.sss.app.security.OrgAccessGuard;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +44,7 @@ import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
+@Transactional
 public class ItineraryItemHelper {
 
     private static final Set<String> VALID_TYPES = Set.of(
@@ -53,6 +72,12 @@ public class ItineraryItemHelper {
     private final ActivityRepository activityRepository;
     private final TransportRepository transportRepository;
     private final ServiceProviderRepository serviceProviderRepository;
+    private final ItineraryItemTransportDetailRepository transportDetailRepository;
+    private final ItineraryItemTransportLegRepository transportLegRepository;
+    private final ItineraryItemHotelDetailRepository hotelDetailRepository;
+    private final ItineraryItemHotelInclusionRepository hotelInclusionRepository;
+    private final MealPlanRepository mealPlanRepository;
+    private final RoomTypeRepository roomTypeRepository;
     private final OrgAccessGuard orgAccessGuard;
 
     private User currentUser() {
@@ -72,10 +97,18 @@ public class ItineraryItemHelper {
                 .title(request.getTitle())
                 .startTime(request.getStartTime())
                 .notes(request.getNotes())
+                .price(request.getPrice())
                 .sortOrder(nextSortOrder(itinerary.getSeqp()))
                 .build();
 
-        return itineraryItemRepository.save(item);
+        ItineraryItem saved = itineraryItemRepository.save(item);
+        if (request.getTransportDetail() != null) {
+            saveTransportDetail(saved, request.getTransportDetail());
+        }
+        if (request.getHotelDetail() != null) {
+            saveHotelDetail(saved, request.getHotelDetail());
+        }
+        return saved;
     }
 
     public List<ItineraryItem> getAllForItinerary(UUID itineraryUid) {
@@ -105,11 +138,199 @@ public class ItineraryItemHelper {
         if (request.getNotes() != null) {
             item.setNotes(request.getNotes());
         }
-        return itineraryItemRepository.save(item);
+        if (request.getPrice() != null) {
+            item.setPrice(request.getPrice());
+        }
+        ItineraryItem saved = itineraryItemRepository.save(item);
+        if (request.getTransportDetail() != null) {
+            saveTransportDetail(saved, request.getTransportDetail());
+        }
+        if (request.getHotelDetail() != null) {
+            saveHotelDetail(saved, request.getHotelDetail());
+        }
+        return saved;
+    }
+
+    /**
+     * Upserts the 1:1 transport detail row and fully replaces its legs
+     * (delete-and-reinsert — the form always resubmits the whole leg list,
+     * so there's no partial-update case to reconcile against).
+     */
+    private void saveTransportDetail(ItineraryItem item, TransportDetailDTO dto) {
+        ItineraryItemTransportDetail detail = transportDetailRepository.findByItineraryItem_Seqp(item.getSeqp())
+                .orElseGet(() -> ItineraryItemTransportDetail.builder().itineraryItem(item).build());
+        detail.setItineraryItem(item);
+        detail.setModeCode(dto.getModeCode());
+        detail.setVehicleTypeCode(dto.getVehicleTypeCode());
+        detail.setPrice(dto.getPrice());
+        detail.setTripType(dto.getTripType());
+        detail.setCostPrice(dto.getCostPrice());
+        detail.setCostPricePerPerson(dto.getCostPricePerPerson());
+        detail.setSellingPrice(dto.getSellingPrice());
+        detail.setSellingPricePerPerson(dto.getSellingPricePerPerson());
+        detail.setAdultsCount(dto.getAdultsCount());
+        detail.setChildrenCount(dto.getChildrenCount());
+        detail.setInfantsCount(dto.getInfantsCount());
+        detail.setAdditionalOptions(dto.getAdditionalOptions());
+        transportDetailRepository.save(detail);
+
+        transportLegRepository.deleteAllByItineraryItem_Seqp(item.getSeqp());
+        if (dto.getLegs() != null && !dto.getLegs().isEmpty()) {
+            List<ItineraryItemTransportLeg> legs = new ArrayList<>();
+            for (int i = 0; i < dto.getLegs().size(); i++) {
+                TransportLegDTO legDto = dto.getLegs().get(i);
+                legs.add(ItineraryItemTransportLeg.builder()
+                        .itineraryItem(item)
+                        .legOrder(legDto.getLegOrder() != null ? legDto.getLegOrder() : i)
+                        .direction(legDto.getDirection())
+                        .departureAirport(legDto.getDepartureAirport())
+                        .departureTerminal(legDto.getDepartureTerminal())
+                        .departureTime(legDto.getDepartureTime())
+                        .arrivalAirport(legDto.getArrivalAirport())
+                        .arrivalTerminal(legDto.getArrivalTerminal())
+                        .arrivalTime(legDto.getArrivalTime())
+                        .flightNumber(legDto.getFlightNumber())
+                        .build());
+            }
+            transportLegRepository.saveAll(legs);
+        }
+    }
+
+    /**
+     * Loads the transport detail + legs for one item, mapped to the response
+     * DTO shape. Only worth calling for transport-like items — see
+     * ItineraryItemServiceImpl, which gates this by itemType to avoid an
+     * unnecessary query per non-transport item.
+     */
+    public TransportDetailDTO getTransportDetail(ItineraryItem item) {
+        return transportDetailRepository.findByItineraryItem_Seqp(item.getSeqp())
+                .map(detail -> {
+                    TransportDetailDTO dto = new TransportDetailDTO();
+                    dto.setModeCode(detail.getModeCode());
+                    dto.setVehicleTypeCode(detail.getVehicleTypeCode());
+                    dto.setPrice(detail.getPrice());
+                    dto.setTripType(detail.getTripType());
+                    dto.setCostPrice(detail.getCostPrice());
+                    dto.setCostPricePerPerson(detail.getCostPricePerPerson());
+                    dto.setSellingPrice(detail.getSellingPrice());
+                    dto.setSellingPricePerPerson(detail.getSellingPricePerPerson());
+                    dto.setAdultsCount(detail.getAdultsCount());
+                    dto.setChildrenCount(detail.getChildrenCount());
+                    dto.setInfantsCount(detail.getInfantsCount());
+                    dto.setAdditionalOptions(detail.getAdditionalOptions());
+                    dto.setLegs(transportLegRepository.findAllByItineraryItem_SeqpOrderByLegOrderAsc(item.getSeqp())
+                            .stream().map(this::toLegDto).toList());
+                    return dto;
+                })
+                .orElse(null);
+    }
+
+    private TransportLegDTO toLegDto(ItineraryItemTransportLeg leg) {
+        TransportLegDTO dto = new TransportLegDTO();
+        dto.setLegOrder(leg.getLegOrder());
+        dto.setDirection(leg.getDirection());
+        dto.setDepartureAirport(leg.getDepartureAirport());
+        dto.setDepartureTerminal(leg.getDepartureTerminal());
+        dto.setDepartureTime(leg.getDepartureTime());
+        dto.setArrivalAirport(leg.getArrivalAirport());
+        dto.setArrivalTerminal(leg.getArrivalTerminal());
+        dto.setArrivalTime(leg.getArrivalTime());
+        dto.setFlightNumber(leg.getFlightNumber());
+        return dto;
+    }
+
+    /**
+     * Upserts the 1:1 hotel detail row and fully replaces its special
+     * inclusions (delete-and-reinsert, same rationale as transport legs).
+     * mealPlanId/roomTypeId are resolved and validated against the real
+     * library tables, same as HotelHelper does for Hotel's own relations.
+     */
+    private void saveHotelDetail(ItineraryItem item, HotelDetailDTO dto) {
+        ItineraryItemHotelDetail detail = hotelDetailRepository.findByItineraryItem_Seqp(item.getSeqp())
+                .orElseGet(() -> ItineraryItemHotelDetail.builder().itineraryItem(item).build());
+        detail.setItineraryItem(item);
+        detail.setMealPlan(resolveMealPlan(dto.getMealPlanId()));
+        detail.setRoomType(resolveRoomType(dto.getRoomTypeId()));
+        detail.setPaxPerRoom(dto.getPaxPerRoom());
+        detail.setRoomCount(dto.getRoomCount());
+        detail.setAdultsWithExtraBed(dto.getAdultsWithExtraBed());
+        detail.setChildrenWithExtraBed(dto.getChildrenWithExtraBed());
+        detail.setChildrenNoBed(dto.getChildrenNoBed());
+        detail.setComplimentaryChildCount(dto.getComplimentaryChildCount());
+        detail.setPrice(dto.getPrice());
+        detail.setTotalPrice(dto.getTotalPrice());
+        hotelDetailRepository.save(detail);
+
+        hotelInclusionRepository.deleteAllByItineraryItem_Seqp(item.getSeqp());
+        if (dto.getInclusions() != null && !dto.getInclusions().isEmpty()) {
+            List<ItineraryItemHotelInclusion> inclusions = dto.getInclusions().stream()
+                    .map(inclusionDto -> ItineraryItemHotelInclusion.builder()
+                            .itineraryItem(item)
+                            .service(inclusionDto.getService())
+                            .startTime(inclusionDto.getStartTime())
+                            .durationMinutes(inclusionDto.getDurationMinutes())
+                            .totalPrice(inclusionDto.getTotalPrice())
+                            .comments(inclusionDto.getComments())
+                            .build())
+                    .toList();
+            hotelInclusionRepository.saveAll(inclusions);
+        }
+    }
+
+    private MealPlan resolveMealPlan(UUID mealPlanUid) {
+        if (mealPlanUid == null) return null;
+        return mealPlanRepository.findByUid(mealPlanUid)
+                .orElseThrow(() -> new NotFoundException("MealPlan not found: " + mealPlanUid));
+    }
+
+    private RoomType resolveRoomType(UUID roomTypeUid) {
+        if (roomTypeUid == null) return null;
+        return roomTypeRepository.findByUid(roomTypeUid)
+                .orElseThrow(() -> new NotFoundException("RoomType not found: " + roomTypeUid));
+    }
+
+    /**
+     * Loads the hotel detail + inclusions for one item, mapped to the
+     * response DTO shape. Only worth calling for hotel items — see
+     * ItineraryItemServiceImpl, which gates this by itemType.
+     */
+    public HotelDetailDTO getHotelDetail(ItineraryItem item) {
+        return hotelDetailRepository.findByItineraryItem_Seqp(item.getSeqp())
+                .map(detail -> {
+                    HotelDetailDTO dto = new HotelDetailDTO();
+                    dto.setMealPlanId(detail.getMealPlan() != null ? detail.getMealPlan().getUid() : null);
+                    dto.setRoomTypeId(detail.getRoomType() != null ? detail.getRoomType().getUid() : null);
+                    dto.setPaxPerRoom(detail.getPaxPerRoom());
+                    dto.setRoomCount(detail.getRoomCount());
+                    dto.setAdultsWithExtraBed(detail.getAdultsWithExtraBed());
+                    dto.setChildrenWithExtraBed(detail.getChildrenWithExtraBed());
+                    dto.setChildrenNoBed(detail.getChildrenNoBed());
+                    dto.setComplimentaryChildCount(detail.getComplimentaryChildCount());
+                    dto.setPrice(detail.getPrice());
+                    dto.setTotalPrice(detail.getTotalPrice());
+                    dto.setInclusions(hotelInclusionRepository.findAllByItineraryItem_SeqpOrderBySeqpAsc(item.getSeqp())
+                            .stream().map(this::toInclusionDto).toList());
+                    return dto;
+                })
+                .orElse(null);
+    }
+
+    private HotelInclusionDTO toInclusionDto(ItineraryItemHotelInclusion inclusion) {
+        HotelInclusionDTO dto = new HotelInclusionDTO();
+        dto.setService(inclusion.getService());
+        dto.setStartTime(inclusion.getStartTime());
+        dto.setDurationMinutes(inclusion.getDurationMinutes());
+        dto.setTotalPrice(inclusion.getTotalPrice());
+        dto.setComments(inclusion.getComments());
+        return dto;
     }
 
     public void delete(UUID uid) {
         ItineraryItem item = getByUid(uid);
+        transportLegRepository.deleteAllByItineraryItem_Seqp(item.getSeqp());
+        transportDetailRepository.findByItineraryItem_Seqp(item.getSeqp()).ifPresent(transportDetailRepository::delete);
+        hotelInclusionRepository.deleteAllByItineraryItem_Seqp(item.getSeqp());
+        hotelDetailRepository.findByItineraryItem_Seqp(item.getSeqp()).ifPresent(hotelDetailRepository::delete);
         itineraryItemRepository.delete(item);
     }
 

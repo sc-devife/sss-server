@@ -1,7 +1,7 @@
 package com.sss.app.dto.library.hotel;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.sss.app.dto.library.activity.ActivityResponseDTO;
+import com.sss.app.dto.library.service.ServiceResponseDTO;
 import com.sss.app.dto.library.escapepoint.EscapePointResponseDto;
 import com.sss.app.dto.library.location.LocationResponseDTO;
 import com.sss.app.dto.library.mealplan.MealPlanResponseDTO;
@@ -34,7 +34,7 @@ public class HotelResponseDTO {
 
     private Set<RoomTypeResponseDTO> roomTypes;
 
-    private Set<ActivityResponseDTO> activities;
+    private Set<ServiceResponseDTO> services;
 
     @JsonFormat(pattern = "HH:mm")
     private LocalTime checkInTime;

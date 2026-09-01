@@ -55,7 +55,7 @@ public class HotelServiceImpl implements HotelService {
                 dto.getEscapePointIds(),
                 dto.getMealPlanIds(),
                 dto.getRoomTypeIds(),
-                dto.getActivityIds()
+                dto.getServiceIds()
         );
 
         Hotel saved = hotelRepository.save(hotel);
@@ -93,7 +93,7 @@ public class HotelServiceImpl implements HotelService {
                 dto.getEscapePointIds(),
                 dto.getMealPlanIds(),
                 dto.getRoomTypeIds(),
-                dto.getActivityIds()
+                dto.getServiceIds()
         );
 
         Hotel saved = hotelRepository.save(hotel);

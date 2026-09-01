@@ -47,11 +47,11 @@ public class PaymentMilestone extends Auditable {
     @Column(name = "due_date", nullable = false)
     private LocalDate dueDate;
 
-    @Column(name = "amount_usd", nullable = false, precision = 14, scale = 2)
-    private BigDecimal amountUsd;
+    @Column(name = "amount_inr", nullable = false, precision = 14, scale = 2)
+    private BigDecimal amountInr;
 
-    @Column(name = "amount_paid_usd", nullable = false, precision = 14, scale = 2)
-    private BigDecimal amountPaidUsd;
+    @Column(name = "amount_paid_inr", nullable = false, precision = 14, scale = 2)
+    private BigDecimal amountPaidInr;
 
     // pending / partially_paid / paid / overdue
     @Column(nullable = false)
@@ -71,8 +71,8 @@ public class PaymentMilestone extends Auditable {
         if (this.status == null) {
             this.status = "pending";
         }
-        if (this.amountPaidUsd == null) {
-            this.amountPaidUsd = BigDecimal.ZERO;
+        if (this.amountPaidInr == null) {
+            this.amountPaidInr = BigDecimal.ZERO;
         }
     }
 }

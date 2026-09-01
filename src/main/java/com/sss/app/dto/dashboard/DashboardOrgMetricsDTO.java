@@ -15,20 +15,20 @@ public class DashboardOrgMetricsDTO {
     private long leadsInLast30Days;
     private double conversionRatePercent;
     private long escapesInProgress;
-    private BigDecimal revenuePipelineUsd;
+    private BigDecimal revenuePipelineInr;
 
     // Trend-arrow comparisons — only for genuine period-flow metrics (a
     // count/sum accrued *within* a window). Point-in-time gauges like
-    // escapesInProgress/revenuePipelineUsd have no historical snapshot to
+    // escapesInProgress/revenuePipelineInr have no historical snapshot to
     // compare against, so they intentionally have no previous-period field.
     private long previousPeriodLeadsCount;
-    private BigDecimal previousPeriodRevenueCollectedUsd;
+    private BigDecimal previousPeriodRevenueCollectedInr;
 
-    private BigDecimal revenueCollectedUsd;
+    private BigDecimal revenueCollectedInr;
     private long overduePaymentsCount;
-    private BigDecimal overduePaymentsAmountUsd;
-    /** Sum of totalUsd across accepted quotes — the org's booked revenue. */
-    private BigDecimal totalRevenueUsd;
+    private BigDecimal overduePaymentsAmountInr;
+    /** Sum of totalInr across accepted quotes — the org's booked revenue. */
+    private BigDecimal totalRevenueInr;
 
     private List<StatusCountDTO> leadFunnel;
     private List<NameCountDTO> leadSourceBreakdown;

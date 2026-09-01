@@ -31,14 +31,14 @@ public interface PaymentMilestoneRepository extends JpaRepository<PaymentMilesto
     List<PaymentMilestone> findUpcomingForAssignee(@Param("orgId") Long orgId, @Param("userId") Long userId, @Param("statuses") List<String> statuses);
 
     // Dashboard Revenue & Payments — one row per status actually present,
-    // with both billed (amountUsd) and collected (amountPaidUsd) totals so
+    // with both billed (amountInr) and collected (amountPaidInr) totals so
     // the same query backs the donut, the KPI totals, and the overdue card.
-    @Query("SELECT pm.status, COUNT(pm), SUM(pm.amountUsd), SUM(pm.amountPaidUsd) "
+    @Query("SELECT pm.status, COUNT(pm), SUM(pm.amountInr), SUM(pm.amountPaidInr) "
             + "FROM PaymentMilestone pm WHERE pm.orgId = :orgId GROUP BY pm.status")
     List<Object[]> aggregateByStatusForOrg(@Param("orgId") Long orgId);
 
     // Dashboard "Revenue Collected vs previous period" trend arrow.
-    @Query("SELECT COALESCE(SUM(pm.amountPaidUsd), 0) FROM PaymentMilestone pm "
+    @Query("SELECT COALESCE(SUM(pm.amountPaidInr), 0) FROM PaymentMilestone pm "
             + "WHERE pm.orgId = :orgId AND pm.markedPaidAt BETWEEN :start AND :end")
     BigDecimal sumPaidBetween(@Param("orgId") Long orgId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }

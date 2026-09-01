@@ -14,7 +14,7 @@ public class QuoteComputeRequestDTO {
     // Section 6: "freeze the rate used" — no live FX provider is wired in
     // yet (that needs a rate-provider integration decision), so a staff
     // member enters the rate manually at compute time and it's frozen from
-    // there. Leave both null to price in USD only.
+    // there. Leave both null to price in INR only.
     private String displayCurrencyCode;
     private BigDecimal fxRateSnapshot;
 }

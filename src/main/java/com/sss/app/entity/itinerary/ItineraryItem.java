@@ -10,6 +10,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.util.UUID;
 
@@ -71,6 +72,13 @@ public class ItineraryItem extends Auditable {
 
     @Column
     private String notes;
+
+    // Currently populated for Activity items only (see Activity's own
+    // basePrice for the library default) — kept on the base item rather
+    // than a dedicated detail table since it's a single scalar field, not a
+    // whole booking-detail shape like Transport/Hotel's.
+    @Column(precision = 12, scale = 2)
+    private BigDecimal price;
 
     @Column(name = "sort_order", nullable = false)
     private Integer sortOrder;

@@ -1,11 +1,11 @@
 package com.sss.app.entity.library.hotel;
 
 import com.sss.app.entity.common.Auditable;
-import com.sss.app.entity.library.activity.Activity;
 import com.sss.app.entity.library.escapepoint.EscapePoint;
 import com.sss.app.entity.library.location.Location;
 import com.sss.app.entity.library.mealplan.MealPlan;
 import com.sss.app.entity.library.roomtype.RoomType;
+import com.sss.app.entity.library.service.Service;
 import com.sss.app.util.IdGenerator;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -106,18 +106,19 @@ public class Hotel extends Auditable {
     @Builder.Default
     private Set<RoomType> roomTypes = new HashSet<>();
 
-    // ----- Activities: ManyToMany (only activities specifically offered at
-    // this hotel, not every activity in its escape point/destination) -----
+    // ----- Services: ManyToMany — hotel-level special add-ons (Candle Light
+    // Dinner, Room Decoration, Honeymoon Setup, Birthday Decoration), not
+    // trip Activities (trekking/scuba/etc, see the Activity entity for that). -----
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
-            name = "hotel_activities",
+            name = "hotel_services",
             joinColumns = @JoinColumn(name = "hotel_id"),
-            inverseJoinColumns = @JoinColumn(name = "activity_id")
+            inverseJoinColumns = @JoinColumn(name = "service_id")
     )
     @Builder.Default
-    private Set<Activity> activities = new HashSet<>();
+    private Set<Service> services = new HashSet<>();
 
     // ----- Services (per the "Services" form section) -----
     private LocalTime checkInTime;

@@ -1,17 +1,17 @@
 package com.sss.app.helper.library.hotel;
 
-import com.sss.app.entity.library.activity.Activity;
 import com.sss.app.entity.library.escapepoint.EscapePoint;
 import com.sss.app.entity.library.hotel.Hotel;
 import com.sss.app.entity.library.location.Location;
 import com.sss.app.entity.library.mealplan.MealPlan;
 import com.sss.app.entity.library.roomtype.RoomType;
+import com.sss.app.entity.library.service.Service;
 import com.sss.app.exception.ResourceNotFoundException;
-import com.sss.app.repository.library.activity.ActivityRepository;
 import com.sss.app.repository.library.escapepoint.EscapePointRepository;
 import com.sss.app.repository.library.location.LocationRepository;
 import com.sss.app.repository.library.mealplan.MealPlanRepository;
 import com.sss.app.repository.library.roomtype.RoomTypeRepository;
+import com.sss.app.repository.library.service.ServiceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -32,7 +32,7 @@ public class HotelHelper {
     private final EscapePointRepository escapePointRepository;
     private final MealPlanRepository mealPlanRepository;
     private final RoomTypeRepository roomTypeRepository;
-    private final ActivityRepository activityRepository;
+    private final ServiceRepository serviceRepository;
 
     public Location resolveLocation(UUID locationId) {
         return locationRepository.findByUid(locationId)
@@ -71,13 +71,13 @@ public class HotelHelper {
         return roomTypes;
     }
 
-    public Set<Activity> resolveActivities(Set<UUID> activityIds) {
-        if (activityIds == null || activityIds.isEmpty()) {
+    public Set<Service> resolveServices(Set<UUID> serviceIds) {
+        if (serviceIds == null || serviceIds.isEmpty()) {
             return new HashSet<>();
         }
-        Set<Activity> activities = new HashSet<>(activityRepository.findAllByUidIn(new java.util.ArrayList<>(activityIds)));
-        validateAllFound(activityIds, activities.size(), "Activity");
-        return activities;
+        Set<Service> services = new HashSet<>(serviceRepository.findAllByUidIn(serviceIds));
+        validateAllFound(serviceIds, services.size(), "Service");
+        return services;
     }
 
     /**
@@ -90,7 +90,7 @@ public class HotelHelper {
                                 Set<String> escapePointIds,
                                 Set<UUID> mealPlanIds,
                                 Set<UUID> roomTypeIds,
-                                Set<UUID> activityIds) {
+                                Set<UUID> serviceIds) {
         if (locationId != null) {
             hotel.setLocation(resolveLocation(locationId));
         }
@@ -106,8 +106,8 @@ public class HotelHelper {
         if (roomTypeIds != null) {
             hotel.setRoomTypes(resolveRoomTypes(roomTypeIds));
         }
-        if (activityIds != null) {
-            hotel.setActivities(resolveActivities(activityIds));
+        if (serviceIds != null) {
+            hotel.setServices(resolveServices(serviceIds));
         }
     }
 

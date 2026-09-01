@@ -31,7 +31,8 @@ import java.util.UUID;
  * items are reported as excluded rather than silently treated as free).
  * Tax comes from a real, org-configurable TaxProfile. FX conversion uses a
  * manually-entered, frozen rate rather than a live provider (no FX rate API
- * integration has been requested/authorized yet).
+ * integration has been requested/authorized yet). Base/storage currency is
+ * INR — a display currency other than INR requires an FX rate snapshot.
  */
 @Service
 @RequiredArgsConstructor
@@ -89,19 +90,19 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
         }
 
         BigDecimal displayTotal = null;
-        if (request.getDisplayCurrencyCode() != null && !"USD".equalsIgnoreCase(request.getDisplayCurrencyCode())) {
+        if (request.getDisplayCurrencyCode() != null && !"INR".equalsIgnoreCase(request.getDisplayCurrencyCode())) {
             if (request.getFxRateSnapshot() == null) {
-                throw new BadRequestException("fxRateSnapshot is required when displayCurrencyCode is not USD");
+                throw new BadRequestException("fxRateSnapshot is required when displayCurrencyCode is not INR");
             }
             displayTotal = total.multiply(request.getFxRateSnapshot()).setScale(2, RoundingMode.HALF_UP);
         }
 
-        quote.setSubtotalUsd(subtotal.setScale(2, RoundingMode.HALF_UP));
+        quote.setSubtotalInr(subtotal.setScale(2, RoundingMode.HALF_UP));
         quote.setTaxProfileId(taxProfileUid);
-        quote.setTaxAmountUsd(taxAmount);
+        quote.setTaxAmountInr(taxAmount);
         quote.setDiscountType(discountType);
         quote.setDiscountValue(discountValue);
-        quote.setTotalUsd(total.setScale(2, RoundingMode.HALF_UP));
+        quote.setTotalInr(total.setScale(2, RoundingMode.HALF_UP));
         quote.setCurrencyCode(request.getDisplayCurrencyCode());
         quote.setFxRateSnapshot(request.getFxRateSnapshot());
         Quote saved = quoteRepository.save(quote);

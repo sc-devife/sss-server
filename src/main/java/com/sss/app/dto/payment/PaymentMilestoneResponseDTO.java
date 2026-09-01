@@ -13,8 +13,8 @@ public class PaymentMilestoneResponseDTO {
     private UUID dealUid;
     private String label;
     private LocalDate dueDate;
-    private BigDecimal amountUsd;
-    private BigDecimal amountPaidUsd;
+    private BigDecimal amountInr;
+    private BigDecimal amountPaidInr;
     private String status;
     private Long markedPaidBy;
     private String markedPaidByName;

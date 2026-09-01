@@ -2,6 +2,7 @@ package com.sss.app.dto.itinerary;
 
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.util.UUID;
 
@@ -13,4 +14,7 @@ public class ItineraryItemUpdateRequestDTO {
     private String title;
     private LocalTime startTime;
     private String notes;
+    private BigDecimal price;
+    private TransportDetailDTO transportDetail;
+    private HotelDetailDTO hotelDetail;
 }

@@ -9,5 +9,5 @@ import java.util.List;
 public class QuoteComputeResponseDTO {
     private QuoteResponseDTO quote;
     private List<String> pricingWarnings; // e.g. items with no resolvable price, excluded from the subtotal
-    private BigDecimal displayTotal; // totalUsd converted via fxRateSnapshot; null if priced in USD only
+    private BigDecimal displayTotal; // totalInr converted via fxRateSnapshot; null if priced in INR only
 }

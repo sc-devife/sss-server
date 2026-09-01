@@ -3,6 +3,7 @@ package com.sss.app.dto.itinerary;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.util.UUID;
 
@@ -29,4 +30,16 @@ public class ItineraryItemCreateRequestDTO {
     private LocalTime startTime;
 
     private String notes;
+
+    // Currently only meaningful for itemType "activity" — see
+    // ItineraryItem.price.
+    private BigDecimal price;
+
+    // Optional booking-specific transport detail — only meaningful when
+    // itemType is transport-like, ignored otherwise. See TransportDetailDTO.
+    private TransportDetailDTO transportDetail;
+
+    // Optional booking-specific hotel stay detail — only meaningful when
+    // itemType is "hotel", ignored otherwise. See HotelDetailDTO.
+    private HotelDetailDTO hotelDetail;
 }

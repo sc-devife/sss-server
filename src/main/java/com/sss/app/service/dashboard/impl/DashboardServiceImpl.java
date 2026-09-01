@@ -166,15 +166,15 @@ public class DashboardServiceImpl implements DashboardService {
         metrics.setTopEscapePoints(toSortedNameCounts(topEscapePointsRawFuture.join()));
 
         applyPaymentBreakdown(metrics, paymentAggRawFuture.join());
-        metrics.setPreviousPeriodRevenueCollectedUsd(previousPeriodRevenueCollectedFuture.join());
+        metrics.setPreviousPeriodRevenueCollectedInr(previousPeriodRevenueCollectedFuture.join());
 
         List<Quote> quotes = quotesFuture.join();
         metrics.setQuoteAnalytics(buildQuoteAnalytics(quotes));
         // The org's booked revenue — accepted quotes only, distinct from
-        // quoteAnalytics.totalQuoteValueUsd (every quote regardless of outcome).
-        metrics.setTotalRevenueUsd(quotes.stream()
+        // quoteAnalytics.totalQuoteValueInr (every quote regardless of outcome).
+        metrics.setTotalRevenueInr(quotes.stream()
                 .filter(q -> "accepted".equals(q.getStatus()))
-                .map(q -> q.getTotalUsd() == null ? BigDecimal.ZERO : q.getTotalUsd())
+                .map(q -> q.getTotalInr() == null ? BigDecimal.ZERO : q.getTotalInr())
                 .reduce(BigDecimal.ZERO, BigDecimal::add));
 
         return metrics;
@@ -204,11 +204,11 @@ public class DashboardServiceImpl implements DashboardService {
     // The same groupBy-by-status result backs three different things: the
     // Revenue & Payments donut, the "revenue collected"/"overdue" KPI cards,
     // and — filtered to the historically-open statuses — the exact same
-    // revenuePipelineUsd figure the dashboard already returned before this
+    // revenuePipelineInr figure the dashboard already returned before this
     // change (same statuses, same subtraction, just sourced from one shared
     // query instead of a separate full-list fetch).
     private void applyPaymentBreakdown(DashboardOrgMetricsDTO metrics, List<Object[]> raw) {
-        record Bucket(long count, BigDecimal totalUsd, BigDecimal paidUsd) {}
+        record Bucket(long count, BigDecimal totalInr, BigDecimal paidInr) {}
         Map<String, Bucket> byStatus = new LinkedHashMap<>();
         for (Object[] row : raw) {
             BigDecimal total = row[2] == null ? BigDecimal.ZERO : (BigDecimal) row[2];
@@ -221,19 +221,19 @@ public class DashboardServiceImpl implements DashboardService {
         BigDecimal revenuePipeline = BigDecimal.ZERO;
         for (String status : PAYMENT_STATUS_ORDER) {
             Bucket b = byStatus.getOrDefault(status, new Bucket(0, BigDecimal.ZERO, BigDecimal.ZERO));
-            breakdown.add(new PaymentStatusBreakdownDTO(status, b.count(), b.totalUsd(), b.paidUsd()));
-            revenueCollected = revenueCollected.add(b.paidUsd());
+            breakdown.add(new PaymentStatusBreakdownDTO(status, b.count(), b.totalInr(), b.paidInr()));
+            revenueCollected = revenueCollected.add(b.paidInr());
             if (OPEN_MILESTONE_STATUSES.contains(status)) {
-                revenuePipeline = revenuePipeline.add(b.totalUsd().subtract(b.paidUsd()));
+                revenuePipeline = revenuePipeline.add(b.totalInr().subtract(b.paidInr()));
             }
         }
         metrics.setPaymentBreakdown(breakdown);
-        metrics.setRevenueCollectedUsd(revenueCollected);
-        metrics.setRevenuePipelineUsd(revenuePipeline);
+        metrics.setRevenueCollectedInr(revenueCollected);
+        metrics.setRevenuePipelineInr(revenuePipeline);
 
         Bucket overdue = byStatus.getOrDefault("overdue", new Bucket(0, BigDecimal.ZERO, BigDecimal.ZERO));
         metrics.setOverduePaymentsCount(overdue.count());
-        metrics.setOverduePaymentsAmountUsd(overdue.totalUsd().subtract(overdue.paidUsd()));
+        metrics.setOverduePaymentsAmountInr(overdue.totalInr().subtract(overdue.paidInr()));
     }
 
     private QuoteAnalyticsDTO buildQuoteAnalytics(List<Quote> quotes) {
@@ -250,7 +250,7 @@ public class DashboardServiceImpl implements DashboardService {
         double acceptanceRate = totalQuotes == 0 ? 0 : (accepted * 100.0) / totalQuotes;
 
         BigDecimal totalValue = quotes.stream()
-                .map(q -> q.getTotalUsd() == null ? BigDecimal.ZERO : q.getTotalUsd())
+                .map(q -> q.getTotalInr() == null ? BigDecimal.ZERO : q.getTotalInr())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal averageValue = totalQuotes == 0
                 ? BigDecimal.ZERO

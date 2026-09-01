@@ -60,17 +60,17 @@ public class Quote extends Auditable {
     @Column(name = "fx_rate_snapshot", precision = 18, scale = 6)
     private BigDecimal fxRateSnapshot;
 
-    @Column(name = "subtotal_usd", precision = 14, scale = 2)
-    private BigDecimal subtotalUsd;
+    @Column(name = "subtotal_inr", precision = 14, scale = 2)
+    private BigDecimal subtotalInr;
 
     @Column(name = "tax_profile_id")
     private UUID taxProfileId;
 
-    @Column(name = "tax_amount_usd", precision = 14, scale = 2)
-    private BigDecimal taxAmountUsd;
+    @Column(name = "tax_amount_inr", precision = 14, scale = 2)
+    private BigDecimal taxAmountInr;
 
-    @Column(name = "total_usd", precision = 14, scale = 2)
-    private BigDecimal totalUsd;
+    @Column(name = "total_inr", precision = 14, scale = 2)
+    private BigDecimal totalInr;
 
     // none / percent / flat
     @Column(name = "discount_type", nullable = false)
