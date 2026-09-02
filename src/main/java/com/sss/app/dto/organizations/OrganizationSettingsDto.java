@@ -15,6 +15,7 @@ public class OrganizationSettingsDto {
     private String default_currency_code;
     private UUID quote_template_id;
     private UUID invoice_template_id;
+    private UUID default_quotation_template_id;
     private String timezone;
     private String default_locale;
     private Integer default_payment_terms_days;

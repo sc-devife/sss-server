@@ -30,6 +30,7 @@ public class CloudinaryService {
             MediaType.IMAGE_JPEG_VALUE, MediaType.IMAGE_PNG_VALUE, "image/webp"
     );
     private static final long MAX_SIZE_BYTES = 8L * 1024 * 1024;
+    private static final long MAX_HTML_SIZE_BYTES = 2L * 1024 * 1024;
     private static final String DEFAULT_FOLDER = "sss";
     private static final String CLOUDINARY_HOST_MARKER = "res.cloudinary.com";
 
@@ -58,6 +59,28 @@ public class CloudinaryService {
     }
 
     /**
+     * Uploads a raw HTML file (e.g. a quotation template) to Cloudinary as a
+     * "raw" resource, alongside the image-only upload() above — same service,
+     * same credentials, just a different Cloudinary resource_type/validation.
+     */
+    public CloudinaryUploadResult uploadHtml(MultipartFile file, String folder) {
+        validateHtml(file);
+        try {
+            Map<?, ?> result = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
+                    "folder", folder,
+                    "resource_type", "raw"
+            ));
+            String secureUrl = (String) result.get("secure_url");
+            String publicId = (String) result.get("public_id");
+            log.info("Uploaded HTML template to Cloudinary: folder={}, publicId={}", folder, publicId);
+            return new CloudinaryUploadResult(secureUrl, publicId);
+        } catch (IOException e) {
+            log.error("Cloudinary raw upload failed for folder={}", folder, e);
+            throw new RuntimeException("Failed to upload template to Cloudinary: " + e.getMessage(), e);
+        }
+    }
+
+    /**
      * Deletes the Cloudinary asset a previously-stored secure URL points to.
      * No-ops (with a log line) for null/blank/non-Cloudinary URLs — e.g. a
      * legacy local "/files/..." path from before this migration — and never
@@ -73,7 +96,7 @@ public class CloudinaryService {
             log.warn("Could not derive Cloudinary public_id from url={}, skipping delete", secureUrl);
             return;
         }
-        deleteByPublicId(publicId);
+        deleteByPublicId(publicId, extractResourceType(secureUrl));
     }
 
     /** Deletes every URL in previousUrls that's no longer present in currentUrls — for image-list fields (hotel/activity/escape point galleries) that get fully replaced on update. */
@@ -90,12 +113,17 @@ public class CloudinaryService {
     }
 
     public void deleteByPublicId(String publicId) {
+        deleteByPublicId(publicId, "image");
+    }
+
+    /** @param resourceType Cloudinary's resource_type the asset was uploaded under ("image" or "raw") — destroy() defaults to "image" and silently no-ops on a raw asset's public_id otherwise. */
+    public void deleteByPublicId(String publicId, String resourceType) {
         if (publicId == null || publicId.isBlank()) {
             return;
         }
         try {
-            Map<?, ?> result = cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
-            log.info("Deleted Cloudinary asset: publicId={}, result={}", publicId, result.get("result"));
+            Map<?, ?> result = cloudinary.uploader().destroy(publicId, ObjectUtils.asMap("resource_type", resourceType));
+            log.info("Deleted Cloudinary asset: publicId={}, resourceType={}, result={}", publicId, resourceType, result.get("result"));
         } catch (IOException e) {
             log.error("Failed to delete Cloudinary asset publicId={}", publicId, e);
         }
@@ -118,6 +146,16 @@ public class CloudinaryService {
         return lastDot > 0 ? pathWithExtension.substring(0, lastDot) : pathWithExtension;
     }
 
+    /** Cloudinary URLs encode resource_type right after the cloud name, e.g. ".../image/upload/..." vs ".../raw/upload/..." — read it back out so deleteByUrl works for both. */
+    static String extractResourceType(String secureUrl) {
+        int hostIdx = secureUrl.indexOf(CLOUDINARY_HOST_MARKER);
+        if (hostIdx < 0) {
+            return "image";
+        }
+        String[] segments = secureUrl.substring(hostIdx + CLOUDINARY_HOST_MARKER.length()).split("/");
+        return segments.length > 2 && !segments[2].isBlank() ? segments[2] : "image";
+    }
+
     private void validate(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new BadRequestException("No file provided");
@@ -128,6 +166,22 @@ public class CloudinaryService {
         String contentType = file.getContentType();
         if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType)) {
             throw new BadRequestException("Only JPEG, PNG, or WEBP images are allowed");
+        }
+    }
+
+    private void validateHtml(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new BadRequestException("No file provided");
+        }
+        if (file.getSize() > MAX_HTML_SIZE_BYTES) {
+            throw new BadRequestException("Template file exceeds the 2MB limit");
+        }
+        String contentType = file.getContentType();
+        String filename = file.getOriginalFilename();
+        boolean looksHtml = "text/html".equals(contentType)
+                || (filename != null && filename.toLowerCase().endsWith(".html"));
+        if (!looksHtml) {
+            throw new BadRequestException("Only .html files are allowed");
         }
     }
 }

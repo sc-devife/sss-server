@@ -13,6 +13,7 @@ import com.sss.app.service.assignment.LeadAssignmentService;
 import com.sss.app.service.audit.AuditLogService;
 import com.sss.app.service.escape.EscapeService;
 import com.sss.app.service.escape.EscapeLifecycleService;
+import com.sss.app.service.quotationtemplate.QuotationTemplateService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -32,6 +33,7 @@ public class EscapeController {
     private final EscapeLifecycleService escapeLifecycleService;
     private final AuditLogService auditLogService;
     private final LeadAssignmentService leadAssignmentService;
+    private final QuotationTemplateService quotationTemplateService;
 
     @PreAuthorize("@permissionService.hasPermission('trips.write')")
     @PostMapping("/create")
@@ -117,5 +119,14 @@ public class EscapeController {
     @PostMapping(value = "/{id}/assign", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<EscapeResponseDTO> assign(@PathVariable UUID id, @Valid @RequestBody EscapeAssignRequestDTO body) {
         return ResponseEntity.ok(leadAssignmentService.manuallyAssign(id, body.getUserId(), body.getReason()));
+    }
+
+    // Real-data quotation preview — same QuotationRenderingService as the
+    // Settings sample preview, just fed this escape's actual data instead.
+    // templateUid is optional: omit to use the org's default template.
+    @PreAuthorize("@permissionService.hasPermission('trips.read')")
+    @GetMapping(value = "/{id}/quotation-preview", produces = MediaType.TEXT_HTML_VALUE)
+    public ResponseEntity<String> quotationPreview(@PathVariable UUID id, @RequestParam(required = false) UUID templateUid) {
+        return ResponseEntity.ok(quotationTemplateService.renderForEscape(id, templateUid));
     }
 }

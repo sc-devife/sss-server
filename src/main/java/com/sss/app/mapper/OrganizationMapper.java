@@ -47,6 +47,7 @@ public class OrganizationMapper {
         dto.setDefault_currency_code(settings.getDefaultCurrencyCode());
         dto.setQuote_template_id(settings.getQuoteTemplateId());
         dto.setInvoice_template_id(settings.getInvoiceTemplateId());
+        dto.setDefault_quotation_template_id(settings.getDefaultQuotationTemplateId());
         dto.setTimezone(settings.getTimezone());
         dto.setDefault_locale(settings.getDefaultLocale());
         dto.setDefault_payment_terms_days(settings.getDefaultPaymentTermsDays());

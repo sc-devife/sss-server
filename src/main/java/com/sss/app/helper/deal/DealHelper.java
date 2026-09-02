@@ -22,14 +22,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
 public class DealHelper {
-
-    private static final Set<String> TERMINAL_QUOTE_STATUSES = Set.of("accepted", "rejected", "superseded");
 
     private final DealRepository dealRepository;
     private final QuoteHelper quoteHelper;
@@ -47,7 +44,18 @@ public class DealHelper {
     /**
      * Section 8: "exactly one accepted quote (from one itinerary) per trip
      * converts to a Deal; all sibling itineraries/quotes remain as history,
-     * marked superseded/rejected."
+     * marked superseded/rejected." Enforced here, not just in the frontend,
+     * so a stray API call (or old client) can't leave two quotes accepted at
+     * once for the same escape.
+     *
+     * Accepting ANY non-rejected quote (draft/sent/superseded, or the
+     * already-accepted one) is allowed at any time — it always supersedes
+     * whichever quote was previously accepted and re-points the escape's one
+     * Deal row (UNIQUE escape_id, V24 — created once, reused/reactivated
+     * after that, never a second row) at the new quote. This is how
+     * switching the accepted quote works, including un-doing a mistaken
+     * acceptance by accepting a superseded one again — no separate
+     * "cancel deal" step required.
      */
     @Transactional
     public Deal acceptQuote(UUID quoteUid) {
@@ -55,12 +63,22 @@ public class DealHelper {
         Itinerary winningItinerary = quote.getItinerary();
         Escape trip = winningItinerary.getEscape();
 
-        if (TERMINAL_QUOTE_STATUSES.contains(quote.getStatus())) {
-            throw new ConflictException("This quote is already " + quote.getStatus() + " and can't be accepted");
+        if ("rejected".equals(quote.getStatus())) {
+            throw new ConflictException("This quote is already rejected and can't be accepted");
         }
-        if (dealRepository.findByEscape_Seqp(trip.getSeqp()).isPresent()) {
-            throw new ConflictException("This trip already has an accepted deal");
-        }
+
+        Deal existingDeal = dealRepository.findByEscape_Seqp(trip.getSeqp()).orElse(null);
+
+        // Accepting the quote that is ALREADY this escape's active deal is a
+        // harmless no-op re-run rather than genuinely new work — lets the
+        // same "accept" action be safely retried, and doubles as a
+        // self-healing path for any sibling quote left stuck "accepted" by
+        // data older than this rule (re-running it drives the supersede
+        // sweep below without changing which quote is actually accepted).
+        boolean reaffirmingActiveDeal = existingDeal != null
+                && "active".equals(existingDeal.getStatus())
+                && existingDeal.getAcceptedQuote() != null
+                && existingDeal.getAcceptedQuote().getSeqp().equals(quote.getSeqp());
 
         quote.setStatus("accepted");
         quoteRepository.save(quote);
@@ -69,7 +87,13 @@ public class DealHelper {
         for (Itinerary itinerary : allItineraries) {
             List<Quote> quotesInItinerary = quoteRepository.findAllByOrgIdAndItinerary_Seqp(trip.getOrgId(), itinerary.getSeqp());
             for (Quote sibling : quotesInItinerary) {
-                if (!sibling.getSeqp().equals(quote.getSeqp()) && !TERMINAL_QUOTE_STATUSES.contains(sibling.getStatus())) {
+                // "accepted" is deliberately NOT treated as protected here —
+                // the whole point of this sweep is to demote whichever quote
+                // was previously accepted the moment a different one becomes
+                // accepted, so at most one quote for this escape is ever
+                // "accepted" at once.
+                boolean protectedStatus = "rejected".equals(sibling.getStatus()) || "superseded".equals(sibling.getStatus());
+                if (!sibling.getSeqp().equals(quote.getSeqp()) && !protectedStatus) {
                     sibling.setStatus("superseded");
                     quoteRepository.save(sibling);
                 }
@@ -83,15 +107,25 @@ public class DealHelper {
             itineraryRepository.save(itinerary);
         }
 
-        Deal deal = Deal.builder()
-                .orgId(trip.getOrgId())
-                .escape(trip)
-                .acceptedQuote(quote)
-                .status("active")
-                .build();
-        deal = dealRepository.save(deal);
-
-        auditLogService.record("Escape", trip.getSeqp(), "DEAL_CREATED", null, deal.getUid());
+        Deal deal;
+        if (reaffirmingActiveDeal) {
+            deal = existingDeal;
+        } else if (existingDeal != null) {
+            String previousStatus = existingDeal.getStatus();
+            existingDeal.setAcceptedQuote(quote);
+            existingDeal.setStatus("active");
+            deal = dealRepository.save(existingDeal);
+            auditLogService.record("Escape", trip.getSeqp(), "DEAL_QUOTE_SWITCHED", previousStatus, deal.getUid());
+        } else {
+            deal = Deal.builder()
+                    .orgId(trip.getOrgId())
+                    .escape(trip)
+                    .acceptedQuote(quote)
+                    .status("active")
+                    .build();
+            deal = dealRepository.save(deal);
+            auditLogService.record("Escape", trip.getSeqp(), "DEAL_CREATED", null, deal.getUid());
+        }
 
         // Best-effort: advance the trip's lifecycle if it hasn't already
         // passed this stage (e.g. re-accepting after a manual status jump).

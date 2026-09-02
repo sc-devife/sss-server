@@ -183,6 +183,12 @@
             <artifactId>uuid-creator</artifactId>
             <version>6.1.1</version>
         </dependency>
+        <!-- Mustache templating: renders quotation template HTML (fetched from Cloudinary) against quotation data -->
+        <dependency>
+            <groupId>com.github.spullara.mustache.java</groupId>
+            <artifactId>compiler</artifactId>
+            <version>0.9.14</version>
+        </dependency>
     </dependencies>
 
     <build>

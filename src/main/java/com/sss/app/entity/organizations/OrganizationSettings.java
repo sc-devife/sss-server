@@ -38,6 +38,11 @@ public class OrganizationSettings {
     private UUID quoteTemplateId;
     private UUID invoiceTemplateId;
 
+    // Cloudinary-HTML quotation template system (V81) — distinct from
+    // quoteTemplateId above (the older hardcoded-list system); this one has
+    // a real FK-able table (quotation_templates).
+    private UUID defaultQuotationTemplateId;
+
     @Builder.Default
     private String timezone = "UTC";
 
@@ -73,6 +78,9 @@ public class OrganizationSettings {
         }
         if (dto.getInvoice_template_id() != null && CompareUtil.hasChanged(dto.getInvoice_template_id(), this.invoiceTemplateId)) {
             this.invoiceTemplateId = dto.getInvoice_template_id();
+        }
+        if (dto.getDefault_quotation_template_id() != null && CompareUtil.hasChanged(dto.getDefault_quotation_template_id(), this.defaultQuotationTemplateId)) {
+            this.defaultQuotationTemplateId = dto.getDefault_quotation_template_id();
         }
         if (dto.getTimezone() != null && CompareUtil.hasChanged(dto.getTimezone(), this.timezone)) {
             this.timezone = dto.getTimezone();

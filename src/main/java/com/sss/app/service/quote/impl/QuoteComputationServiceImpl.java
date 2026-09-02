@@ -1,5 +1,6 @@
 package com.sss.app.service.quote.impl;
 
+import com.sss.app.dto.quote.PricingBreakdownDTO;
 import com.sss.app.dto.quote.QuoteComputeRequestDTO;
 import com.sss.app.dto.quote.QuoteComputeResponseDTO;
 import com.sss.app.entity.itinerary.ItineraryItem;
@@ -72,11 +73,18 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
 
         List<String> warnings = new ArrayList<>();
         BigDecimal subtotal = BigDecimal.ZERO;
+        PricingBreakdownDTO breakdown = new PricingBreakdownDTO();
 
         for (ItineraryItem item : items) {
             BigDecimal price = resolvePrice(item, warnings);
             if (price != null) {
                 subtotal = subtotal.add(price);
+                switch (item.getItemType()) {
+                    case "hotel" -> breakdown.setHotelsInr(breakdown.getHotelsInr().add(price));
+                    case "activity" -> breakdown.setActivitiesInr(breakdown.getActivitiesInr().add(price));
+                    case "transport" -> breakdown.setTransportInr(breakdown.getTransportInr().add(price));
+                    default -> breakdown.setOtherInr(breakdown.getOtherInr().add(price));
+                }
             }
         }
 
@@ -127,6 +135,7 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
         response.setQuote(quoteMapper.toResponse(saved));
         response.setPricingWarnings(warnings);
         response.setDisplayTotal(displayTotal);
+        response.setBreakdown(breakdown);
         return response;
     }
 
