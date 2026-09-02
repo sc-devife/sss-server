@@ -12,6 +12,8 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -56,13 +58,21 @@ public class Lead extends Auditable {
     @Column(name = "source_ref_id")
     private String sourceRefId;
 
-    // Section 15 destination_interest — coded FK alongside the historical
-    // free-text `destination` column above (see V14 migration note).
+    // Section 15 destination_interest — coded links alongside the historical
+    // free-text `destination` column above (see V14 migration note). Was a
+    // single @ManyToOne (destination_id) until V80, which moved it to this
+    // many-to-many so a lead can express interest in more than one Escape
+    // Point — mirrors Escape.escapePoints / Hotel.escapePoints.
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "destination_id")
-    private EscapePoint escapePointRef;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "lead_escape_points",
+            joinColumns = @JoinColumn(name = "lead_id"),
+            inverseJoinColumns = @JoinColumn(name = "escape_point_id")
+    )
+    @Builder.Default
+    private Set<EscapePoint> escapePoints = new HashSet<>();
 
     @Builder.Default
     @Column(name = "is_priority", nullable = false)

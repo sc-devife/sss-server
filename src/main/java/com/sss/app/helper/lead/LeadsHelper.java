@@ -22,6 +22,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -60,9 +61,9 @@ public class LeadsHelper {
         if (LeadSourceType.AGENCY.equals(lead.getSourceType())) {
             lead.setSourceChannel(null);
         }
-        if (payload.getEscapePointId() != null && !payload.getEscapePointId().isBlank()) {
-            escapePointRepository.findByUid(payload.getEscapePointId())
-                    .ifPresent(lead::setEscapePointRef);
+        if (payload.getEscapePointIds() != null && !payload.getEscapePointIds().isEmpty()) {
+            lead.setEscapePoints(new HashSet<>(escapePointRepository.findAllByUidIn(
+                    new HashSet<>(payload.getEscapePointIds()))));
         }
         Lead saved = leadRepository.save(lead);
 

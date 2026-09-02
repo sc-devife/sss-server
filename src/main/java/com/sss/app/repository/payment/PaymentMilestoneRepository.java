@@ -41,4 +41,17 @@ public interface PaymentMilestoneRepository extends JpaRepository<PaymentMilesto
     @Query("SELECT COALESCE(SUM(pm.amountPaidInr), 0) FROM PaymentMilestone pm "
             + "WHERE pm.orgId = :orgId AND pm.markedPaidAt BETWEEN :start AND :end")
     BigDecimal sumPaidBetween(@Param("orgId") Long orgId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    // Incoming Transactions ledger: every milestone that's actually had a
+    // payment recorded against it (paymentMethod only gets set by
+    // recordPayment — a milestone still sitting at "pending" never appears
+    // here, since no money has moved yet). JOIN FETCH avoids N+1s across
+    // deal -> escape -> lead for the customer-name column.
+    @Query("SELECT pm FROM PaymentMilestone pm "
+            + "JOIN FETCH pm.deal d "
+            + "JOIN FETCH d.escape e "
+            + "JOIN FETCH e.lead l "
+            + "WHERE pm.orgId = :orgId AND pm.paymentMethod IS NOT NULL "
+            + "ORDER BY pm.markedPaidAt DESC")
+    List<PaymentMilestone> findIncomingForOrg(@Param("orgId") Long orgId);
 }

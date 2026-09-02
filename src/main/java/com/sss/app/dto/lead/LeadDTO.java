@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.List;
 @Data
 public class LeadDTO {
     private String name;
@@ -29,7 +30,7 @@ public class LeadDTO {
     private String sourceRefId;
     private LeadAgencyDetailsDTO agencyDetails;
 
-    private String escapePointId; // EscapePoint uid, resolved manually (see LeadsHelper)
+    private List<String> escapePointIds; // EscapePoint uids, resolved manually (see LeadsHelper)
     private Boolean isPriority;
     private String originCity;
     private String travelType;

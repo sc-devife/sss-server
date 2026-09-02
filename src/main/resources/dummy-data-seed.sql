@@ -75,13 +75,16 @@ BEGIN
     VALUES (gen_random_uuid(), v_org_id, 'Netravati Resort', 4, v_loc_chikka, v_ep_netravati, true, 'active', now(), now());
 
     -- Leads (never individually assigned — see leads schema note in V62)
-    INSERT INTO leads (org_id, name, email, phone, destination, number_of_people, travel_date, duration_days, budget, status, destination_id, source_type, source_channel, origin_city, travel_type, is_priority, created_at, updated_at)
-    VALUES (v_org_id, 'Sanat', 'sanat@gmail.com', '+916363356214', 'Crrog', 2, DATE '2026-08-20', 2, 4499, 'Converted', v_ep_crrog, 'DIRECT', 'manual', 'Bengaluru', 'friends', false, now(), now())
+    INSERT INTO leads (org_id, name, email, phone, destination, number_of_people, travel_date, duration_days, budget, status, source_type, source_channel, origin_city, travel_type, is_priority, created_at, updated_at)
+    VALUES (v_org_id, 'Sanat', 'sanat@gmail.com', '+916363356214', 'Crrog', 2, DATE '2026-08-20', 2, 4499, 'Converted', 'DIRECT', 'manual', 'Bengaluru', 'friends', false, now(), now())
     RETURNING seqp INTO v_lead_sanat;
 
-    INSERT INTO leads (org_id, name, email, phone, destination, number_of_people, travel_date, duration_days, budget, status, destination_id, source_type, source_channel, origin_city, travel_type, is_priority, created_at, updated_at)
-    VALUES (v_org_id, 'Sangmesh', 'sangmesh@gmail.com', '+916363356215', 'Netravati', 2, DATE '2026-09-05', 2, 15000, 'Converted', v_ep_netravati, 'DIRECT', 'manual', 'Bengaluru', 'friends', false, now(), now())
+    INSERT INTO leads (org_id, name, email, phone, destination, number_of_people, travel_date, duration_days, budget, status, source_type, source_channel, origin_city, travel_type, is_priority, created_at, updated_at)
+    VALUES (v_org_id, 'Sangmesh', 'sangmesh@gmail.com', '+916363356215', 'Netravati', 2, DATE '2026-09-05', 2, 15000, 'Converted', 'DIRECT', 'manual', 'Bengaluru', 'friends', false, now(), now())
     RETURNING seqp INTO v_lead_sangmesh;
+
+    INSERT INTO lead_escape_points (lead_id, escape_point_id) VALUES (v_lead_sanat, v_ep_crrog);
+    INSERT INTO lead_escape_points (lead_id, escape_point_id) VALUES (v_lead_sangmesh, v_ep_netravati);
 
     -- Travellers
     INSERT INTO traveller (org_id, first_name, last_name, email, phone)
