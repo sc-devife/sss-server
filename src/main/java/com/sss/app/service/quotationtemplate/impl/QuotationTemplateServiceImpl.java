@@ -12,6 +12,8 @@ import com.sss.app.repository.quotationtemplate.QuotationTemplateRepository;
 import com.sss.app.service.files.CloudinaryService;
 import com.sss.app.service.files.CloudinaryUploadResult;
 import com.sss.app.service.quotationtemplate.QuotationDataService;
+import com.sss.app.service.quotationtemplate.QuotationPdfResult;
+import com.sss.app.service.quotationtemplate.QuotationPdfService;
 import com.sss.app.service.quotationtemplate.QuotationRenderingService;
 import com.sss.app.service.quotationtemplate.QuotationTemplateService;
 import com.sss.app.service.quotationtemplate.SampleQuotationDataService;
@@ -21,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -37,6 +40,7 @@ public class QuotationTemplateServiceImpl implements QuotationTemplateService {
     private final QuotationRenderingService quotationRenderingService;
     private final SampleQuotationDataService sampleQuotationDataService;
     private final QuotationDataService quotationDataService;
+    private final QuotationPdfService quotationPdfService;
 
     @Override
     public QuotationTemplateResponseDTO create(String name, String description, MultipartFile htmlFile, MultipartFile previewImage) {
@@ -112,6 +116,19 @@ public class QuotationTemplateServiceImpl implements QuotationTemplateService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public QuotationPdfResult previewWithSampleDataAsPdf(UUID uid) {
+        QuotationTemplate template = findEntity(uid);
+        Map<String, Object> data = sampleQuotationDataService.buildSampleData();
+        String html = quotationRenderingService.render(template.getCloudinaryUrl(), data);
+        byte[] pdf = quotationPdfService.render(html, watermarkText(data));
+        // Not a real quotation — no quote number applies, and the filename
+        // deliberately avoids the word "Quotation" per the same convention
+        // real downloads use.
+        return new QuotationPdfResult(pdf, "template-preview.pdf");
+    }
+
+    @Override
     public void setAsDefault(UUID uid) {
         QuotationTemplate template = findEntity(uid);
         Long orgId = organizationsHelper.getMyOrganization().getSeqp();
@@ -133,6 +150,57 @@ public class QuotationTemplateServiceImpl implements QuotationTemplateService {
         }
         QuotationTemplate template = findEntity(resolvedTemplateUid);
         return quotationRenderingService.render(template.getCloudinaryUrl(), quotationDataService.buildData(escapeUid));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public QuotationPdfResult renderForEscapeAsPdf(UUID escapeUid, UUID templateUid) {
+        UUID resolvedTemplateUid = templateUid;
+        if (resolvedTemplateUid == null) {
+            Long orgId = organizationsHelper.getMyOrganization().getSeqp();
+            resolvedTemplateUid = organizationsHelper.getSettings(orgId).getDefaultQuotationTemplateId();
+        }
+        if (resolvedTemplateUid == null) {
+            throw new BadRequestException("No quotation template selected — choose one in Settings > Quotation Templates first");
+        }
+        QuotationTemplate template = findEntity(resolvedTemplateUid);
+        Map<String, Object> data = quotationDataService.buildData(escapeUid);
+        String html = quotationRenderingService.render(template.getCloudinaryUrl(), data);
+        byte[] pdf = quotationPdfService.render(html, watermarkText(data));
+        return new QuotationPdfResult(pdf, quoteNameFilename(data));
+    }
+
+    // The quote actually rendered (accepted, else latest — see
+    // QuotationDataService) is the one whose existing Quote Name — the same
+    // name shown in the Quotes section on the Escape page — names the file;
+    // no new/separate name is generated here.
+    @SuppressWarnings("unchecked")
+    private String quoteNameFilename(Map<String, Object> data) {
+        Object pricing = data.get("pricing");
+        Object quoteName = pricing instanceof Map ? ((Map<String, Object>) pricing).get("quoteName") : null;
+        String name = quoteName != null ? quoteName.toString() : "quote";
+        // Strip characters that are invalid in a filename on any major OS —
+        // the name itself is untouched, only made safe to save as a file.
+        String sanitized = name.replaceAll("[\\\\/:*?\"<>|]", "-").trim();
+        return (sanitized.isEmpty() ? "quote" : sanitized) + ".pdf";
+    }
+
+    // "TRP-000007 · Wanderlust Escapes Pvt Ltd" — same trip code + org name
+    // now shown in the quotation header, reused so the watermark can never
+    // say something different from the document it's stamped on.
+    @SuppressWarnings("unchecked")
+    private String watermarkText(Map<String, Object> data) {
+        Object tripCode = data.get("tripCode");
+        Object organization = data.get("organization");
+        Object orgName = organization instanceof Map ? ((Map<String, Object>) organization).get("name") : null;
+        if (tripCode == null && orgName == null) {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder();
+        if (tripCode != null) sb.append(tripCode);
+        if (tripCode != null && orgName != null) sb.append(" · ");
+        if (orgName != null) sb.append(orgName);
+        return sb.toString();
     }
 
     private QuotationTemplate findEntity(UUID uid) {

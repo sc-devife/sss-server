@@ -19,7 +19,7 @@ public class LeadDTO {
     private String destination;
     private Integer numberOfPeople;
     private LocalDate travelDate;
-    private Integer durationDays;
+    private Integer durationNights;
     private Double budget;
     private String status;
 

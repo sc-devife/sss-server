@@ -11,6 +11,7 @@ import java.util.UUID;
 public class QuoteResponseDTO {
     private UUID uid;
     private UUID itineraryUid;
+    private String quoteCode;
     private String name;
     private Integer version;
     private String status;
@@ -19,6 +20,8 @@ public class QuoteResponseDTO {
     private BigDecimal subtotalInr;
     private UUID taxProfileId;
     private BigDecimal taxAmountInr;
+    private BigDecimal tcsRatePercent;
+    private BigDecimal tcsAmountInr;
     private BigDecimal totalInr;
     private String discountType;
     private BigDecimal discountValue;

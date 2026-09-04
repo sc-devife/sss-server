@@ -79,6 +79,8 @@ public class Organizations {
     // ----- Brand / presentation -----
     private String businessEmail;
     private String websiteUrl;
+    private String instagramUrl;
+    private String linkedinUrl;
     private String whatsappNumber;
     private String tagline;
     @Column(columnDefinition = "text")
@@ -121,6 +123,8 @@ public class Organizations {
         builder.cin(dto.getCin());
         builder.businessEmail(dto.getBusiness_email());
         builder.websiteUrl(dto.getWebsite_url());
+        builder.instagramUrl(dto.getInstagram_url());
+        builder.linkedinUrl(dto.getLinkedin_url());
         builder.whatsappNumber(dto.getWhatsapp_number());
         builder.tagline(dto.getTagline());
         builder.aboutText(dto.getAbout_text());
@@ -164,6 +168,12 @@ public class Organizations {
         }
         if (dto.getWebsite_url() != null && CompareUtil.hasChanged(dto.getWebsite_url(), this.websiteUrl)) {
             this.websiteUrl = dto.getWebsite_url();
+        }
+        if (dto.getInstagram_url() != null && CompareUtil.hasChanged(dto.getInstagram_url(), this.instagramUrl)) {
+            this.instagramUrl = dto.getInstagram_url();
+        }
+        if (dto.getLinkedin_url() != null && CompareUtil.hasChanged(dto.getLinkedin_url(), this.linkedinUrl)) {
+            this.linkedinUrl = dto.getLinkedin_url();
         }
         if (dto.getWhatsapp_number() != null && CompareUtil.hasChanged(dto.getWhatsapp_number(), this.whatsappNumber)) {
             this.whatsappNumber = dto.getWhatsapp_number();

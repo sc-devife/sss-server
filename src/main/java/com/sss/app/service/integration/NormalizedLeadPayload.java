@@ -24,7 +24,7 @@ public class NormalizedLeadPayload {
     private String destinationHint; // free-text destination as the channel sent it
     private LocalDate travelDate;
     private Integer numberOfPeople;
-    private Integer durationDays;
+    private Integer durationNights;
     private String sourceRefId; // the channel's own id for this lead, for dedup/ack
     private Map<String, Object> rawPayload;
 

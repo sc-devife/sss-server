@@ -30,6 +30,12 @@ public class Escape extends Auditable {
     @Column(nullable = false, unique = true, updatable = false)
     private UUID uid;
 
+    // Computed by the DB from seqp (see V82 migration) — human-readable trip
+    // code for quotation headers/watermarks, e.g. "TRP-000123". Never
+    // app-generated so it can never drift out of sync with seqp.
+    @Column(name = "trip_code", insertable = false, updatable = false)
+    private String tripCode;
+
     private Long orgId;
 
     @ManyToOne(fetch = FetchType.LAZY)

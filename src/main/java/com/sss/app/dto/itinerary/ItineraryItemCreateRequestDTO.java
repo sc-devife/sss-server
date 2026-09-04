@@ -31,6 +31,9 @@ public class ItineraryItemCreateRequestDTO {
 
     private String notes;
 
+    // See ItineraryItem.longDescription.
+    private String longDescription;
+
     // Currently only meaningful for itemType "activity" — see
     // ItineraryItem.price.
     private BigDecimal price;

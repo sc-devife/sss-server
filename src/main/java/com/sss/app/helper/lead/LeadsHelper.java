@@ -85,7 +85,7 @@ public class LeadsHelper {
      */
     public Lead createLeadFromChannel(Long orgId, String channelCode, String sourceRefId, String name,
                                        String email, String phone, String destinationHint,
-                                       java.time.LocalDate travelDate, Integer numberOfPeople, Integer durationDays) {
+                                       java.time.LocalDate travelDate, Integer numberOfPeople, Integer durationNights) {
         Lead lead = Lead.builder()
                 .orgId(orgId)
                 .name(name)
@@ -94,7 +94,7 @@ public class LeadsHelper {
                 .destination(destinationHint)
                 .travelDate(travelDate)
                 .numberOfPeople(numberOfPeople)
-                .durationDays(durationDays)
+                .durationNights(durationNights)
                 .status("New")
                 .sourceType(LeadSourceType.DIRECT)
                 .sourceChannel(channelCode)
@@ -130,7 +130,7 @@ public class LeadsHelper {
                 .destination(payload.getDestinationHint())
                 .travelDate(payload.getTravelDate())
                 .numberOfPeople(payload.getNumberOfPeople())
-                .durationDays(payload.getDurationDays())
+                .durationNights(payload.getDurationNights())
                 .status("New")
                 .sourceType(LeadSourceType.DIRECT)
                 .sourceChannel(channelCode)

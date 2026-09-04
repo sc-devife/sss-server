@@ -13,9 +13,12 @@ import com.sss.app.service.assignment.LeadAssignmentService;
 import com.sss.app.service.audit.AuditLogService;
 import com.sss.app.service.escape.EscapeService;
 import com.sss.app.service.escape.EscapeLifecycleService;
+import com.sss.app.service.quotationtemplate.QuotationPdfResult;
 import com.sss.app.service.quotationtemplate.QuotationTemplateService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -128,5 +131,17 @@ public class EscapeController {
     @GetMapping(value = "/{id}/quotation-preview", produces = MediaType.TEXT_HTML_VALUE)
     public ResponseEntity<String> quotationPreview(@PathVariable UUID id, @RequestParam(required = false) UUID templateUid) {
         return ResponseEntity.ok(quotationTemplateService.renderForEscape(id, templateUid));
+    }
+
+    // Same rendered document as quotationPreview above, as a downloadable,
+    // watermarked PDF — see QuotationPdfService.
+    @PreAuthorize("@permissionService.hasPermission('trips.read')")
+    @GetMapping(value = "/{id}/quotation-preview/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> quotationPreviewPdf(@PathVariable UUID id, @RequestParam(required = false) UUID templateUid) {
+        QuotationPdfResult result = quotationTemplateService.renderForEscapeAsPdf(id, templateUid);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename(result.filename(), java.nio.charset.StandardCharsets.UTF_8).build().toString())
+                .body(result.bytes());
     }
 }

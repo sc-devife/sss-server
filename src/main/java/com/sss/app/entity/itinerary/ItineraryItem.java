@@ -73,6 +73,12 @@ public class ItineraryItem extends Auditable {
     @Column
     private String notes;
 
+    // Longer descriptive copy (e.g. a paragraph about a named temple/tour) —
+    // distinct from the short `notes` field above, rendered as an
+    // expandable block in quotation PDFs. Optional; plain text.
+    @Column(name = "long_description", columnDefinition = "TEXT")
+    private String longDescription;
+
     // Currently populated for Activity items only (see Activity's own
     // basePrice for the library default) — kept on the base item rather
     // than a dedicated detail table since it's a single scalar field, not a

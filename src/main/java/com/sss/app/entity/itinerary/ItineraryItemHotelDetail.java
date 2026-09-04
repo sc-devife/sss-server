@@ -51,6 +51,14 @@ public class ItineraryItemHotelDetail {
     @JoinColumn(name = "room_type_id")
     private RoomType roomType;
 
+    // How many consecutive nights this stay covers, starting from the
+    // parent ItineraryItem's own day_number (its check-in day). Check-out
+    // day/date is always derived (day_number + nights), never a separately
+    // stored field, so it can never drift out of sync.
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer nights = 1;
+
     // "Pax/room (WoEB)" — base occupancy per room, without extra bed.
     @Column(name = "pax_per_room")
     private Integer paxPerRoom;

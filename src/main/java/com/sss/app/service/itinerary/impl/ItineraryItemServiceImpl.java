@@ -76,6 +76,7 @@ public class ItineraryItemServiceImpl implements ItineraryItemService {
         dto.setTitle(item.getTitle());
         dto.setStartTime(item.getStartTime());
         dto.setNotes(item.getNotes());
+        dto.setLongDescription(item.getLongDescription());
         dto.setPrice(item.getPrice());
         dto.setSortOrder(item.getSortOrder());
         if (TRANSPORT_ITEM_TYPES.contains(item.getItemType())) {

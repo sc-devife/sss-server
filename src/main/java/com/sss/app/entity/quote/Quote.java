@@ -37,6 +37,12 @@ public class Quote extends Auditable {
     @Column(nullable = false, unique = true, updatable = false)
     private UUID uid;
 
+    // Computed by the DB from seqp (see V85 migration) — human-readable
+    // quote code for download filenames, e.g. "QUOTE-00001". Mirrors
+    // Escape.tripCode; never app-generated so it can never drift from seqp.
+    @Column(name = "quote_code", insertable = false, updatable = false)
+    private String quoteCode;
+
     private Long orgId;
 
     @ToString.Exclude
@@ -68,6 +74,16 @@ public class Quote extends Auditable {
 
     @Column(name = "tax_amount_inr", precision = 14, scale = 2)
     private BigDecimal taxAmountInr;
+
+    // TCS (Tax Collected at Source) — a second statutory tax on Indian
+    // outbound travel packages, stacked alongside GST rather than replacing
+    // it. Computed on (subtotal + GST), matching how TCS is actually levied
+    // on the customer-facing package price.
+    @Column(name = "tcs_rate_percent", precision = 5, scale = 2)
+    private BigDecimal tcsRatePercent;
+
+    @Column(name = "tcs_amount_inr", precision = 14, scale = 2)
+    private BigDecimal tcsAmountInr;
 
     @Column(name = "total_inr", precision = 14, scale = 2)
     private BigDecimal totalInr;

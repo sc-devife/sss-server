@@ -97,6 +97,14 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
             taxProfileUid = taxProfile.getUid();
         }
 
+        // TCS is levied on the customer-facing package price — i.e. subtotal
+        // plus GST — not on the pre-tax subtotal alone, matching how
+        // outbound-tour-package TCS is actually charged in practice.
+        BigDecimal tcsRatePercent = request.getTcsRatePercent();
+        BigDecimal tcsAmount = tcsRatePercent != null
+                ? subtotal.add(taxAmount).multiply(tcsRatePercent).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+
         String discountType = request.getDiscountType() != null ? request.getDiscountType() : "none";
         BigDecimal discountValue = request.getDiscountValue();
         BigDecimal discountAmount = switch (discountType) {
@@ -108,7 +116,7 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
             default -> throw new BadRequestException("discountType must be one of: none, percent, flat");
         };
 
-        BigDecimal total = subtotal.add(taxAmount).subtract(discountAmount);
+        BigDecimal total = subtotal.add(taxAmount).add(tcsAmount).subtract(discountAmount);
         if (total.compareTo(BigDecimal.ZERO) < 0) {
             total = BigDecimal.ZERO;
         }
@@ -124,6 +132,8 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
         quote.setSubtotalInr(subtotal.setScale(2, RoundingMode.HALF_UP));
         quote.setTaxProfileId(taxProfileUid);
         quote.setTaxAmountInr(taxAmount);
+        quote.setTcsRatePercent(tcsRatePercent);
+        quote.setTcsAmountInr(tcsAmount);
         quote.setDiscountType(discountType);
         quote.setDiscountValue(discountValue);
         quote.setTotalInr(total.setScale(2, RoundingMode.HALF_UP));
@@ -131,11 +141,17 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
         quote.setFxRateSnapshot(request.getFxRateSnapshot());
         Quote saved = quoteRepository.save(quote);
 
+        int paxCount = quote.getItinerary().getEscape().getTravellers() != null
+                ? quote.getItinerary().getEscape().getTravellers().size()
+                : 0;
+
         QuoteComputeResponseDTO response = new QuoteComputeResponseDTO();
         response.setQuote(quoteMapper.toResponse(saved));
         response.setPricingWarnings(warnings);
         response.setDisplayTotal(displayTotal);
         response.setBreakdown(breakdown);
+        response.setPaxCount(paxCount);
+        response.setPerPaxInr(paxCount > 0 ? total.divide(BigDecimal.valueOf(paxCount), 2, RoundingMode.HALF_UP) : null);
         return response;
     }
 

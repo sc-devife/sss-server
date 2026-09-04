@@ -133,9 +133,15 @@ public class EscapeHelper {
         escape.setNumberOfDays(request.getNumberOfDays());
 
         //Auto-calculate endDate
+        // numberOfDays counts inclusive day tabs (Day 1..Day N, Day 1 = the
+        // start date — see ItineraryDayPlanner), so the last day's calendar
+        // date is startDate + (numberOfDays - 1), matching createEscape's
+        // formula above. This previously omitted the "-1" here, so an escape
+        // whose duration was edited (the "Add Day" flow) ended up with an
+        // endDate one day past its own last itinerary day.
         if (request.getStartDate() != null && request.getNumberOfDays() != null) {
             escape.setEndDate(
-                    request.getStartDate().plusDays(request.getNumberOfDays())
+                    request.getStartDate().plusDays(request.getNumberOfDays() - 1)
             );
         }
 

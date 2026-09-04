@@ -40,7 +40,7 @@ public class Lead extends Auditable {
     private String destination;     // e.g. "Bali" — free text, kept for historical rows (see destination below)
     private Integer numberOfPeople; // e.g. 4
     private LocalDate travelDate;   // e.g. 2025-12-15
-    private Integer durationDays;   // e.g. 7 days
+    private Integer durationNights; // e.g. 3 nights (implies a 4-day trip — see LeadAssignmentServiceImpl/ConvertToEscapeModal for the "+1" used when this becomes Escape.numberOfDays)
     private Double budget;          // e.g. 150000.00
     private String status;          // system-managed lifecycle: New/Contacted/Qualified/Converted/Unqualified/Lost/Duplicate
 

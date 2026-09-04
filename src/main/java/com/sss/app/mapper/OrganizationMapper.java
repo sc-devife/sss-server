@@ -30,6 +30,8 @@ public class OrganizationMapper {
         dto.setCin(orgs.getCin());
         dto.setBusiness_email(orgs.getBusinessEmail());
         dto.setWebsite_url(orgs.getWebsiteUrl());
+        dto.setInstagram_url(orgs.getInstagramUrl());
+        dto.setLinkedin_url(orgs.getLinkedinUrl());
         dto.setWhatsapp_number(orgs.getWhatsappNumber());
         dto.setTagline(orgs.getTagline());
         dto.setAbout_text(orgs.getAboutText());

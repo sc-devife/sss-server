@@ -7,6 +7,7 @@ import com.sss.app.dto.itinerary.ItineraryItemReorderRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryItemUpdateRequestDTO;
 import com.sss.app.dto.itinerary.TransportDetailDTO;
 import com.sss.app.dto.itinerary.TransportLegDTO;
+import com.sss.app.entity.escape.Escape;
 import com.sss.app.entity.itinerary.Itinerary;
 import com.sss.app.entity.itinerary.ItineraryItem;
 import com.sss.app.entity.itinerary.ItineraryItemHotelDetail;
@@ -97,6 +98,7 @@ public class ItineraryItemHelper {
                 .title(request.getTitle())
                 .startTime(request.getStartTime())
                 .notes(request.getNotes())
+                .longDescription(request.getLongDescription())
                 .price(request.getPrice())
                 .sortOrder(nextSortOrder(itinerary.getSeqp()))
                 .build();
@@ -137,6 +139,9 @@ public class ItineraryItemHelper {
         }
         if (request.getNotes() != null) {
             item.setNotes(request.getNotes());
+        }
+        if (request.getLongDescription() != null) {
+            item.setLongDescription(request.getLongDescription());
         }
         if (request.getPrice() != null) {
             item.setPrice(request.getPrice());
@@ -246,11 +251,13 @@ public class ItineraryItemHelper {
      * library tables, same as HotelHelper does for Hotel's own relations.
      */
     private void saveHotelDetail(ItineraryItem item, HotelDetailDTO dto) {
+        validateHotelNights(item, dto.getNights());
         ItineraryItemHotelDetail detail = hotelDetailRepository.findByItineraryItem_Seqp(item.getSeqp())
                 .orElseGet(() -> ItineraryItemHotelDetail.builder().itineraryItem(item).build());
         detail.setItineraryItem(item);
         detail.setMealPlan(resolveMealPlan(dto.getMealPlanId()));
         detail.setRoomType(resolveRoomType(dto.getRoomTypeId()));
+        detail.setNights(dto.getNights() != null ? dto.getNights() : 1);
         detail.setPaxPerRoom(dto.getPaxPerRoom());
         detail.setRoomCount(dto.getRoomCount());
         detail.setAdultsWithExtraBed(dto.getAdultsWithExtraBed());
@@ -277,6 +284,33 @@ public class ItineraryItemHelper {
         }
     }
 
+    /**
+     * A hotel stay's nights are capped by what's actually left of the
+     * escape's total hotel-night budget — Escape.numberOfDays - 1 (see
+     * EscapeHelper's endDate calculation: Day 1 is the start date itself, so
+     * an N-day trip has N-1 nights to fill with stays), minus nights already
+     * committed to this itinerary's OTHER hotel items. Mirrors
+     * HotelDetailFields' frontend check so a direct API call can't save what
+     * the UI would have blocked.
+     */
+    private void validateHotelNights(ItineraryItem item, Integer requestedNights) {
+        int nights = requestedNights != null ? requestedNights : 1;
+        if (nights <= 0) {
+            throw new BadRequestException("No. of Night must be at least 1");
+        }
+        Escape escape = item.getItinerary().getEscape();
+        Integer numberOfDays = escape.getNumberOfDays();
+        int totalAvailable = numberOfDays != null ? Math.max(numberOfDays - 1, 0) : 0;
+        int usedByOtherHotels = hotelDetailRepository.sumNightsForItineraryExcludingItem(
+                item.getItinerary().getSeqp(), item.getSeqp());
+        int remaining = totalAvailable - usedByOtherHotels;
+        if (nights > remaining) {
+            throw new BadRequestException(remaining <= 0
+                    ? "No nights remaining for additional hotels in this escape."
+                    : "Only " + remaining + " night" + (remaining == 1 ? "" : "s") + " remaining for this escape's hotels.");
+        }
+    }
+
     private MealPlan resolveMealPlan(UUID mealPlanUid) {
         if (mealPlanUid == null) return null;
         return mealPlanRepository.findByUid(mealPlanUid)
@@ -300,6 +334,7 @@ public class ItineraryItemHelper {
                     HotelDetailDTO dto = new HotelDetailDTO();
                     dto.setMealPlanId(detail.getMealPlan() != null ? detail.getMealPlan().getUid() : null);
                     dto.setRoomTypeId(detail.getRoomType() != null ? detail.getRoomType().getUid() : null);
+                    dto.setNights(detail.getNights());
                     dto.setPaxPerRoom(detail.getPaxPerRoom());
                     dto.setRoomCount(detail.getRoomCount());
                     dto.setAdultsWithExtraBed(detail.getAdultsWithExtraBed());

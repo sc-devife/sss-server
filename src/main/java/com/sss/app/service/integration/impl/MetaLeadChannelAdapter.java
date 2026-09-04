@@ -86,7 +86,12 @@ public class MetaLeadChannelAdapter implements LeadChannelAdapter {
             case "destination_hint" -> payload.setDestinationHint(value);
             case "travel_date" -> payload.setTravelDate(parseDate(value));
             case "number_of_people" -> payload.setNumberOfPeople(parseInt(value));
-            case "duration_days" -> payload.setDurationDays(parseInt(value));
+            // "duration_days" (legacy admin-configured mapping code, kept
+            // for existing org configurations) is a day count and needs the
+            // "-1" conversion; "duration_nights" is already the value we
+            // store, so it's taken as-is. The two are NOT interchangeable.
+            case "duration_days" -> payload.setDurationNights(toNights(parseInt(value)));
+            case "duration_nights" -> payload.setDurationNights(parseInt(value));
             case "notes" -> payload.setNotes(payload.getNotes() == null ? value : payload.getNotes() + "; " + value);
             case MetaFieldMappingResolver.CRM_FIELD_IGNORE -> { /* explicitly discarded by admin mapping */ }
             default -> { /* unknown crm_field value in a stored mapping row — ignore rather than fail the whole lead */ }
@@ -126,6 +131,10 @@ public class MetaLeadChannelAdapter implements LeadChannelAdapter {
         } catch (NumberFormatException e) {
             return null;
         }
+    }
+
+    private Integer toNights(Integer days) {
+        return days != null ? days - 1 : null;
     }
 
     private LocalDateTime parseCreatedTime(String value) {

@@ -13,6 +13,10 @@ import java.util.UUID;
 @Data
 public class EscapeDTO {
 
+    // Human-readable trip code (e.g. "TRP-000123"), computed by the DB from
+    // seqp — see Escape.tripCode.
+    private String tripCode;
+
     // ✅ Full objects
     private LeadResponseDTO lead;
 

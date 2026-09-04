@@ -8,6 +8,7 @@ import java.util.UUID;
 @Data
 public class QuoteComputeRequestDTO {
     private UUID taxProfileUid; // null = no tax applied
+    private BigDecimal tcsRatePercent; // null/zero = no TCS applied; computed on (subtotal + GST)
     private String discountType; // none / percent / flat
     private BigDecimal discountValue;
 

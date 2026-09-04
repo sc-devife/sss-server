@@ -2,8 +2,11 @@ package com.sss.app.controller.quotationtemplate;
 
 import com.sss.app.dto.quotationtemplate.QuotationTemplateResponseDTO;
 import com.sss.app.dto.quotationtemplate.QuotationTemplateUpdateRequestDTO;
+import com.sss.app.service.quotationtemplate.QuotationPdfResult;
 import com.sss.app.service.quotationtemplate.QuotationTemplateService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -85,5 +88,15 @@ public class QuotationTemplateController {
     @GetMapping(value = "/{uid}/preview-sample", produces = MediaType.TEXT_HTML_VALUE)
     public ResponseEntity<String> previewWithSampleData(@PathVariable UUID uid) {
         return ResponseEntity.ok(quotationTemplateService.previewWithSampleData(uid));
+    }
+
+    /** Same as previewWithSampleData, as a downloadable, watermarked PDF. */
+    @PreAuthorize("@permissionService.hasPermission('organizations.read')")
+    @GetMapping(value = "/{uid}/preview-sample/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> previewWithSampleDataAsPdf(@PathVariable UUID uid) {
+        QuotationPdfResult result = quotationTemplateService.previewWithSampleDataAsPdf(uid);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment().filename(result.filename()).build().toString())
+                .body(result.bytes());
     }
 }

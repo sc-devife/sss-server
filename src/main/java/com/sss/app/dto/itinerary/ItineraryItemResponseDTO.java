@@ -18,6 +18,7 @@ public class ItineraryItemResponseDTO {
     private String title;
     private LocalTime startTime;
     private String notes;
+    private String longDescription;
     private BigDecimal price;
     private Integer sortOrder;
     private TransportDetailDTO transportDetail;

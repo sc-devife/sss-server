@@ -14,6 +14,7 @@ public class ItineraryItemUpdateRequestDTO {
     private String title;
     private LocalTime startTime;
     private String notes;
+    private String longDescription;
     private BigDecimal price;
     private TransportDetailDTO transportDetail;
     private HotelDetailDTO hotelDetail;

@@ -22,8 +22,14 @@ public interface QuotationTemplateService {
     /** Renders this template against predefined sample data — Settings preview, no Escape required. */
     String previewWithSampleData(UUID uid);
 
+    /** Same as {@link #previewWithSampleData}, as a downloadable watermarked PDF. */
+    QuotationPdfResult previewWithSampleDataAsPdf(UUID uid);
+
     void setAsDefault(UUID uid);
 
     /** Renders real Escape/quotation data against templateUid, or the org's default template when null. */
     String renderForEscape(UUID escapeUid, UUID templateUid);
+
+    /** Same as {@link #renderForEscape}, as a downloadable watermarked PDF. */
+    QuotationPdfResult renderForEscapeAsPdf(UUID escapeUid, UUID templateUid);
 }

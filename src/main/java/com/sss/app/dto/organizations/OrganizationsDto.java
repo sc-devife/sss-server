@@ -12,6 +12,12 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class OrganizationsDto {
+
+    // Optional field — empty is valid, but if provided must be an absolute
+    // http(s) URL. Shared by website/Instagram/LinkedIn below.
+    private static final String URL_REGEXP = "^$|^https?://[^\\s/$.?#].[^\\s]*$";
+    private static final String URL_MSG = "Enter a valid URL starting with http:// or https://";
+
     private Long seqp;
     private String uid;
     private String registered_name;
@@ -33,7 +39,16 @@ public class OrganizationsDto {
     private String legal_entity_type;
     private String cin;
     private String business_email;
+
+    @Pattern(regexp = URL_REGEXP, message = URL_MSG)
     private String website_url;
+
+    @Pattern(regexp = URL_REGEXP, message = URL_MSG)
+    private String instagram_url;
+
+    @Pattern(regexp = URL_REGEXP, message = URL_MSG)
+    private String linkedin_url;
+
     private String whatsapp_number;
     private String tagline;
     private String about_text;

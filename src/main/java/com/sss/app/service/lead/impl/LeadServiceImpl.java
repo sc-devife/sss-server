@@ -41,7 +41,7 @@ public class LeadServiceImpl implements LeadService {
     public LeadResponseDTO createLeadFromChannel(Long orgId, String channelCode, NormalizedLeadPayload payload) {
         Lead lead = leadHelper.createLeadFromChannel(orgId, channelCode, payload.getSourceRefId(),
                 payload.getName(), payload.getEmail(), payload.getPhone(), payload.getDestinationHint(),
-                payload.getTravelDate(), payload.getNumberOfPeople(), payload.getDurationDays());
+                payload.getTravelDate(), payload.getNumberOfPeople(), payload.getDurationNights());
         return toResponseWithEscapePoints(lead);
     }
 

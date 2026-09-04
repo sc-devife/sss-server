@@ -46,7 +46,7 @@ import java.util.UUID;
 @Transactional
 public class LeadAssignmentServiceImpl implements LeadAssignmentService {
 
-    private static final int PRIORITY_MIN_DURATION_DAYS = 4;
+    private static final int PRIORITY_MIN_DURATION_NIGHTS = 4;
     private static final Set<String> SEASONAL_PRIORITY_TRAVEL_TYPES = Set.of("honeymoon", "family");
 
     private final EscapeRepository escapeRepository;
@@ -174,7 +174,7 @@ public class LeadAssignmentServiceImpl implements LeadAssignmentService {
     }
 
     private boolean computesAsPriority(Lead lead) {
-        if (lead.getDurationDays() != null && lead.getDurationDays() >= PRIORITY_MIN_DURATION_DAYS) {
+        if (lead.getDurationNights() != null && lead.getDurationNights() >= PRIORITY_MIN_DURATION_NIGHTS) {
             return true;
         }
         if (MetroCities.isMetro(lead.getOriginCity())) {
