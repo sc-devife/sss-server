@@ -1,5 +1,6 @@
 package com.sss.app.service.quotationtemplate;
 
+import com.sss.app.dto.email.SendEmailResponseDTO;
 import com.sss.app.dto.quotationtemplate.QuotationTemplateResponseDTO;
 import com.sss.app.dto.quotationtemplate.QuotationTemplateUpdateRequestDTO;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,4 +33,7 @@ public interface QuotationTemplateService {
 
     /** Same as {@link #renderForEscape}, as a downloadable watermarked PDF. */
     QuotationPdfResult renderForEscapeAsPdf(UUID escapeUid, UUID templateUid);
+
+    /** Emails the same watermarked PDF as {@link #renderForEscapeAsPdf} to the escape's lead + traveller addresses. */
+    SendEmailResponseDTO sendEmailForEscape(UUID escapeUid, UUID templateUid);
 }

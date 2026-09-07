@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+<body style="margin:0;padding:0;background:#f4f5f7;font-family:Arial,Helvetica,sans-serif;color:#1a222c;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:24px 0;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;">
+          <tr>
+            <td style="background:#0d2645;padding:20px 28px;">
+              <span style="color:#ffffff;font-size:16px;font-weight:700;">{{organizationName}}</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px;">
+              <p style="margin:0 0 14px;font-size:14px;">Dear {{recipientName}},</p>
+              <p style="margin:0 0 14px;font-size:14px;line-height:1.6;">
+                We've received and verified your payment{{#milestoneLabel}} for <strong>{{milestoneLabel}}</strong>{{/milestoneLabel}}
+                {{#destinationName}}towards your trip to <strong>{{destinationName}}</strong>{{/destinationName}}
+                {{#tripCode}}(<strong>{{tripCode}}</strong>){{/tripCode}}. Thank you!
+              </p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;border:1px solid #e5e8ec;border-radius:6px;">
+                <tr>
+                  <td style="padding:14px 18px;font-size:13px;color:#4a5666;">Amount paid</td>
+                  <td style="padding:14px 18px;font-size:15px;text-align:right;font-weight:800;color:#1f8a4c;">&#8377;{{paidAmountFormatted}}</td>
+                </tr>
+                <tr>
+                  <td style="padding:0 18px 16px;font-size:13px;color:#4a5666;border-top:1px dashed #e5e8ec;padding-top:12px;">
+                    {{#isFullyPaid}}Balance due{{/isFullyPaid}}{{^isFullyPaid}}Pending amount{{/isFullyPaid}}
+                  </td>
+                  <td style="padding:0 18px 16px;font-size:15px;text-align:right;font-weight:800;padding-top:12px;border-top:1px dashed #e5e8ec;color:{{#isFullyPaid}}#1f8a4c{{/isFullyPaid}}{{^isFullyPaid}}#b13c31{{/isFullyPaid}};">
+                    &#8377;{{pendingAmountFormatted}}
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:0 0 14px;font-size:14px;line-height:1.6;">
+                {{#isFullyPaid}}Your trip is now fully paid — we can't wait to have you travel with us!{{/isFullyPaid}}
+                {{^isFullyPaid}}The remaining balance shown above is still due as per your agreed payment schedule.{{/isFullyPaid}}
+              </p>
+              <p style="margin:24px 0 0;font-size:14px;">Warm regards,<br><strong>{{organizationName}}</strong></p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

@@ -387,12 +387,23 @@ public class QuotationDataService {
     }
 
     private Map<String, Object> toEscapePointMap(EscapePointResponseDto ep) {
+        String imageUrl = ep.getPriorityImage() != null && !ep.getPriorityImage().isBlank()
+                ? ep.getPriorityImage()
+                : (ep.getImages() != null && !ep.getImages().isEmpty() ? ep.getImages().get(0) : null);
         return map(
                 "name", ep.getName(),
                 "locationLabel", ep.getLocationLabel(),
                 "description", ep.getDescription(),
-                "imageUrl", ep.getImages() != null && !ep.getImages().isEmpty() ? ep.getImages().get(0) : null
+                "imageUrl", imageUrl
         );
+    }
+
+    private String resolveHotelImage(Hotel hotel) {
+        if (hotel == null) return null;
+        if (hotel.getPriorityImage() != null && !hotel.getPriorityImage().isBlank()) {
+            return hotel.getPriorityImage();
+        }
+        return hotel.getImages() != null && !hotel.getImages().isEmpty() ? hotel.getImages().get(0) : null;
     }
 
     // Batched once per buildData() call (not per item) to avoid an N+1 query
@@ -525,7 +536,7 @@ public class QuotationDataService {
                     "roomTypeName", roomTypeNames.get(item.getHotelDetail().getRoomTypeId()),
                     "stars", stars,
                     "starIcons", starIcons,
-                    "photoUrl", hotel != null && hotel.getImages() != null && !hotel.getImages().isEmpty() ? hotel.getImages().get(0) : null,
+                    "photoUrl", resolveHotelImage(hotel),
                     // A library-sourced hotel is still an indicative pick
                     // (agent may substitute an equivalent property at
                     // booking time) — a custom/ad-hoc item names a hotel

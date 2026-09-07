@@ -2,6 +2,7 @@ package com.sss.app.service.library.hotel.impl;
 
 import com.sss.app.dto.library.hotel.HotelBookingDTO;
 import com.sss.app.dto.library.hotel.HotelCreateRequestDTO;
+import com.sss.app.dto.library.hotel.HotelPriorityImageRequestDTO;
 import com.sss.app.dto.library.hotel.HotelResponseDTO;
 import com.sss.app.dto.library.hotel.HotelUpdateRequestDTO;
 import com.sss.app.entity.escape.Escape;
@@ -58,6 +59,7 @@ public class HotelServiceImpl implements HotelService {
                 dto.getServiceIds()
         );
 
+        resolvePriorityImage(hotel);
         Hotel saved = hotelRepository.save(hotel);
         return hotelMapper.toResponse(saved);
     }
@@ -96,8 +98,36 @@ public class HotelServiceImpl implements HotelService {
                 dto.getServiceIds()
         );
 
+        resolvePriorityImage(hotel);
         Hotel saved = hotelRepository.save(hotel);
         cloudinaryService.deleteRemoved(previousImages, saved.getImages());
+        return hotelMapper.toResponse(saved);
+    }
+
+    // Keeps priority_image consistent whenever the gallery changes: a single
+    // image is always its own priority, and if no priority is stored yet or
+    // the previously-chosen one was just removed, fall back to the first
+    // remaining image. Mirrors EscapePointsHelper.resolvePriorityImage.
+    private void resolvePriorityImage(Hotel hotel) {
+        List<String> images = hotel.getImages();
+        if (images == null || images.isEmpty()) {
+            hotel.setPriorityImage(null);
+            return;
+        }
+        if (images.size() == 1 || hotel.getPriorityImage() == null || !images.contains(hotel.getPriorityImage())) {
+            hotel.setPriorityImage(images.get(0));
+        }
+    }
+
+    @Override
+    public HotelResponseDTO setPriorityImage(UUID id, HotelPriorityImageRequestDTO dto) {
+        Hotel hotel = findEntityById(id);
+        List<String> images = hotel.getImages();
+        if (images == null || !images.contains(dto.getImageUrl())) {
+            throw new IllegalArgumentException("imageUrl must be one of this Hotel's existing images");
+        }
+        hotel.setPriorityImage(dto.getImageUrl());
+        Hotel saved = hotelRepository.save(hotel);
         return hotelMapper.toResponse(saved);
     }
 

@@ -39,6 +39,26 @@ public class QuotationRenderingService {
         return writer.toString();
     }
 
+    // Reads the template straight from the classpath (DefaultMustacheFactory
+    // resolves a bare resource name against the classpath root) — used for
+    // the Quotation/Invoice email bodies, which ship with the app rather than
+    // living in Cloudinary like the customer-facing PDF templates.
+    public String renderClasspathTemplate(String classpathResource, Map<String, Object> data) {
+        Mustache mustache = MUSTACHE_FACTORY.compile(classpathResource);
+        StringWriter writer = new StringWriter();
+        mustache.execute(writer, data);
+        return writer.toString();
+    }
+
+    // For short dynamic strings (e.g. an email subject line) that aren't
+    // worth their own template file.
+    public String renderInline(String template, Map<String, Object> data) {
+        Mustache mustache = MUSTACHE_FACTORY.compile(new StringReader(template), "inline-template");
+        StringWriter writer = new StringWriter();
+        mustache.execute(writer, data);
+        return writer.toString();
+    }
+
     private String fetchTemplateHtml(String cloudinaryUrl) {
         try {
             HttpRequest request = HttpRequest.newBuilder(URI.create(cloudinaryUrl))

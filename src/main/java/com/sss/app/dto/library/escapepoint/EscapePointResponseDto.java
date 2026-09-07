@@ -13,6 +13,11 @@ public class EscapePointResponseDto extends EscapePointDto {
     private Long seqp;
     private String uid;
 
+    // The Escape Point's manually-chosen main image — used wherever a single
+    // representative image is needed (Escape Summary, Dashboard cards,
+    // Quotation data), instead of assuming images[0].
+    private String priorityImage;
+
     // Resolved from EscapePointLocation — see EscapePointsServiceImpl.
     private List<EscapePointLocationRefDto> locations;
 

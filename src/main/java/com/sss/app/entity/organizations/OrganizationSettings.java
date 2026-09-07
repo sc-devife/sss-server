@@ -43,6 +43,13 @@ public class OrganizationSettings {
     // a real FK-able table (quotation_templates).
     private UUID defaultQuotationTemplateId;
 
+    // Cloudinary-HTML "billing template" system (V89) — same pattern as
+    // defaultQuotationTemplateId, but for Invoice. Named "billing" rather
+    // than "invoice" to avoid colliding with invoiceTemplateId above (the
+    // older hardcoded-list system), which stays untouched. Set only via
+    // BillingTemplateController's /set-default endpoint.
+    private UUID defaultBillingTemplateId;
+
     @Builder.Default
     private String timezone = "UTC";
 

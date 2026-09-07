@@ -1,6 +1,5 @@
 package com.sss.app.dto.dashboard;
 
-import com.sss.app.dto.escape.EscapeResponseDTO;
 import com.sss.app.dto.payment.PaymentMilestoneResponseDTO;
 import lombok.Data;
 
@@ -16,6 +15,8 @@ public class DashboardResponseDTO {
     // of role, since an Admin can also be a working agent with assignments.
     // Leads have no per-user assignee (assignment happens once, on the
     // Escape, at conversion time), so there is no "myOpenLeads" here.
-    private List<EscapeResponseDTO> myOpenEscapes;
+    // The 3 most recently created, via a lightweight summary DTO rather than
+    // the full EscapeResponseDTO — see DashboardEscapeSummaryDTO.
+    private List<DashboardEscapeSummaryDTO> myOpenEscapes;
     private List<PaymentMilestoneResponseDTO> myUpcomingPaymentMilestones;
 }

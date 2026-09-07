@@ -2,6 +2,7 @@ package com.sss.app.service.library.escapepoint.impl;
 
 import com.sss.app.dto.library.escapepoint.EscapePointCreateRequestDto;
 import com.sss.app.dto.library.escapepoint.EscapePointLocationsUpdateRequestDto;
+import com.sss.app.dto.library.escapepoint.EscapePointPriorityImageRequestDto;
 import com.sss.app.dto.library.escapepoint.EscapePointResponseDto;
 import com.sss.app.dto.library.escapepoint.EscapePointUpdateRequestDto;
 import com.sss.app.entity.library.escapepoint.EscapePoint;
@@ -59,6 +60,12 @@ public class EscapePointsServiceImpl implements EscapePointsService {
     @Override
     public EscapePointResponseDto updateLocations(String uid, EscapePointLocationsUpdateRequestDto payload) {
         EscapePoint entity = escapePointsHelper.reassignLocations(uid, payload);
+        return enrich(List.of(entity), List.of(escapePointMapper.toDto(entity))).get(0);
+    }
+
+    @Override
+    public EscapePointResponseDto setPriorityImage(String uid, EscapePointPriorityImageRequestDto payload) {
+        EscapePoint entity = escapePointsHelper.setPriorityImage(uid, payload.getImageUrl());
         return enrich(List.of(entity), List.of(escapePointMapper.toDto(entity))).get(0);
     }
 

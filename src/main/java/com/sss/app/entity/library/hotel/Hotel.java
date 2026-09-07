@@ -151,6 +151,12 @@ public class Hotel extends Auditable {
     @Column(columnDefinition = "text[]")
     private List<String> images;
 
+    // The manually-chosen main image for this Hotel — must always be one of
+    // `images` (enforced in HotelServiceImpl), never inferred from array
+    // order. Mirrors EscapePoint.priorityImage.
+    @Column(name = "priority_image")
+    private String priorityImage;
+
     @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.ARRAY)
     @Column(columnDefinition = "text[]")
     private List<String> amenities;

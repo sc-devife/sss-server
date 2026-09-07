@@ -16,5 +16,9 @@ public class ServiceProviderCreateRequestDTO {
 
     private String countryCode;
 
+    // The EscapePoint's uid (String) — resolved to the entity in the service
+    // layer, matching Transport/Activity's escapePointId.
+    private String escapePointId;
+
     private String status;
 }

@@ -1,6 +1,7 @@
 package com.sss.app.controller.escape;
 
 import com.sss.app.dto.audit.AuditLogResponseDTO;
+import com.sss.app.dto.email.SendEmailResponseDTO;
 import com.sss.app.dto.escape.EscapeCreateRequestDTO;
 import com.sss.app.dto.escape.EscapeResponseDTO;
 import com.sss.app.dto.escape.EscapeUpdateRequestDTO;
@@ -13,6 +14,7 @@ import com.sss.app.service.assignment.LeadAssignmentService;
 import com.sss.app.service.audit.AuditLogService;
 import com.sss.app.service.escape.EscapeService;
 import com.sss.app.service.escape.EscapeLifecycleService;
+import com.sss.app.service.billingtemplate.BillingTemplateService;
 import com.sss.app.service.quotationtemplate.QuotationPdfResult;
 import com.sss.app.service.quotationtemplate.QuotationTemplateService;
 import jakarta.validation.Valid;
@@ -37,6 +39,7 @@ public class EscapeController {
     private final AuditLogService auditLogService;
     private final LeadAssignmentService leadAssignmentService;
     private final QuotationTemplateService quotationTemplateService;
+    private final BillingTemplateService billingTemplateService;
 
     @PreAuthorize("@permissionService.hasPermission('trips.write')")
     @PostMapping("/create")
@@ -143,5 +146,43 @@ public class EscapeController {
                 .header(HttpHeaders.CONTENT_DISPOSITION,
                         ContentDisposition.attachment().filename(result.filename(), java.nio.charset.StandardCharsets.UTF_8).build().toString())
                 .body(result.bytes());
+    }
+
+    // Emails the exact same watermarked PDF as quotationPreviewPdf above to
+    // the escape's lead + traveller addresses — trips.write since, unlike
+    // the read-only preview/download endpoints, this has a real side effect.
+    @PreAuthorize("@permissionService.hasPermission('trips.write')")
+    @PostMapping("/{id}/quotation-preview/send-email")
+    public ResponseEntity<SendEmailResponseDTO> quotationPreviewSendEmail(@PathVariable UUID id, @RequestParam(required = false) UUID templateUid) {
+        return ResponseEntity.ok(quotationTemplateService.sendEmailForEscape(id, templateUid));
+    }
+
+    // Real-data invoice preview — same QuotationRenderingService/
+    // QuotationPdfService as the quotation preview above, fed this escape's
+    // Deal/Quote/PaymentMilestone data via BillingDataService instead.
+    @PreAuthorize("@permissionService.hasPermission('trips.read')")
+    @GetMapping(value = "/{id}/invoice-preview", produces = MediaType.TEXT_HTML_VALUE)
+    public ResponseEntity<String> invoicePreview(@PathVariable UUID id, @RequestParam(required = false) UUID templateUid) {
+        return ResponseEntity.ok(billingTemplateService.renderForEscape(id, templateUid));
+    }
+
+    // Same rendered document as invoicePreview above, as a downloadable,
+    // watermarked PDF.
+    @PreAuthorize("@permissionService.hasPermission('trips.read')")
+    @GetMapping(value = "/{id}/invoice-preview/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> invoicePreviewPdf(@PathVariable UUID id, @RequestParam(required = false) UUID templateUid) {
+        QuotationPdfResult result = billingTemplateService.renderForEscapeAsPdf(id, templateUid);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename(result.filename(), java.nio.charset.StandardCharsets.UTF_8).build().toString())
+                .body(result.bytes());
+    }
+
+    // Emails the exact same watermarked PDF as invoicePreviewPdf above to
+    // the escape's lead + traveller addresses.
+    @PreAuthorize("@permissionService.hasPermission('trips.write')")
+    @PostMapping("/{id}/invoice-preview/send-email")
+    public ResponseEntity<SendEmailResponseDTO> invoicePreviewSendEmail(@PathVariable UUID id, @RequestParam(required = false) UUID templateUid) {
+        return ResponseEntity.ok(billingTemplateService.sendEmailForEscape(id, templateUid));
     }
 }

@@ -26,7 +26,11 @@ public interface LeadMapper {
     @Mapping(target = "escapePointIds", ignore = true)
     LeadResponseDTO toResponse(Lead entity);
 
-    // For updates — copy values from DTO into an existing entity
+    // For updates — copy values from DTO into an existing entity. status is
+    // deliberately ignored: it must only ever change via the lifecycle
+    // actions (contact/qualify/mark-lost/...), never a field-level edit,
+    // even though LeadDTO happens to carry a status field for responses.
     @Mapping(target = "escapePoints", ignore = true)
+    @Mapping(target = "status", ignore = true)
     void updateEntityFromDto(LeadCreateRequestDTO dto, @MappingTarget Lead entity);
 }

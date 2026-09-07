@@ -69,6 +69,7 @@ public class EscapePointsHelper {
 
         EscapePoint newEscapePoint = escapePointMapper.toEntity(payload);
         newEscapePoint.setOrgId(currentUser().getOrgId());
+        resolvePriorityImage(newEscapePoint);
         newEscapePoint = escapePointRepository.save(newEscapePoint);
         entityManager.refresh(newEscapePoint);
 
@@ -81,7 +82,36 @@ public class EscapePointsHelper {
         List<String> previousImages = escapePoint.getImages() == null ? null : new ArrayList<>(escapePoint.getImages());
         escapePointMapper.updateFromDto(payload, escapePoint);
         cloudinaryService.deleteRemoved(previousImages, escapePoint.getImages());
+        resolvePriorityImage(escapePoint);
 
+        return escapePoint;
+    }
+
+    // Keeps priority_image consistent whenever the gallery changes: a single
+    // image is always its own priority (nothing else it could be), and if no
+    // priority is stored yet or the previously-chosen one was just removed,
+    // fall back to the first remaining image — never silently leaves a stale
+    // or missing priority while images still exist. A no-op when the
+    // existing priority is still present and there's more than one image.
+    private void resolvePriorityImage(EscapePoint escapePoint) {
+        List<String> images = escapePoint.getImages();
+        if (images == null || images.isEmpty()) {
+            escapePoint.setPriorityImage(null);
+            return;
+        }
+        if (images.size() == 1 || escapePoint.getPriorityImage() == null || !images.contains(escapePoint.getPriorityImage())) {
+            escapePoint.setPriorityImage(images.get(0));
+        }
+    }
+
+    @Transactional
+    public EscapePoint setPriorityImage(String uid, String imageUrl) {
+        EscapePoint escapePoint = getEscapePointByUid(uid);
+        List<String> images = escapePoint.getImages();
+        if (images == null || !images.contains(imageUrl)) {
+            throw new IllegalArgumentException("imageUrl must be one of this Escape Point's existing images");
+        }
+        escapePoint.setPriorityImage(imageUrl);
         return escapePoint;
     }
 

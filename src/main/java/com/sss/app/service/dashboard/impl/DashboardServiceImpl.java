@@ -1,5 +1,6 @@
 package com.sss.app.service.dashboard.impl;
 
+import com.sss.app.dto.dashboard.DashboardEscapeSummaryDTO;
 import com.sss.app.dto.dashboard.DashboardOrgMetricsDTO;
 import com.sss.app.dto.dashboard.DashboardResponseDTO;
 import com.sss.app.dto.dashboard.LeadsTrendPointDTO;
@@ -7,13 +8,13 @@ import com.sss.app.dto.dashboard.NameCountDTO;
 import com.sss.app.dto.dashboard.PaymentStatusBreakdownDTO;
 import com.sss.app.dto.dashboard.QuoteAnalyticsDTO;
 import com.sss.app.dto.dashboard.StatusCountDTO;
-import com.sss.app.dto.escape.EscapeResponseDTO;
 import com.sss.app.dto.payment.PaymentMilestoneResponseDTO;
+import com.sss.app.entity.escape.Escape;
 import com.sss.app.entity.escape.EscapeStatus;
 import com.sss.app.entity.lead.LeadStatus;
+import com.sss.app.entity.library.escapepoint.EscapePoint;
 import com.sss.app.entity.quote.Quote;
 import com.sss.app.entity.users.User;
-import com.sss.app.mapper.escape.EscapeMapper;
 import com.sss.app.mapper.payment.PaymentMilestoneMapper;
 import com.sss.app.repository.escape.EscapeRepository;
 import com.sss.app.repository.lead.LeadRepository;
@@ -69,7 +70,6 @@ public class DashboardServiceImpl implements DashboardService {
     private final EscapeRepository escapeRepository;
     private final PaymentMilestoneRepository paymentMilestoneRepository;
     private final QuoteRepository quoteRepository;
-    private final EscapeMapper escapeMapper;
     private final PaymentMilestoneMapper paymentMilestoneMapper;
     private final PermissionService permissionService;
 
@@ -98,9 +98,12 @@ public class DashboardServiceImpl implements DashboardService {
         Long userId = user.getSeqp();
         boolean canReadOrgMetrics = permissionService.hasPermission("organizations.read");
 
-        CompletableFuture<List<EscapeResponseDTO>> escapesFuture = CompletableFuture.supplyAsync(() ->
-                escapeRepository.findAllByOrgIdAndAssignedToUserIdAndStatusNotIn(orgId, userId, INACTIVE_ESCAPE_STATUSES)
-                        .stream().map(escapeMapper::toResponse).toList());
+        // Newest 3 only — limited and sorted at the query level (see
+        // EscapeRepository), not fetched-then-truncated here.
+        CompletableFuture<List<DashboardEscapeSummaryDTO>> escapesFuture = CompletableFuture.supplyAsync(() ->
+                escapeRepository.findAllByOrgIdAndAssignedToUserIdAndStatusNotInOrderByCreatedAtDesc(
+                                orgId, userId, INACTIVE_ESCAPE_STATUSES, PageRequest.of(0, 3))
+                        .stream().map(this::toDashboardEscapeSummary).toList());
 
         CompletableFuture<List<PaymentMilestoneResponseDTO>> milestonesFuture = CompletableFuture.supplyAsync(() ->
                 paymentMilestoneRepository.findUpcomingForAssignee(orgId, userId, OPEN_MILESTONE_STATUSES)
@@ -117,6 +120,31 @@ public class DashboardServiceImpl implements DashboardService {
         response.setMyUpcomingPaymentMilestones(milestonesFuture.join());
         response.setOrgMetrics(orgMetricsFuture.join());
         return response;
+    }
+
+    // The escape's first escape point's priority image (falling back to the
+    // first image if priorityImage somehow wasn't backfilled — defensive
+    // only, EscapePointsHelper.resolvePriorityImage keeps it set whenever
+    // images exist). Deliberately returns one URL, not the full images list
+    // — this dashboard card doesn't need every image for every destination.
+    private DashboardEscapeSummaryDTO toDashboardEscapeSummary(Escape escape) {
+        EscapePoint primary = escape.getEscapePoints().stream().findFirst().orElse(null);
+        String imageUrl = resolveEscapePointImage(primary);
+        return DashboardEscapeSummaryDTO.builder()
+                .uid(escape.getUid())
+                .leadName(escape.getLead() != null ? escape.getLead().getName() : null)
+                .escapePointNames(escape.getEscapePoints().stream().map(EscapePoint::getName).toList())
+                .status(escape.getStatus())
+                .imageUrl(imageUrl)
+                .build();
+    }
+
+    private String resolveEscapePointImage(EscapePoint escapePoint) {
+        if (escapePoint == null) return null;
+        if (escapePoint.getPriorityImage() != null && !escapePoint.getPriorityImage().isBlank()) {
+            return escapePoint.getPriorityImage();
+        }
+        return escapePoint.getImages() != null && !escapePoint.getImages().isEmpty() ? escapePoint.getImages().get(0) : null;
     }
 
     // Its own queries are likewise independent of each other.

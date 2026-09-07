@@ -66,6 +66,13 @@ public class EscapePoint extends Auditable {
     @Column(columnDefinition = "text[]")
     private List<String> images;
 
+    // The manually-chosen main image for this Escape Point — must always be
+    // one of `images` (enforced in EscapePointsHelper), never inferred from
+    // array order. See EscapePointsHelper.resolvePriorityImage for how this
+    // stays consistent as images are added/removed.
+    @Column(name = "priority_image")
+    private String priorityImage;
+
     @Column
     private String status;
 

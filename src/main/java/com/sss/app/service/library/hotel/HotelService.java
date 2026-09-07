@@ -2,6 +2,7 @@ package com.sss.app.service.library.hotel;
 
 import com.sss.app.dto.library.hotel.HotelBookingDTO;
 import com.sss.app.dto.library.hotel.HotelCreateRequestDTO;
+import com.sss.app.dto.library.hotel.HotelPriorityImageRequestDTO;
 import com.sss.app.dto.library.hotel.HotelResponseDTO;
 import com.sss.app.dto.library.hotel.HotelUpdateRequestDTO;
 
@@ -17,6 +18,8 @@ public interface HotelService {
     List<HotelResponseDTO> getAll();
 
     HotelResponseDTO update(UUID id, HotelUpdateRequestDTO dto);
+
+    HotelResponseDTO setPriorityImage(UUID id, HotelPriorityImageRequestDTO dto);
 
     void delete(UUID id);
 

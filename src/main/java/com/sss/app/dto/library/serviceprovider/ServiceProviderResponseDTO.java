@@ -1,5 +1,6 @@
 package com.sss.app.dto.library.serviceprovider;
 
+import com.sss.app.dto.library.escapepoint.EscapePointResponseDto;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -17,6 +18,8 @@ public class ServiceProviderResponseDTO {
     private String contactInfo;
 
     private String countryCode;
+
+    private EscapePointResponseDto escapePoint;
 
     private String status;
 

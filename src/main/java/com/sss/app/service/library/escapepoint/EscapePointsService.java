@@ -2,6 +2,7 @@ package com.sss.app.service.library.escapepoint;
 
 import com.sss.app.dto.library.escapepoint.EscapePointCreateRequestDto;
 import com.sss.app.dto.library.escapepoint.EscapePointLocationsUpdateRequestDto;
+import com.sss.app.dto.library.escapepoint.EscapePointPriorityImageRequestDto;
 import com.sss.app.dto.library.escapepoint.EscapePointResponseDto;
 import com.sss.app.dto.library.escapepoint.EscapePointUpdateRequestDto;
 
@@ -19,5 +20,7 @@ public interface EscapePointsService {
     void deleteEscapePoint(String uid);
 
     EscapePointResponseDto updateLocations(String uid, EscapePointLocationsUpdateRequestDto payload);
+
+    EscapePointResponseDto setPriorityImage(String uid, EscapePointPriorityImageRequestDto payload);
 
 }

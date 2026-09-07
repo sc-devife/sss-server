@@ -21,8 +21,10 @@ public interface EscapeRepository extends JpaRepository<Escape, Long> {
     @EntityGraph(attributePaths = {"lead", "travellers", "escapePoints"})
     List<Escape> findAllByOrgId(Long orgId);
 
+    // Dashboard "My Escapes" — newest first, capped via the Pageable (e.g.
+    // PageRequest.of(0, 3)) rather than fetching every assigned escape.
     @EntityGraph(attributePaths = {"lead", "travellers", "escapePoints"})
-    List<Escape> findAllByOrgIdAndAssignedToUserIdAndStatusNotIn(Long orgId, Long assignedToUserId, List<String> excludedStatuses);
+    List<Escape> findAllByOrgIdAndAssignedToUserIdAndStatusNotInOrderByCreatedAtDesc(Long orgId, Long assignedToUserId, List<String> excludedStatuses, Pageable pageable);
 
     long countByOrgIdAndStatusNotIn(Long orgId, List<String> excludedStatuses);
 

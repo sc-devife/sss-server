@@ -2,6 +2,7 @@ package com.sss.app.controller.library.hotel;
 
 import com.sss.app.dto.library.hotel.HotelBookingDTO;
 import com.sss.app.dto.library.hotel.HotelCreateRequestDTO;
+import com.sss.app.dto.library.hotel.HotelPriorityImageRequestDTO;
 import com.sss.app.dto.library.hotel.HotelResponseDTO;
 import com.sss.app.dto.library.hotel.HotelUpdateRequestDTO;
 import com.sss.app.service.library.hotel.HotelService;
@@ -45,6 +46,13 @@ public class HotelController {
     public ResponseEntity<HotelResponseDTO> update(@PathVariable UUID id,
                                                      @RequestBody HotelUpdateRequestDTO dto) {
         return ResponseEntity.ok(hotelService.update(id, dto));
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('library.write')")
+    @PutMapping("/{id}/priority-image")
+    public ResponseEntity<HotelResponseDTO> setPriorityImage(@PathVariable UUID id,
+                                                               @Valid @RequestBody HotelPriorityImageRequestDTO dto) {
+        return ResponseEntity.ok(hotelService.setPriorityImage(id, dto));
     }
 
     @PreAuthorize("@permissionService.hasPermission('library.write')")

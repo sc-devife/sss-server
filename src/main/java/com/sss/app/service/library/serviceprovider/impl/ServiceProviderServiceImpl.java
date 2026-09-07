@@ -3,10 +3,12 @@ package com.sss.app.service.library.serviceprovider.impl;
 import com.sss.app.dto.library.serviceprovider.ServiceProviderCreateRequestDTO;
 import com.sss.app.dto.library.serviceprovider.ServiceProviderResponseDTO;
 import com.sss.app.dto.library.serviceprovider.ServiceProviderUpdateRequestDTO;
+import com.sss.app.entity.library.escapepoint.EscapePoint;
 import com.sss.app.entity.library.serviceprovider.ServiceProvider;
 import com.sss.app.entity.users.User;
 import com.sss.app.exception.ResourceNotFoundException;
 import com.sss.app.mapper.library.serviceprovider.ServiceProviderMapper;
+import com.sss.app.repository.library.escapepoint.EscapePointRepository;
 import com.sss.app.repository.library.serviceprovider.ServiceProviderRepository;
 import com.sss.app.security.OrgAccessGuard;
 import com.sss.app.service.library.serviceprovider.ServiceProviderService;
@@ -26,6 +28,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
     private final ServiceProviderRepository serviceProviderRepository;
     private final ServiceProviderMapper serviceProviderMapper;
+    private final EscapePointRepository escapePointRepository;
     private final OrgAccessGuard orgAccessGuard;
 
     private User currentUser() {
@@ -36,8 +39,16 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     public ServiceProviderResponseDTO create(ServiceProviderCreateRequestDTO dto) {
         ServiceProvider entity = serviceProviderMapper.toEntityCreate(dto);
         entity.setOrgId(currentUser().getOrgId());
+        if (dto.getEscapePointId() != null) {
+            entity.setEscapePoint(resolveEscapePoint(dto.getEscapePointId()));
+        }
         ServiceProvider saved = serviceProviderRepository.save(entity);
         return serviceProviderMapper.toResponse(saved);
+    }
+
+    private EscapePoint resolveEscapePoint(String escapePointUid) {
+        return escapePointRepository.findByUid(escapePointUid)
+                .orElseThrow(() -> new ResourceNotFoundException("EscapePoint", escapePointUid));
     }
 
     @Override
@@ -59,6 +70,9 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     public ServiceProviderResponseDTO update(UUID id, ServiceProviderUpdateRequestDTO dto) {
         ServiceProvider entity = findEntityById(id);
         serviceProviderMapper.updateEntityFromDto(dto, entity);
+        if (dto.getEscapePointId() != null) {
+            entity.setEscapePoint(resolveEscapePoint(dto.getEscapePointId()));
+        }
         ServiceProvider saved = serviceProviderRepository.save(entity);
         return serviceProviderMapper.toResponse(saved);
     }

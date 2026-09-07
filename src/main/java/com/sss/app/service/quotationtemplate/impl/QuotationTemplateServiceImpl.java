@@ -1,5 +1,6 @@
 package com.sss.app.service.quotationtemplate.impl;
 
+import com.sss.app.dto.email.SendEmailResponseDTO;
 import com.sss.app.dto.quotationtemplate.QuotationTemplateResponseDTO;
 import com.sss.app.dto.quotationtemplate.QuotationTemplateUpdateRequestDTO;
 import com.sss.app.entity.organizations.OrganizationSettings;
@@ -9,6 +10,8 @@ import com.sss.app.exception.ResourceNotFoundException;
 import com.sss.app.helper.OrganizationsHelper;
 import com.sss.app.repository.OrganizationSettingsRepository;
 import com.sss.app.repository.quotationtemplate.QuotationTemplateRepository;
+import com.sss.app.service.email.EmailService;
+import com.sss.app.service.email.EscapeEmailRecipientResolver;
 import com.sss.app.service.files.CloudinaryService;
 import com.sss.app.service.files.CloudinaryUploadResult;
 import com.sss.app.service.quotationtemplate.QuotationDataService;
@@ -32,6 +35,8 @@ import java.util.UUID;
 public class QuotationTemplateServiceImpl implements QuotationTemplateService {
 
     private static final String CLOUDINARY_FOLDER = "sss/quotation-templates";
+    private static final String EMAIL_BODY_TEMPLATE = "email-templates/quotation-email.mustache";
+    private static final String EMAIL_SUBJECT_TEMPLATE = "Your Quotation {{pricing.quoteCode}} — {{organization.name}}";
 
     private final QuotationTemplateRepository quotationTemplateRepository;
     private final OrganizationSettingsRepository organizationSettingsRepository;
@@ -41,6 +46,8 @@ public class QuotationTemplateServiceImpl implements QuotationTemplateService {
     private final SampleQuotationDataService sampleQuotationDataService;
     private final QuotationDataService quotationDataService;
     private final QuotationPdfService quotationPdfService;
+    private final EmailService emailService;
+    private final EscapeEmailRecipientResolver escapeEmailRecipientResolver;
 
     @Override
     public QuotationTemplateResponseDTO create(String name, String description, MultipartFile htmlFile, MultipartFile previewImage) {
@@ -140,21 +147,40 @@ public class QuotationTemplateServiceImpl implements QuotationTemplateService {
     @Override
     @Transactional(readOnly = true)
     public String renderForEscape(UUID escapeUid, UUID templateUid) {
-        UUID resolvedTemplateUid = templateUid;
-        if (resolvedTemplateUid == null) {
-            Long orgId = organizationsHelper.getMyOrganization().getSeqp();
-            resolvedTemplateUid = organizationsHelper.getSettings(orgId).getDefaultQuotationTemplateId();
-        }
-        if (resolvedTemplateUid == null) {
-            throw new BadRequestException("No quotation template selected — choose one in Settings > Quotation Templates first");
-        }
-        QuotationTemplate template = findEntity(resolvedTemplateUid);
+        QuotationTemplate template = resolveTemplate(templateUid);
         return quotationRenderingService.render(template.getCloudinaryUrl(), quotationDataService.buildData(escapeUid));
     }
 
     @Override
     @Transactional(readOnly = true)
     public QuotationPdfResult renderForEscapeAsPdf(UUID escapeUid, UUID templateUid) {
+        QuotationTemplate template = resolveTemplate(templateUid);
+        Map<String, Object> data = quotationDataService.buildData(escapeUid);
+        String html = quotationRenderingService.render(template.getCloudinaryUrl(), data);
+        byte[] pdf = quotationPdfService.render(html, watermarkText(data));
+        return new QuotationPdfResult(pdf, quoteNameFilename(data));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SendEmailResponseDTO sendEmailForEscape(UUID escapeUid, UUID templateUid) {
+        QuotationTemplate template = resolveTemplate(templateUid);
+        Map<String, Object> data = quotationDataService.buildData(escapeUid);
+        // Resolved before rendering the PDF (a headless-Chrome render) so a
+        // recipient-less escape fails fast/cheap instead of after that work.
+        List<String> recipients = escapeEmailRecipientResolver.resolveFromRenderedData(data);
+
+        String html = quotationRenderingService.render(template.getCloudinaryUrl(), data);
+        byte[] pdf = quotationPdfService.render(html, watermarkText(data));
+
+        String subject = quotationRenderingService.renderInline(EMAIL_SUBJECT_TEMPLATE, data);
+        String body = quotationRenderingService.renderClasspathTemplate(EMAIL_BODY_TEMPLATE, data);
+        emailService.sendHtmlEmailWithAttachment(recipients, subject, body, pdf, quoteNameFilename(data));
+
+        return new SendEmailResponseDTO(recipients);
+    }
+
+    private QuotationTemplate resolveTemplate(UUID templateUid) {
         UUID resolvedTemplateUid = templateUid;
         if (resolvedTemplateUid == null) {
             Long orgId = organizationsHelper.getMyOrganization().getSeqp();
@@ -163,11 +189,7 @@ public class QuotationTemplateServiceImpl implements QuotationTemplateService {
         if (resolvedTemplateUid == null) {
             throw new BadRequestException("No quotation template selected — choose one in Settings > Quotation Templates first");
         }
-        QuotationTemplate template = findEntity(resolvedTemplateUid);
-        Map<String, Object> data = quotationDataService.buildData(escapeUid);
-        String html = quotationRenderingService.render(template.getCloudinaryUrl(), data);
-        byte[] pdf = quotationPdfService.render(html, watermarkText(data));
-        return new QuotationPdfResult(pdf, quoteNameFilename(data));
+        return findEntity(resolvedTemplateUid);
     }
 
     // The quote actually rendered (accepted, else latest — see

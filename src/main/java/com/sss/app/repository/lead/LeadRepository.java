@@ -22,7 +22,9 @@ public interface LeadRepository extends JpaRepository<Lead, Long> {
     // Example: find leads by destination (for travel use case)
     List<Lead> findByDestinationIgnoreCase(String destination);
 
-    List<Lead> findAllByOrgId(Long orgId);
+    // Newest lead first, so the Leads list always surfaces what just came in
+    // without the frontend needing its own default sort.
+    List<Lead> findAllByOrgIdOrderByCreatedAtDesc(Long orgId);
 
 
     long countByOrgId(Long orgId);

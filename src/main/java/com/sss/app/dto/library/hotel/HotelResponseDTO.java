@@ -56,6 +56,10 @@ public class HotelResponseDTO {
 
     private List<String> images;
 
+    // The manually-chosen main image — used wherever a single representative
+    // image is needed instead of assuming images[0].
+    private String priorityImage;
+
     private List<String> amenities;
 
     private String status;

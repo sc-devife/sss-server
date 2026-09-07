@@ -13,5 +13,7 @@ public class ServiceProviderUpdateRequestDTO {
 
     private String countryCode;
 
+    private String escapePointId;
+
     private String status;
 }

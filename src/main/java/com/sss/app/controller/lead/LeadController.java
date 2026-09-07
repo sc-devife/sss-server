@@ -40,6 +40,14 @@ public class LeadController {
         return ResponseEntity.ok(leadService.getLeadById(id));
     }
 
+    // Field-level edit — distinct from the lifecycle actions below (Section
+    // 7), which are the only way status itself changes.
+    @PreAuthorize("@permissionService.hasPermission('leads.write')")
+    @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<LeadResponseDTO> updateLead(@PathVariable UUID id, @Valid @RequestBody LeadCreateRequestDTO payload) {
+        return ResponseEntity.ok(leadService.updateLead(id, payload));
+    }
+
     @PreAuthorize("@permissionService.hasPermission('leads.read')")
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<LeadResponseDTO>> getAllLeads() {

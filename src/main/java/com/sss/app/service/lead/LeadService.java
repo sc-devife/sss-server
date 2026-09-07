@@ -19,6 +19,7 @@ public interface LeadService {
 
     LeadResponseDTO getLeadById(UUID id);
     List<LeadResponseDTO> getAllLeads();
+    LeadResponseDTO updateLead(UUID id, LeadCreateRequestDTO request);
     LeadResponseDTO setFollowUpDueDate(UUID id, LocalDate followUpDueDate);
 
     // Internal-only: resolves the external uid to the entity's internal

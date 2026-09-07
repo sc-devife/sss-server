@@ -1,6 +1,7 @@
 package com.sss.app.entity.library.serviceprovider;
 
 import com.sss.app.entity.common.Auditable;
+import com.sss.app.entity.library.escapepoint.EscapePoint;
 import com.sss.app.util.IdGenerator;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -45,6 +46,14 @@ public class ServiceProvider extends Auditable {
 
     @Column(name = "country_code")
     private String countryCode;
+
+    // Which destination this provider serves — same "destination_id"
+    // ManyToOne already used by Hotel/Transport/Activity.
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "destination_id")
+    private EscapePoint escapePoint;
 
     @Column
     private String status;

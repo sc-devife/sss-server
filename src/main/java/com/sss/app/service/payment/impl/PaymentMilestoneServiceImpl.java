@@ -7,6 +7,7 @@ import com.sss.app.entity.users.User;
 import com.sss.app.helper.payment.PaymentMilestoneHelper;
 import com.sss.app.mapper.payment.PaymentMilestoneMapper;
 import com.sss.app.repository.UserRepository;
+import com.sss.app.service.email.PaymentConfirmationEmailService;
 import com.sss.app.service.payment.PaymentMilestoneService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ public class PaymentMilestoneServiceImpl implements PaymentMilestoneService {
     private final PaymentMilestoneHelper paymentMilestoneHelper;
     private final PaymentMilestoneMapper paymentMilestoneMapper;
     private final UserRepository userRepository;
+    private final PaymentConfirmationEmailService paymentConfirmationEmailService;
 
     @Override
     public PaymentMilestoneResponseDTO create(PaymentMilestoneCreateRequestDTO request) {
@@ -40,7 +42,13 @@ public class PaymentMilestoneServiceImpl implements PaymentMilestoneService {
 
     @Override
     public PaymentMilestoneResponseDTO verifyPayment(UUID uid) {
-        return toResponse(paymentMilestoneHelper.verifyPayment(uid));
+        PaymentMilestoneResponseDTO response = toResponse(paymentMilestoneHelper.verifyPayment(uid));
+        // Only reached if verifyPayment() above didn't throw — i.e. never for
+        // a still-pending/unverified payment or a failed verification. Async
+        // (see PaymentConfirmationEmailService): fires after this method's
+        // own (non-transactional) work is done, doesn't block the response.
+        paymentConfirmationEmailService.sendPaymentConfirmationEmail(uid);
+        return response;
     }
 
     @Override

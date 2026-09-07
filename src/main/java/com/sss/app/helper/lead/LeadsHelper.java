@@ -199,7 +199,7 @@ public class LeadsHelper {
     }
 
     public List<Lead> getAllLeads() {
-        return leadRepository.findAllByOrgId(currentUser().getOrgId());
+        return leadRepository.findAllByOrgIdOrderByCreatedAtDesc(currentUser().getOrgId());
     }
 
     // Deliberately not a lifecycle action (no status implication) — a plain
@@ -209,6 +209,33 @@ public class LeadsHelper {
         Lead lead = getLeadById(id);
         lead.setFollowUpDueDate(followUpDueDate);
         return leadRepository.save(lead);
+    }
+
+    // Field-level edit (name/email/phone/escape points/etc.) — deliberately
+    // separate from the lifecycle actions above (contact/qualify/mark-lost/
+    // ...), which are the only way status itself changes. LeadMapper's
+    // updateEntityFromDto already existed for this; nothing previously
+    // called it. Mirrors createLead's escape-point/agency-details handling.
+    public Lead updateLead(UUID id, LeadCreateRequestDTO payload) {
+        Lead lead = getLeadById(id);
+        leadMapper.updateEntityFromDto(payload, lead);
+        if (payload.getEscapePointIds() != null) {
+            lead.setEscapePoints(payload.getEscapePointIds().isEmpty()
+                    ? new HashSet<>()
+                    : new HashSet<>(escapePointRepository.findAllByUidIn(new HashSet<>(payload.getEscapePointIds()))));
+        }
+        Lead saved = leadRepository.save(lead);
+
+        if (LeadSourceType.AGENCY.equals(saved.getSourceType()) && payload.getAgencyDetails() != null) {
+            LeadAgencyDetailsDTO agencyDto = payload.getAgencyDetails();
+            LeadAgencyDetails agencyDetails = leadAgencyDetailsRepository.findById(saved.getSeqp())
+                    .orElseGet(LeadAgencyDetails::new);
+            BeanUtils.copyProperties(agencyDto, agencyDetails);
+            agencyDetails.setLeadId(saved.getSeqp());
+            leadAgencyDetailsRepository.save(agencyDetails);
+        }
+
+        return saved;
     }
 
 }

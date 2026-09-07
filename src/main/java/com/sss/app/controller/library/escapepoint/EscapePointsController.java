@@ -2,6 +2,7 @@ package com.sss.app.controller.library.escapepoint;
 
 import com.sss.app.dto.library.escapepoint.EscapePointCreateRequestDto;
 import com.sss.app.dto.library.escapepoint.EscapePointLocationsUpdateRequestDto;
+import com.sss.app.dto.library.escapepoint.EscapePointPriorityImageRequestDto;
 import com.sss.app.dto.library.escapepoint.EscapePointResponseDto;
 import com.sss.app.dto.library.escapepoint.EscapePointUpdateRequestDto;
 import com.sss.app.service.library.escapepoint.EscapePointsService;
@@ -60,5 +61,11 @@ public class EscapePointsController {
     @PutMapping(value = "{uid}/locations", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<EscapePointResponseDto> updateLocations(@PathVariable String uid, @RequestBody EscapePointLocationsUpdateRequestDto payload) {
         return ResponseEntity.ok(escapePointsService.updateLocations(uid, payload));
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('library.write')")
+    @PutMapping(value = "{uid}/priority-image", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<EscapePointResponseDto> setPriorityImage(@PathVariable String uid, @Valid @RequestBody EscapePointPriorityImageRequestDto payload) {
+        return ResponseEntity.ok(escapePointsService.setPriorityImage(uid, payload));
     }
 }

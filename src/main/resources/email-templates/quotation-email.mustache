@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+<body style="margin:0;padding:0;background:#f4f5f7;font-family:Arial,Helvetica,sans-serif;color:#1a222c;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:24px 0;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;">
+          <tr>
+            <td style="background:#0d2645;padding:20px 28px;">
+              <span style="color:#ffffff;font-size:16px;font-weight:700;">{{organization.name}}</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px;">
+              <p style="margin:0 0 14px;font-size:14px;">Dear {{lead.name}},</p>
+              <p style="margin:0 0 14px;font-size:14px;line-height:1.6;">
+                Thank you for planning your trip to <strong>{{primaryEscapePoint.name}}</strong> with us!
+                Please find attached your quotation <strong>{{pricing.quoteCode}}</strong> for trip
+                <strong>{{tripCode}}</strong>.
+              </p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;border:1px solid #e5e8ec;border-radius:6px;">
+                <tr>
+                  <td style="padding:14px 18px 6px;font-size:13px;color:#4a5666;">Travel dates</td>
+                  <td style="padding:14px 18px 6px;font-size:13px;text-align:right;font-weight:700;">{{startDate}} &rarr; {{endDate}}</td>
+                </tr>
+                <tr>
+                  <td style="padding:0 18px 6px;font-size:13px;color:#4a5666;">Travellers</td>
+                  <td style="padding:0 18px 6px;font-size:13px;text-align:right;font-weight:700;">{{travellersCount}} Pax</td>
+                </tr>
+                <tr>
+                  <td style="padding:0 18px 16px;font-size:13px;color:#4a5666;">Total amount</td>
+                  <td style="padding:0 18px 16px;font-size:15px;text-align:right;font-weight:800;color:#0d2645;">&#8377;{{pricing.totalFormatted}}</td>
+                </tr>
+              </table>
+              <p style="margin:0 0 14px;font-size:14px;line-height:1.6;">
+                The full quotation is attached to this email as a PDF. Feel free to reach out if you have any questions.
+              </p>
+              <p style="margin:24px 0 0;font-size:14px;">Warm regards,<br><strong>{{organization.name}}</strong></p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:16px 28px;background:#f4f5f7;font-size:11px;color:#8290a0;">
+              {{organization.contactPhone}}{{#organization.contactEmail}} &middot; {{organization.contactEmail}}{{/organization.contactEmail}}{{#organization.websiteUrl}} &middot; {{organization.websiteUrl}}{{/organization.websiteUrl}}
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

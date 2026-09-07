@@ -58,6 +58,12 @@ public class LeadServiceImpl implements LeadService {
     }
 
     @Override
+    public LeadResponseDTO updateLead(UUID id, LeadCreateRequestDTO request) {
+        Lead lead = leadHelper.updateLead(id, request);
+        return enrichAgencyDetails(lead, toResponseWithEscapePoints(lead));
+    }
+
+    @Override
     public List<LeadResponseDTO> getAllLeads() {
         return leadHelper.getAllLeads()
                 .stream()
