@@ -1,34 +1,44 @@
 package com.sss.app.helper;
 
+import com.sss.app.entity.notification.NotificationType;
+import com.sss.app.entity.organizations.Organizations;
 import com.sss.app.entity.roles.Role;
 import com.sss.app.entity.users.User;
 import com.sss.app.entity.users.invitations.UserInvitation;
 import com.sss.app.exception.ConflictException;
 import com.sss.app.exception.NotFoundException;
 import com.sss.app.repository.InvitationTokenRepository;
+import com.sss.app.repository.OrganizationRepository;
 import com.sss.app.repository.RoleRepository;
 import com.sss.app.security.OrgAccessGuard;
+import com.sss.app.service.email.EmailService;
+import com.sss.app.service.notification.NotificationService;
+import com.sss.app.service.quotationtemplate.QuotationRenderingService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import jakarta.transaction.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class UserInvitationHelper {
 
     private static final long INVITATION_VALIDITY_DAYS = 15;
+    private static final String EMAIL_BODY_TEMPLATE = "email-templates/user-invitation-email.mustache";
 
     private final InvitationTokenRepository invitationRepository;
     private final RoleRepository roleRepository;
     private final OrgAccessGuard orgAccessGuard;
+    private final OrganizationRepository organizationRepository;
+    private final QuotationRenderingService quotationRenderingService;
+    private final EmailService emailService;
+    private final NotificationService notificationService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -36,10 +46,17 @@ public class UserInvitationHelper {
     @Value("${app.frontend-url}")
     private String frontendUrl;
 
-    public UserInvitationHelper(InvitationTokenRepository invitationRepository, RoleRepository roleRepository, OrgAccessGuard orgAccessGuard) {
+    public UserInvitationHelper(InvitationTokenRepository invitationRepository, RoleRepository roleRepository,
+                                 OrgAccessGuard orgAccessGuard, OrganizationRepository organizationRepository,
+                                 QuotationRenderingService quotationRenderingService, EmailService emailService,
+                                 NotificationService notificationService) {
         this.invitationRepository = invitationRepository;
         this.roleRepository = roleRepository;
         this.orgAccessGuard = orgAccessGuard;
+        this.organizationRepository = organizationRepository;
+        this.quotationRenderingService = quotationRenderingService;
+        this.emailService = emailService;
+        this.notificationService = notificationService;
     }
 
     private User currentUser() {
@@ -75,7 +92,13 @@ public class UserInvitationHelper {
         entityManager.refresh(userInvitation);
 
         String link = frontendUrl + "/signup?token=" + userInvitation.getUid() + "&email=" + email;
-        sendInvitationEmail(email, link);
+        sendInvitationEmail(email, link, inviter.getOrgId());
+
+        notificationService.notifyUsers(notificationService.resolveOrgManagers(inviter.getOrgId()), inviter.getOrgId(),
+                NotificationType.USER_INVITED, "User Invited",
+                email + " has been invited to join your organization.",
+                null, null);
+
         return userInvitation;
     }
 
@@ -97,15 +120,22 @@ public class UserInvitationHelper {
         invitationRepository.save(invitation);
     }
 
-    @Autowired
-    JavaMailSender mailSender = null;
+    // Synchronous, inside inviteUser()'s own transaction — same as the
+    // plain-text SimpleMailMessage this replaced. A send failure here still
+    // propagates and rolls back the invitation row, unchanged from before;
+    // only the email's own content/format changed.
+    private void sendInvitationEmail(String email, String link, Long orgId) {
+        Organizations org = organizationRepository.findById(orgId).orElse(null);
+        String orgName = org != null
+                ? (org.getDisplayName() != null && !org.getDisplayName().isBlank() ? org.getDisplayName() : org.getRegisteredName())
+                : "";
 
-    private void sendInvitationEmail(String email, String link) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(email);
-        message.setSubject("You're invited to join!");
-        message.setText("Click the link to complete your signup: " + link
-                + "\n\nThis invitation expires in " + INVITATION_VALIDITY_DAYS + " days.");
-        mailSender.send(message);
+        Map<String, Object> data = new HashMap<>();
+        data.put("organizationName", orgName);
+        data.put("invitationLink", link);
+        data.put("expiryDays", INVITATION_VALIDITY_DAYS);
+
+        String body = quotationRenderingService.renderClasspathTemplate(EMAIL_BODY_TEMPLATE, data);
+        emailService.sendHtmlEmail(List.of(email), "You're invited to join " + orgName, body);
     }
 }

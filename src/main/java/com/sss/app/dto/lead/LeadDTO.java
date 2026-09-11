@@ -1,5 +1,6 @@
 package com.sss.app.dto.lead;
 
+import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
@@ -18,6 +19,14 @@ public class LeadDTO {
     private String phone;
     private String destination;
     private Integer numberOfPeople;
+
+    // Today or later only — mirrors the DatePicker's `min` on the frontend.
+    // @FutureOrPresent treats null as valid (travelDate is optional), and
+    // this is shared by both LeadController's create and update endpoints
+    // (both bind LeadCreateRequestDTO, which extends this class), so a past
+    // date is rejected the same way whether the lead is being created or
+    // edited.
+    @FutureOrPresent(message = "Travel date cannot be in the past")
     private LocalDate travelDate;
     private Integer durationNights;
     private Double budget;

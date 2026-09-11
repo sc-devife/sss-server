@@ -44,7 +44,7 @@ public class HotelController {
     @PreAuthorize("@permissionService.hasPermission('library.write')")
     @PutMapping("/{id}")
     public ResponseEntity<HotelResponseDTO> update(@PathVariable UUID id,
-                                                     @RequestBody HotelUpdateRequestDTO dto) {
+                                                     @Valid @RequestBody HotelUpdateRequestDTO dto) {
         return ResponseEntity.ok(hotelService.update(id, dto));
     }
 

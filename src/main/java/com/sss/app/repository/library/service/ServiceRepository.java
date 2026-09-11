@@ -21,6 +21,11 @@ public interface ServiceRepository extends JpaRepository<Service, Long> {
 
     boolean existsByNameIgnoreCaseAndHotelIsNull(String name);
 
+    // Bulk-import resolves a CSV service name to a global service only — a
+    // brand-new hotel being created via CSV has no uid yet to scope a
+    // hotel-private service against.
+    Optional<Service> findByNameIgnoreCaseAndHotelIsNull(String name);
+
     // What one hotel's Add/Edit form should offer: every global service,
     // plus any service scoped specifically to this hotel. The LEFT JOIN is
     // required — a plain `s.hotel.uid` path expression compiles to an

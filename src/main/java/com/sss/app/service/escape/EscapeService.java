@@ -2,6 +2,7 @@ package com.sss.app.service.escape;
 
 import com.sss.app.dto.escape.EscapeCreateRequestDTO;
 import com.sss.app.dto.escape.EscapeResponseDTO;
+import com.sss.app.dto.escape.EscapeSummaryNotesRequestDTO;
 import com.sss.app.dto.escape.EscapeUpdateRequestDTO;
 import com.sss.app.dto.traveller.TravellerCreateRequestDTO;
 
@@ -11,6 +12,7 @@ import java.util.UUID;
 public interface EscapeService {
     EscapeResponseDTO createEscape(EscapeCreateRequestDTO request);
     EscapeResponseDTO updateEscape(UUID uid, EscapeUpdateRequestDTO request);
+    EscapeResponseDTO updateSummaryNotes(UUID uid, EscapeSummaryNotesRequestDTO request);
     EscapeResponseDTO getEscapeById(UUID id);
     List<EscapeResponseDTO> getAllEscapes();
     void deleteEscape(UUID id);

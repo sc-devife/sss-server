@@ -9,6 +9,7 @@ import com.sss.app.entity.team.Team;
 import com.sss.app.entity.team.TeamStatus;
 import com.sss.app.entity.team.UserTeamLink;
 import com.sss.app.entity.users.User;
+import com.sss.app.entity.notification.NotificationType;
 import com.sss.app.exception.ConflictException;
 import com.sss.app.exception.NotFoundException;
 import com.sss.app.mapper.escape.EscapeMapper;
@@ -21,6 +22,7 @@ import com.sss.app.service.assignment.LeadAssignmentService;
 import com.sss.app.service.assignment.MetroCities;
 import com.sss.app.service.assignment.PriorityCalendarService;
 import com.sss.app.service.audit.AuditLogService;
+import com.sss.app.service.notification.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,6 +59,7 @@ public class LeadAssignmentServiceImpl implements LeadAssignmentService {
     private final EscapeMapper escapeMapper;
     private final AuditLogService auditLogService;
     private final PriorityCalendarService priorityCalendarService;
+    private final NotificationService notificationService;
 
     @Override
     public void autoAssign(Escape escape) {
@@ -115,6 +118,11 @@ public class LeadAssignmentServiceImpl implements LeadAssignmentService {
                 : "Auto-assigned: round-robin load balancing") + scopeSuffix);
         escapeRepository.save(escape);
         auditLogService.record("Escape", escape.getSeqp(), "AUTO_ASSIGNED", null, assignee.getSeqp());
+
+        notificationService.notify(assignee.getSeqp(), escape.getOrgId(),
+                NotificationType.ESCAPE_ASSIGNED, "Escape Assigned",
+                "An Escape has been assigned to you.",
+                NotificationType.RelatedEntityType.ESCAPE, escape.getUid());
     }
 
     @Override
@@ -133,6 +141,11 @@ public class LeadAssignmentServiceImpl implements LeadAssignmentService {
         escape.setAssignmentReason(reason);
         Escape saved = escapeRepository.save(escape);
         auditLogService.record("Escape", escape.getSeqp(), "MANUALLY_ASSIGNED", previousAssignee, user.getSeqp());
+
+        notificationService.notify(user.getSeqp(), saved.getOrgId(),
+                NotificationType.ESCAPE_ASSIGNED, "Escape Assigned",
+                "An Escape has been assigned to you.",
+                NotificationType.RelatedEntityType.ESCAPE, saved.getUid());
 
         return escapeMapper.toResponse(saved);
     }

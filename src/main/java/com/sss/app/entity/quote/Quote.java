@@ -88,6 +88,14 @@ public class Quote extends Auditable {
     @Column(name = "total_inr", precision = 14, scale = 2)
     private BigDecimal totalInr;
 
+    // Sum of dropped hotels' cancellation charges across this itinerary —
+    // already folded into subtotalInr/totalInr above (see
+    // QuoteComputationServiceImpl's resolvePrice), kept as its own column
+    // purely so it can be shown as a distinct line (Quotation, billing)
+    // rather than hidden inside the general hotel total.
+    @Column(name = "cancellation_charges_inr", precision = 14, scale = 2)
+    private BigDecimal cancellationChargesInr;
+
     // none / percent / flat
     @Column(name = "discount_type", nullable = false)
     private String discountType;

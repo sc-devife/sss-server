@@ -89,6 +89,20 @@ public class ItineraryItem extends Auditable {
     @Column(name = "sort_order", nullable = false)
     private Integer sortOrder;
 
+    // Initialize / Booked / Drop (see BookingStatus) — generalizes the same
+    // lifecycle Hotel already has on ItineraryItemHotelDetail to item types
+    // with no dedicated detail table of their own (currently Activity).
+    // ItineraryItemHelper is what enforces "always Initialize on create" and
+    // "Drop requires a reason", not a DB constraint.
+    @Column(nullable = false, length = 20)
+    private String status;
+
+    @Column(name = "dropping_reason", columnDefinition = "TEXT")
+    private String droppingReason;
+
+    @Column(name = "cancellation_charge_inr", precision = 12, scale = 2)
+    private BigDecimal cancellationChargeInr;
+
     @PrePersist
     protected void onCreate() {
         if (this.uid == null) {
@@ -99,6 +113,9 @@ public class ItineraryItem extends Auditable {
         }
         if (this.source == null) {
             this.source = referenceId != null ? "library" : "custom";
+        }
+        if (this.status == null) {
+            this.status = BookingStatus.INITIALIZE;
         }
     }
 }

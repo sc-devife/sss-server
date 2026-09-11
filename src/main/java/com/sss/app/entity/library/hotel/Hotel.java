@@ -71,6 +71,12 @@ public class Hotel extends Auditable {
     // ----- Escape Points: ManyToMany, kept for backward compatibility with
     // pre-existing multi-escape-point hotel data (see `escapePoint` above
     // for the dictionary-aligned single-FK field). -----
+    // @BatchSize here (and on the three collections below) turns "one lazy
+    // SELECT per hotel per collection" into "one SELECT per batch of hotels
+    // per collection" whenever a list of hotels is in the persistence context
+    // together (e.g. getAll()'s findAllByOrgIdAndDeletedAtIsNull) — this is
+    // what fixes the N+1 that made GET /api/v1/hotels take 20-70s with 500+
+    // rows, without changing what any single hotel's data looks like.
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @ManyToMany(fetch = FetchType.LAZY)
@@ -80,6 +86,7 @@ public class Hotel extends Auditable {
             inverseJoinColumns = @JoinColumn(name = "escape_point_id")
     )
     @Builder.Default
+    @org.hibernate.annotations.BatchSize(size = 50)
     private Set<EscapePoint> escapePoints = new HashSet<>();
 
     // ----- Meal Plans: ManyToMany -----
@@ -92,6 +99,7 @@ public class Hotel extends Auditable {
             inverseJoinColumns = @JoinColumn(name = "meal_plan_id")
     )
     @Builder.Default
+    @org.hibernate.annotations.BatchSize(size = 50)
     private Set<MealPlan> mealPlans = new HashSet<>();
 
     // ----- Room Types: ManyToMany (shared master data) -----
@@ -104,6 +112,7 @@ public class Hotel extends Auditable {
             inverseJoinColumns = @JoinColumn(name = "room_type_id")
     )
     @Builder.Default
+    @org.hibernate.annotations.BatchSize(size = 50)
     private Set<RoomType> roomTypes = new HashSet<>();
 
     // ----- Services: ManyToMany — hotel-level special add-ons (Candle Light
@@ -118,6 +127,7 @@ public class Hotel extends Auditable {
             inverseJoinColumns = @JoinColumn(name = "service_id")
     )
     @Builder.Default
+    @org.hibernate.annotations.BatchSize(size = 50)
     private Set<Service> services = new HashSet<>();
 
     // ----- Services (per the "Services" form section) -----
@@ -144,8 +154,17 @@ public class Hotel extends Auditable {
     @Column
     private String address;
 
+    // Legacy free-text field — superseded by the structured phoneNumber/
+    // email pair below for the Add/Edit Hotel form, kept only for existing
+    // data and bulk import's own "contactInfo" CSV column.
     @Column(name = "contact_info")
     private String contactInfo;
+
+    @Column(name = "phone_number", length = 30)
+    private String phoneNumber;
+
+    @Column(length = 255)
+    private String email;
 
     @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.ARRAY)
     @Column(columnDefinition = "text[]")

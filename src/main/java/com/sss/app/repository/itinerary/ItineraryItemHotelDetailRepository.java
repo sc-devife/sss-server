@@ -1,5 +1,6 @@
 package com.sss.app.repository.itinerary;
 
+import com.sss.app.entity.itinerary.BookingStatus;
 import com.sss.app.entity.itinerary.ItineraryItemHotelDetail;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -17,8 +18,10 @@ public interface ItineraryItemHotelDetailRepository extends JpaRepository<Itiner
     // with an unchanged (or reduced) night count is never rejected against
     // its own prior value. A brand-new item's seqp simply never matches any
     // row here (it has no hotel detail yet), so the same call works for
-    // create too.
+    // create too. Dropped bookings are excluded — a cancelled stay no
+    // longer occupies its nights, so another hotel can reclaim them.
     @Query("SELECT COALESCE(SUM(d.nights), 0) FROM ItineraryItemHotelDetail d " +
-            "WHERE d.itineraryItem.itinerary.seqp = :itinerarySeqp AND d.itineraryItem.seqp <> :excludeItemSeqp")
+            "WHERE d.itineraryItem.itinerary.seqp = :itinerarySeqp AND d.itineraryItem.seqp <> :excludeItemSeqp " +
+            "AND (d.status IS NULL OR d.status <> '" + BookingStatus.DROP + "')")
     int sumNightsForItineraryExcludingItem(@Param("itinerarySeqp") Long itinerarySeqp, @Param("excludeItemSeqp") Long excludeItemSeqp);
 }

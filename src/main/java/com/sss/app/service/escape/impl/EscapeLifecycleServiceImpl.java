@@ -3,6 +3,7 @@ package com.sss.app.service.escape.impl;
 import com.sss.app.dto.escape.EscapeResponseDTO;
 import com.sss.app.entity.escape.Escape;
 import com.sss.app.entity.escape.EscapeStatus;
+import com.sss.app.entity.notification.NotificationType;
 import com.sss.app.exception.BadRequestException;
 import com.sss.app.exception.ConflictException;
 import com.sss.app.helper.escape.EscapeHelper;
@@ -10,10 +11,12 @@ import com.sss.app.mapper.escape.EscapeMapper;
 import com.sss.app.repository.escape.EscapeRepository;
 import com.sss.app.service.audit.AuditLogService;
 import com.sss.app.service.escape.EscapeLifecycleService;
+import com.sss.app.service.notification.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -23,10 +26,17 @@ public class EscapeLifecycleServiceImpl implements EscapeLifecycleService {
 
     private static final String ENTITY_TYPE = "Escape";
 
+    // Suppressed here — the caller (DealHelper.acceptQuote / PaymentMilestoneHelper's
+    // verify flow) already sends a more specific notification for these three
+    // transitions; a generic "status changed" alongside it would be noise.
+    private static final Set<String> SUPPRESS_GENERIC_STATUS_NOTIFICATION = Set.of(
+            EscapeStatus.QUOTE_ACCEPTED, EscapeStatus.PARTIALLY_PAID, EscapeStatus.FULLY_PAID);
+
     private final EscapeHelper escapeHelper;
     private final EscapeRepository escapeRepository;
     private final EscapeMapper escapeMapper;
     private final AuditLogService auditLogService;
+    private final NotificationService notificationService;
 
     @Override
     public EscapeResponseDTO advance(UUID escapeId, String targetStatus) {
@@ -53,7 +63,26 @@ public class EscapeLifecycleServiceImpl implements EscapeLifecycleService {
         Escape saved = escapeRepository.save(escape);
         auditLogService.record(ENTITY_TYPE, escape.getSeqp(), "STATUS_ADVANCED", previousStatus, targetStatus);
 
+        if (!SUPPRESS_GENERIC_STATUS_NOTIFICATION.contains(targetStatus)) {
+            Long recipient = notificationService.resolveEscapeRecipient(saved);
+            if (recipient != null) {
+                notificationService.notify(recipient, saved.getOrgId(),
+                        NotificationType.ESCAPE_STATUS_CHANGED, "Escape Status Changed",
+                        "Escape " + safeTripCode(saved) + " moved from " + previousStatus + " to " + targetStatus + ".",
+                        NotificationType.RelatedEntityType.ESCAPE, saved.getUid());
+            } else {
+                notificationService.notifyUsers(notificationService.resolveOrgManagers(saved.getOrgId()), saved.getOrgId(),
+                        NotificationType.ESCAPE_STATUS_CHANGED, "Escape Status Changed",
+                        "Escape " + safeTripCode(saved) + " moved from " + previousStatus + " to " + targetStatus + ".",
+                        NotificationType.RelatedEntityType.ESCAPE, saved.getUid());
+            }
+        }
+
         return escapeMapper.toResponse(saved);
+    }
+
+    private String safeTripCode(Escape escape) {
+        return escape.getTripCode() != null ? escape.getTripCode() : escape.getUid().toString();
     }
 
     @Override
@@ -73,6 +102,17 @@ public class EscapeLifecycleServiceImpl implements EscapeLifecycleService {
         escape.setStatus(EscapeStatus.CANCELLED);
         Escape saved = escapeRepository.save(escape);
         auditLogService.record(ENTITY_TYPE, escape.getSeqp(), "CANCELLED", previousStatus, reason);
+
+        Long recipient = notificationService.resolveEscapeRecipient(saved);
+        String message = "Escape " + safeTripCode(saved) + " has been cancelled.";
+        if (recipient != null) {
+            notificationService.notify(recipient, saved.getOrgId(), NotificationType.ESCAPE_CANCELLED,
+                    "Escape Cancelled", message, NotificationType.RelatedEntityType.ESCAPE, saved.getUid());
+        } else {
+            notificationService.notifyUsers(notificationService.resolveOrgManagers(saved.getOrgId()), saved.getOrgId(),
+                    NotificationType.ESCAPE_CANCELLED, "Escape Cancelled", message,
+                    NotificationType.RelatedEntityType.ESCAPE, saved.getUid());
+        }
 
         return escapeMapper.toResponse(saved);
     }

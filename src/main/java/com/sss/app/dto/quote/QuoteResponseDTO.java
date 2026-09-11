@@ -23,6 +23,7 @@ public class QuoteResponseDTO {
     private BigDecimal tcsRatePercent;
     private BigDecimal tcsAmountInr;
     private BigDecimal totalInr;
+    private BigDecimal cancellationChargesInr;
     private String discountType;
     private BigDecimal discountValue;
     private UUID templateId;

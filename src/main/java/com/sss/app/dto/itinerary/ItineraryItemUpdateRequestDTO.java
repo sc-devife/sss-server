@@ -18,4 +18,13 @@ public class ItineraryItemUpdateRequestDTO {
     private BigDecimal price;
     private TransportDetailDTO transportDetail;
     private HotelDetailDTO hotelDetail;
+
+    // Item-level Initialize/Booked/Drop status — for item types with no
+    // dedicated detail table of their own (currently Activity; Hotel keeps
+    // its own separate status on HotelDetailDTO). droppingReason is
+    // required when status is being changed to Drop; cancellationCharge is
+    // optional and only meaningful then. See ItineraryItemHelper.update.
+    private String status;
+    private String droppingReason;
+    private BigDecimal cancellationCharge;
 }

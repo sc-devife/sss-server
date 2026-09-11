@@ -1,6 +1,7 @@
 package com.sss.app.dto.library.hotel;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -48,6 +49,11 @@ public class HotelCreateRequestDTO {
     private String address;
 
     private String contactInfo;
+
+    private String phoneNumber;
+
+    @Email(message = "Invalid email")
+    private String email;
 
     private List<String> images;
 

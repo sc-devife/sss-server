@@ -5,8 +5,11 @@ import com.sss.app.dto.lead.LeadResponseDTO;
 import com.sss.app.service.integration.ChannelLeadResult;
 import com.sss.app.service.integration.NormalizedLeadPayload;
 import com.sss.app.service.integration.ProviderLeadMetadata;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,7 +21,17 @@ public interface LeadService {
     ChannelLeadResult createLeadFromChannel(Long orgId, String channelCode, NormalizedLeadPayload payload, ProviderLeadMetadata sourceMetadata);
 
     LeadResponseDTO getLeadById(UUID id);
-    List<LeadResponseDTO> getAllLeads();
+
+    /**
+     * Leads page's Search + Status + Priority + Month/Week/Day/All +
+     * pagination, applied as one DB-level query. `search`/`status` are
+     * optional (null/blank = not applied); `priority` true adds the
+     * Priority-pseudo-status filter; `start`/`end` back the date-period
+     * filter (start inclusive, end exclusive) — both null means "All" (no
+     * date restriction).
+     */
+    Page<LeadResponseDTO> getAllLeads(String search, String status, Boolean priority, LocalDateTime start, LocalDateTime end,
+                                       String escapePointId, List<String> sources, Boolean archived, Pageable pageable);
     LeadResponseDTO updateLead(UUID id, LeadCreateRequestDTO request);
     LeadResponseDTO setFollowUpDueDate(UUID id, LocalDate followUpDueDate);
 

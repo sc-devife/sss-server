@@ -163,6 +163,7 @@ public class SampleQuotationDataService {
                 "terms", List.of(
                         map("name", "Cancellation policy", "contentHtml", "<p>Full refund if cancelled 30 days before departure.</p>")
                 ),
+                "remarkForLead", "<p>Looking forward to hosting you — let us know if you'd like the itinerary adjusted before we confirm.</p>",
                 "payment", map(
                         "milestones", List.of(
                                 map("label", "Booking advance", "dueDate", "2026-10-01", "amount", "30000.00", "amountPaid", "30000.00", "status", "paid", "method", "Bank Transfer", "reference", "TXN-88213"),

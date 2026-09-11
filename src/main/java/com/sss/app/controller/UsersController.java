@@ -1,5 +1,6 @@
 package com.sss.app.controller;
 
+import com.sss.app.dto.users.NotificationSoundPreferenceRequestDto;
 import com.sss.app.dto.users.UserAssignmentSettingsUpdateRequestDto;
 import com.sss.app.dto.users.UserCreateRequestDto;
 import com.sss.app.dto.users.UserResponseDto;
@@ -36,11 +37,20 @@ public class UsersController {
         return ResponseEntity.ok(usersService.updateCurrentUser(payload));
     }
 
-    @RequestMapping(value = "/all", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<UserResponseDto>> fetchAllUsers() {
-        return ResponseEntity.ok(usersService.fetchAllUsers(123456L));
+    // No @PreAuthorize — same self-service shape as PUT /me: uid always comes
+    // from the security principal, never the request.
+    @PatchMapping(value = "/me/notification-sound", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UserResponseDto> updateNotificationSoundPreference(@Valid @RequestBody NotificationSoundPreferenceRequestDto payload) {
+        return ResponseEntity.ok(usersService.updateCurrentUserNotificationSoundPreference(payload.getEnabled()));
     }
 
+    @PreAuthorize("@permissionService.hasPermission('users.read')")
+    @RequestMapping(value = "/all", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<UserResponseDto>> fetchAllUsers() {
+        return ResponseEntity.ok(usersService.fetchAllUsers());
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('users.read')")
     @RequestMapping(value = "/{uid}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<UserResponseDto> getUserByUid(@PathVariable String uid) {
         return ResponseEntity.ok(usersService.getUserByUid(uid));

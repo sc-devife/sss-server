@@ -54,6 +54,10 @@ public class HotelResponseDTO {
 
     private String contactInfo;
 
+    private String phoneNumber;
+
+    private String email;
+
     private List<String> images;
 
     // The manually-chosen main image — used wherever a single representative

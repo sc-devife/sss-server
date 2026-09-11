@@ -12,7 +12,7 @@ public interface UsersService {
 
     UserResponseDto updateCurrentUser(UserUpdateRequestDto payload);
 
-    List<UserResponseDto> fetchAllUsers(Long companyId);
+    List<UserResponseDto> fetchAllUsers();
 
     UserResponseDto getUserByUid(String uid);
 
@@ -27,4 +27,6 @@ public interface UsersService {
     UserResponseDto reassignTeams(String uid, List<String> teamUids);
 
     UserResponseDto setBlocked(String uid, boolean blocked);
+
+    UserResponseDto updateCurrentUserNotificationSoundPreference(boolean enabled);
 }

@@ -4,6 +4,7 @@ import com.sss.app.entity.deal.Deal;
 import com.sss.app.entity.escape.Escape;
 import com.sss.app.entity.escape.EscapeStatus;
 import com.sss.app.entity.itinerary.Itinerary;
+import com.sss.app.entity.notification.NotificationType;
 import com.sss.app.entity.quote.Quote;
 import com.sss.app.entity.users.User;
 import com.sss.app.exception.ConflictException;
@@ -16,6 +17,7 @@ import com.sss.app.repository.quote.QuoteRepository;
 import com.sss.app.security.OrgAccessGuard;
 import com.sss.app.service.audit.AuditLogService;
 import com.sss.app.service.escape.EscapeLifecycleService;
+import com.sss.app.service.notification.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -36,6 +38,7 @@ public class DealHelper {
     private final EscapeLifecycleService escapeLifecycleService;
     private final AuditLogService auditLogService;
     private final OrgAccessGuard orgAccessGuard;
+    private final NotificationService notificationService;
 
     private User currentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -131,6 +134,22 @@ public class DealHelper {
         // passed this stage (e.g. re-accepting after a manual status jump).
         if (EscapeStatus.indexOf(trip.getStatus()) < EscapeStatus.indexOf(EscapeStatus.QUOTE_ACCEPTED)) {
             escapeLifecycleService.advance(trip.getUid(), EscapeStatus.QUOTE_ACCEPTED);
+        }
+
+        // Exactly one notification for the whole operation — not one per
+        // superseded sibling quote (see the loop above) — and skipped
+        // entirely on a harmless re-run of an already-accepted quote.
+        if (!reaffirmingActiveDeal) {
+            String message = "Quotation " + quote.getName() + " for " + trip.getLead().getName() + " has been accepted.";
+            Long recipient = notificationService.resolveEscapeRecipient(trip);
+            if (recipient != null) {
+                notificationService.notify(recipient, trip.getOrgId(), NotificationType.QUOTATION_ACCEPTED,
+                        "Quotation Accepted", message, NotificationType.RelatedEntityType.QUOTE, quote.getUid());
+            } else {
+                notificationService.notifyUsers(notificationService.resolveOrgManagers(trip.getOrgId()), trip.getOrgId(),
+                        NotificationType.QUOTATION_ACCEPTED, "Quotation Accepted", message,
+                        NotificationType.RelatedEntityType.QUOTE, quote.getUid());
+            }
         }
 
         return deal;

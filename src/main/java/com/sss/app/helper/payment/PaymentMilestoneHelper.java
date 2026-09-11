@@ -4,6 +4,7 @@ import com.sss.app.dto.payment.PaymentMilestoneCreateRequestDTO;
 import com.sss.app.entity.deal.Deal;
 import com.sss.app.entity.escape.Escape;
 import com.sss.app.entity.escape.EscapeStatus;
+import com.sss.app.entity.notification.NotificationType;
 import com.sss.app.entity.payment.PaymentMilestone;
 import com.sss.app.entity.users.User;
 import com.sss.app.exception.BadRequestException;
@@ -14,6 +15,8 @@ import com.sss.app.repository.payment.PaymentMilestoneRepository;
 import com.sss.app.security.OrgAccessGuard;
 import com.sss.app.service.audit.AuditLogService;
 import com.sss.app.service.escape.EscapeLifecycleService;
+import com.sss.app.service.notification.NotificationService;
+import com.sss.app.util.CurrencyFormat;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -33,6 +36,7 @@ public class PaymentMilestoneHelper {
     private final OrgAccessGuard orgAccessGuard;
     private final AuditLogService auditLogService;
     private final EscapeLifecycleService escapeLifecycleService;
+    private final NotificationService notificationService;
 
     private User currentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -102,7 +106,19 @@ public class PaymentMilestoneHelper {
         auditLogService.record("Escape", milestone.getDeal().getEscape().getSeqp(), "PAYMENT_RECORDED",
                 milestone.getLabel(), amount + " via " + paymentMethod + " (ref: " + paymentReference + ")");
 
+        // Goes to org managers, not the assignee — the agent recorded it;
+        // accounting/admin is the audience that needs to verify it.
+        Escape trip = milestone.getDeal().getEscape();
+        notificationService.notifyUsers(notificationService.resolveOrgManagers(trip.getOrgId()), trip.getOrgId(),
+                NotificationType.PAYMENT_RECORDED, "Payment Recorded",
+                CurrencyFormat.inrWhole(amount) + " payment recorded for " + safeTripCode(trip) + ".",
+                NotificationType.RelatedEntityType.PAYMENT_MILESTONE, saved.getUid());
+
         return saved;
+    }
+
+    private String safeTripCode(Escape escape) {
+        return escape.getTripCode() != null ? escape.getTripCode() : escape.getUid().toString();
     }
 
     /**
@@ -124,6 +140,22 @@ public class PaymentMilestoneHelper {
         auditLogService.record("Escape", milestone.getDeal().getEscape().getSeqp(), "PAYMENT_VERIFIED",
                 "unverified", saved.getStatus());
 
+        Escape verifiedTrip = milestone.getDeal().getEscape();
+        Long verifiedRecipient = notificationService.resolveEscapeRecipient(verifiedTrip);
+        String verifiedAmount = CurrencyFormat.inrWhole(saved.getAmountPaidInr());
+        if (verifiedRecipient != null) {
+            notificationService.notify(verifiedRecipient, verifiedTrip.getOrgId(),
+                    NotificationType.PAYMENT_VERIFIED, "Payment Verified",
+                    verifiedAmount + " payment for " + safeTripCode(verifiedTrip) + " has been verified.",
+                    NotificationType.RelatedEntityType.PAYMENT_MILESTONE, saved.getUid());
+            if ("partially_paid".equals(saved.getStatus())) {
+                notificationService.notify(verifiedRecipient, verifiedTrip.getOrgId(),
+                        NotificationType.PAYMENT_PARTIAL, "Partial Payment Received",
+                        "Partial payment of " + verifiedAmount + " received for " + safeTripCode(verifiedTrip) + ".",
+                        NotificationType.RelatedEntityType.PAYMENT_MILESTONE, saved.getUid());
+            }
+        }
+
         advanceEscapePaymentStatus(milestone.getDeal());
 
         return saved;
@@ -144,6 +176,19 @@ public class PaymentMilestoneHelper {
         int targetIndex = EscapeStatus.indexOf(target);
         if (currentIndex >= 0 && targetIndex > currentIndex) {
             escapeLifecycleService.advance(trip.getUid(), target);
+
+            if (EscapeStatus.FULLY_PAID.equals(target)) {
+                Long recipient = notificationService.resolveEscapeRecipient(trip);
+                String message = "Payment for " + safeTripCode(trip) + " is now fully completed.";
+                if (recipient != null) {
+                    notificationService.notify(recipient, trip.getOrgId(), NotificationType.PAYMENT_COMPLETED,
+                            "Payment Fully Completed", message, NotificationType.RelatedEntityType.ESCAPE, trip.getUid());
+                } else {
+                    notificationService.notifyUsers(notificationService.resolveOrgManagers(trip.getOrgId()), trip.getOrgId(),
+                            NotificationType.PAYMENT_COMPLETED, "Payment Fully Completed", message,
+                            NotificationType.RelatedEntityType.ESCAPE, trip.getUid());
+                }
+            }
         }
     }
 }

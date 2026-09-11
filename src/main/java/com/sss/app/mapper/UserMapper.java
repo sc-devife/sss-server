@@ -52,6 +52,7 @@ public class UserMapper {
         dto.setEligibleForPriorityLeads(user.getEligibleForPriorityLeads());
         dto.setAcceptingLeads(user.getAcceptingLeads());
         dto.setBlocked(user.getBlocked());
+        dto.setNotificationSoundEnabled(user.getNotificationSoundEnabled());
 
         List<UserRoleLinkResponseDto> roleDTOs = new ArrayList<>();
         for (UserRoleLink link : user.getRoles()) {

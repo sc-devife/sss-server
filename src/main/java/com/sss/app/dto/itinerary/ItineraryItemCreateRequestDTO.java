@@ -45,4 +45,14 @@ public class ItineraryItemCreateRequestDTO {
     // Optional booking-specific hotel stay detail — only meaningful when
     // itemType is "hotel", ignored otherwise. See HotelDetailDTO.
     private HotelDetailDTO hotelDetail;
+
+    // Ignored on create — a new item always starts at Initialize
+    // server-side (see ItineraryItemHelper.create), regardless of what's
+    // sent here. Present on this DTO only so create/update share the same
+    // shape; meaningful on update, for item types with no dedicated detail
+    // table of their own (currently Activity — Hotel keeps its own separate
+    // status on HotelDetailDTO).
+    private String status;
+    private String droppingReason;
+    private BigDecimal cancellationCharge;
 }

@@ -21,4 +21,9 @@ public class EscapeResponseDTO extends EscapeDTO {
     private String assignmentReason;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    // Private, team-only — never rendered in the Quotation (see
+    // QuotationDataService, which deliberately never reads this field).
+    private String internalComments;
+    // Client-facing rich text, rendered in the generated Quotation.
+    private String remarkForLead;
 }

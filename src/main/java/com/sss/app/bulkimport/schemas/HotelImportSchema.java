@@ -2,35 +2,48 @@ package com.sss.app.bulkimport.schemas;
 
 import com.sss.app.bulkimport.BulkImportSchema;
 import com.sss.app.dto.library.hotel.HotelCreateRequestDTO;
-import com.sss.app.entity.library.escapepoint.EscapePoint;
 import com.sss.app.repository.library.escapepoint.EscapePointRepository;
 import com.sss.app.repository.library.location.LocationRepository;
+import com.sss.app.repository.library.mealplan.MealPlanRepository;
+import com.sss.app.repository.library.roomtype.RoomTypeRepository;
+import com.sss.app.repository.library.service.ServiceRepository;
 import com.sss.app.service.library.hotel.HotelService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
 import static com.sss.app.bulkimport.RowUtils.blankToNull;
 import static com.sss.app.bulkimport.RowUtils.parseIntOrNull;
+import static com.sss.app.bulkimport.RowUtils.parseLocalDateOrNull;
+import static com.sss.app.bulkimport.RowUtils.parseLocalTimeOrNull;
+import static com.sss.app.bulkimport.RowUtils.splitList;
 
 /**
- * Bulk import covers Hotel's core dictionary fields only (name, location,
- * escape point, stars, address, contact, status) — meal plans, room types,
- * and images aren't spreadsheet-friendly relations and are left to the
- * regular create/edit screen, consistent with keeping this a v1-scoped
- * import rather than a full parity importer.
+ * Every field HotelFormModal's manual create/edit form exposes, so a
+ * bulk-imported hotel has the same field coverage as one created by hand.
+ * Only "images" is left out — a file upload has no meaningful plain-text CSV
+ * representation, and stays a manual-only, documented limitation.
  */
 @Component
 @RequiredArgsConstructor
 public class HotelImportSchema implements BulkImportSchema {
 
+    // Mirrors HotelFormModal.tsx's AMENITY_OPTIONS exactly.
+    private static final Set<String> VALID_AMENITIES = Set.of(
+            "wifi", "pool", "parking", "gym", "spa", "restaurant", "ac", "breakfast");
+
     private final HotelService hotelService;
     private final LocationRepository locationRepository;
     private final EscapePointRepository escapePointRepository;
+    private final MealPlanRepository mealPlanRepository;
+    private final RoomTypeRepository roomTypeRepository;
+    private final ServiceRepository serviceRepository;
 
     @Override
     public String entityType() {
@@ -39,7 +52,11 @@ public class HotelImportSchema implements BulkImportSchema {
 
     @Override
     public List<String> columns() {
-        return List.of("name", "locationDisplayName", "escapePointCode", "stars", "address", "contactInfo", "status");
+        return List.of(
+                "name", "locationDisplayName", "escapePointCode", "stars", "address", "contactInfo",
+                "mealPlanCodes", "roomTypeNames", "serviceNames",
+                "checkInTime", "checkOutTime", "childAgeForExtraBed",
+                "rateValidFrom", "rateValidTo", "amenities", "notes", "status");
     }
 
     @Override
@@ -56,8 +73,46 @@ public class HotelImportSchema implements BulkImportSchema {
             errors.add("No location found named \"" + locationDisplayName + "\" — create it first on the Hotels screen");
         }
         String escapePointCode = row.get("escapePointCode");
-        if (escapePointCode != null && !escapePointCode.isBlank() && findEscapePoint(escapePointCode).isEmpty()) {
+        if (escapePointCode != null && !escapePointCode.isBlank() && escapePointRepository.findById(escapePointCode.trim()).isEmpty()) {
             errors.add("No escape point found with code \"" + escapePointCode + "\"");
+        }
+
+        for (String code : splitList(row.get("mealPlanCodes"))) {
+            if (mealPlanRepository.findByCodeIgnoreCase(code).isEmpty()) {
+                errors.add("No meal plan found with code \"" + code + "\"");
+            }
+        }
+        for (String name : splitList(row.get("roomTypeNames"))) {
+            if (roomTypeRepository.findByNameIgnoreCase(name).isEmpty()) {
+                errors.add("No room type found named \"" + name + "\"");
+            }
+        }
+        for (String name : splitList(row.get("serviceNames"))) {
+            if (serviceRepository.findByNameIgnoreCaseAndHotelIsNull(name).isEmpty()) {
+                errors.add("No service found named \"" + name + "\"");
+            }
+        }
+        for (String amenity : splitList(row.get("amenities"))) {
+            if (!VALID_AMENITIES.contains(amenity)) {
+                errors.add("\"" + amenity + "\" is not a valid amenity — must be one of: " + String.join(", ", VALID_AMENITIES));
+            }
+        }
+
+        String checkInRaw = row.get("checkInTime");
+        if (checkInRaw != null && !checkInRaw.isBlank() && parseLocalTimeOrNull(checkInRaw) == null) {
+            errors.add("\"checkInTime\" must be in HH:mm format (e.g. 14:00)");
+        }
+        String checkOutRaw = row.get("checkOutTime");
+        if (checkOutRaw != null && !checkOutRaw.isBlank() && parseLocalTimeOrNull(checkOutRaw) == null) {
+            errors.add("\"checkOutTime\" must be in HH:mm format (e.g. 11:00)");
+        }
+        String fromRaw = row.get("rateValidFrom");
+        if (fromRaw != null && !fromRaw.isBlank() && parseLocalDateOrNull(fromRaw) == null) {
+            errors.add("\"rateValidFrom\" must be in YYYY-MM-DD format");
+        }
+        String toRaw = row.get("rateValidTo");
+        if (toRaw != null && !toRaw.isBlank() && parseLocalDateOrNull(toRaw) == null) {
+            errors.add("\"rateValidTo\" must be in YYYY-MM-DD format");
         }
         return errors;
     }
@@ -70,21 +125,44 @@ public class HotelImportSchema implements BulkImportSchema {
         dto.setAddress(blankToNull(row.get("address")));
         dto.setContactInfo(blankToNull(row.get("contactInfo")));
         dto.setStatus(blankToNull(row.get("status")));
+        dto.setCheckInTime(parseLocalTimeOrNull(row.get("checkInTime")));
+        dto.setCheckOutTime(parseLocalTimeOrNull(row.get("checkOutTime")));
+        dto.setChildAgeForExtraBed(blankToNull(row.get("childAgeForExtraBed")));
+        dto.setRateValidFrom(parseLocalDateOrNull(row.get("rateValidFrom")));
+        dto.setRateValidTo(parseLocalDateOrNull(row.get("rateValidTo")));
+        dto.setNotes(blankToNull(row.get("notes")));
+
+        List<String> amenities = splitList(row.get("amenities"));
+        if (!amenities.isEmpty()) {
+            dto.setAmenities(amenities);
+        }
 
         locationRepository.findByDisplayNameIgnoreCase(row.get("locationDisplayName"))
                 .ifPresent(l -> dto.setLocationId(l.getUid()));
 
         String escapePointCode = blankToNull(row.get("escapePointCode"));
         if (escapePointCode != null) {
-            findEscapePoint(escapePointCode).ifPresent(d -> dto.setEscapePointId(d.getUid()));
+            escapePointRepository.findById(escapePointCode).ifPresent(d -> dto.setEscapePointId(d.getUid()));
         }
 
-        hotelService.create(dto);
-    }
+        Set<UUID> mealPlanIds = new HashSet<>();
+        for (String code : splitList(row.get("mealPlanCodes"))) {
+            mealPlanRepository.findByCodeIgnoreCase(code).ifPresent(m -> mealPlanIds.add(m.getUid()));
+        }
+        if (!mealPlanIds.isEmpty()) dto.setMealPlanIds(mealPlanIds);
 
-    private Optional<EscapePoint> findEscapePoint(String code) {
-        return escapePointRepository.findAll().stream()
-                .filter(e -> code.equals(e.getId()))
-                .findFirst();
+        Set<UUID> roomTypeIds = new HashSet<>();
+        for (String name : splitList(row.get("roomTypeNames"))) {
+            roomTypeRepository.findByNameIgnoreCase(name).ifPresent(r -> roomTypeIds.add(r.getUid()));
+        }
+        if (!roomTypeIds.isEmpty()) dto.setRoomTypeIds(roomTypeIds);
+
+        Set<UUID> serviceIds = new HashSet<>();
+        for (String name : splitList(row.get("serviceNames"))) {
+            serviceRepository.findByNameIgnoreCaseAndHotelIsNull(name).ifPresent(s -> serviceIds.add(s.getUid()));
+        }
+        if (!serviceIds.isEmpty()) dto.setServiceIds(serviceIds);
+
+        hotelService.create(dto);
     }
 }

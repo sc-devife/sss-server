@@ -68,8 +68,6 @@ public class ActivityImportSchema implements BulkImportSchema {
     }
 
     private Optional<EscapePoint> findEscapePoint(String code) {
-        return escapePointRepository.findAll().stream()
-                .filter(e -> code.equals(e.getId()))
-                .findFirst();
+        return escapePointRepository.findById(code);
     }
 }

@@ -1,6 +1,7 @@
 package com.sss.app.helper.escape;
 
 import com.sss.app.dto.escape.EscapeCreateRequestDTO;
+import com.sss.app.dto.escape.EscapeSummaryNotesRequestDTO;
 import com.sss.app.dto.escape.EscapeUpdateRequestDTO;
 import com.sss.app.dto.traveller.TravellerCreateRequestDTO;
 import com.sss.app.entity.escape.Escape;
@@ -10,6 +11,7 @@ import com.sss.app.entity.library.escapepoint.EscapePoint;
 import com.sss.app.entity.organizations.OrganizationSettings;
 import com.sss.app.entity.traveller.Traveller;
 import com.sss.app.entity.users.User;
+import com.sss.app.entity.notification.NotificationType;
 import com.sss.app.exception.NotFoundException;
 import com.sss.app.helper.traveller.TravellerHelper;
 import com.sss.app.mapper.escape.EscapeMapper;
@@ -20,6 +22,8 @@ import com.sss.app.repository.library.escapepoint.EscapePointRepository;
 import com.sss.app.repository.traveller.TravellerRepository;
 import com.sss.app.security.OrgAccessGuard;
 import com.sss.app.service.assignment.LeadAssignmentService;
+import com.sss.app.service.notification.NotificationService;
+import com.sss.app.util.RichTextSanitizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -41,6 +45,7 @@ public class EscapeHelper {
     private final OrgAccessGuard orgAccessGuard;
     private final OrganizationSettingsRepository organizationSettingsRepository;
     private final LeadAssignmentService leadAssignmentService;
+    private final NotificationService notificationService;
 
     private User currentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -73,6 +78,12 @@ public class EscapeHelper {
         trip.setStatus(EscapeStatus.PLANNING);
 
         Escape saved = escapeRepository.save(trip);
+
+        notificationService.notifyUsers(
+                notificationService.resolveOrgManagers(saved.getOrgId()), saved.getOrgId(),
+                NotificationType.ESCAPE_CREATED, "Escape Created",
+                "A new Escape has been created" + (lead != null ? " for " + lead.getName() : "") + ".",
+                NotificationType.RelatedEntityType.ESCAPE, saved.getUid());
 
         // Assignment happens exactly once, here — leads themselves are never
         // individually assigned. Gated by the org's own setting (Phase 1),
@@ -154,6 +165,21 @@ public class EscapeHelper {
                 .orElseThrow(() -> new NotFoundException("Escape not found with id: " + id));
         orgAccessGuard.requireAccessToOrg(escape.getOrgId());
         return escape;
+    }
+
+    // Its own small endpoint (Section 8's Summary tab) rather than riding
+    // updateEscape's full-object PUT — that endpoint unconditionally
+    // overwrites plain fields like startDate/numberOfDays on every save (see
+    // above), and the duration-only save never carries these two fields,
+    // which would silently null them out. internalComments is stored as-is
+    // (plain text, never rendered as HTML); remarkForLead is rich text
+    // rendered both here and in the Quotation, so it goes through the same
+    // sanitizer as Terms/Inclusions/Exclusions content.
+    public Escape updateSummaryNotes(UUID uid, EscapeSummaryNotesRequestDTO request) {
+        Escape escape = getEscapeById(uid);
+        escape.setInternalComments(request.getInternalComments());
+        escape.setRemarkForLead(RichTextSanitizer.sanitize(request.getRemarkForLead()));
+        return escapeRepository.save(escape);
     }
 
     // Adds a new traveller record to an already-created Escape — the

@@ -83,6 +83,23 @@ public class Escape extends Auditable {
     // ✅ AUTO CALCULATED
     private LocalDate endDate;
 
+    // Idempotency stamp for the "travel date approaching" notification sweep
+    // (EscapeTravelDateReminderServiceImpl) — same "stamp once sent, never
+    // cleared" role FollowUp's own reminder columns play.
+    @Column(name = "travel_date_reminder_sent_at")
+    private java.time.LocalDateTime travelDateReminderSentAt;
+
+    // Private, team-only notes — never exposed to QuotationDataService, so
+    // it can never reach the client-facing quotation.
+    @Column(name = "internal_comments", columnDefinition = "TEXT")
+    private String internalComments;
+
+    // Client-facing rich text, sanitized the same way as Terms/Inclusions/
+    // Exclusions content (see RichTextSanitizer) — flows into the Quotation
+    // via QuotationDataService.
+    @Column(name = "remark_for_lead", columnDefinition = "TEXT")
+    private String remarkForLead;
+
   /*  public void setTravellers(List<Escape> allById) {
     }*/
 

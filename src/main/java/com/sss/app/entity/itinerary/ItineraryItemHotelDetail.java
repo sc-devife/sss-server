@@ -83,4 +83,17 @@ public class ItineraryItemHotelDetail {
 
     @Column(name = "total_price", precision = 12, scale = 2)
     private BigDecimal totalPrice;
+
+    // Initialize / Booked / Drop (see BookingStatus) — defaults to
+    // Initialize at the DB level for pre-existing rows; ItineraryItemHelper
+    // is what actually enforces "always Initialize on first save" and
+    // "Drop requires a reason", not a DB constraint.
+    @Column(nullable = false, length = 20)
+    private String status;
+
+    @Column(name = "dropping_reason", columnDefinition = "TEXT")
+    private String droppingReason;
+
+    @Column(name = "cancellation_charge_inr", precision = 12, scale = 2)
+    private BigDecimal cancellationChargeInr;
 }

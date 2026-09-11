@@ -39,6 +39,10 @@ public class UserResponseDto extends UserDto {
     private Boolean acceptingLeads;
     private Boolean blocked;
 
+    // Populated on every response — the Profile Settings popover reads it
+    // straight from GET/PUT /users/me with no extra request.
+    private Boolean notificationSoundEnabled;
+
     // Resolved from UserSession.lastAccessed (keyed by email, refreshed on
     // every authenticated request — see JwtAuthenticationFilter) rather than
     // stored on the user record itself. Only populated on fetchAllUsers —

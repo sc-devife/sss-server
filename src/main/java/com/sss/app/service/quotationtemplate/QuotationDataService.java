@@ -12,6 +12,7 @@ import com.sss.app.dto.organizations.OrganizationsDto;
 import com.sss.app.dto.payment.PaymentMilestoneResponseDTO;
 import com.sss.app.dto.quote.QuoteResponseDTO;
 import com.sss.app.dto.traveller.TravellerResponseDTO;
+import com.sss.app.entity.itinerary.BookingStatus;
 import com.sss.app.entity.library.activity.Activity;
 import com.sss.app.entity.library.hotel.Hotel;
 import com.sss.app.entity.library.mealplan.MealPlan;
@@ -202,6 +203,13 @@ public class QuotationDataService {
                         "tcs", latestQuote.getTcsAmountInr(),
                         "total", latestQuote.getTotalInr(),
                         "totalFormatted", latestQuote.getTotalInr() != null ? inrFormat.format(latestQuote.getTotalInr()) : null,
+                        // Sum of dropped hotels' cancellation charges on this
+                        // itinerary — already folded into subtotal/total
+                        // above, exposed separately so a template can show
+                        // it as its own line (see BookingStatus).
+                        "cancellationCharges", latestQuote.getCancellationChargesInr(),
+                        "cancellationChargesFormatted", isPositive(latestQuote.getCancellationChargesInr())
+                                ? inrFormat.format(latestQuote.getCancellationChargesInr()) : null,
                         "discountType", latestQuote.getDiscountType(),
                         "discountValue", latestQuote.getDiscountValue(),
                         "paxCount", paxCount,
@@ -296,6 +304,11 @@ public class QuotationDataService {
                 "inclusions", inclusions,
                 "exclusions", exclusions,
                 "terms", terms,
+                // Client-facing (Section 8's Summary tab) — deliberately the
+                // ONLY escape-level note exposed here. internalComments is
+                // never added to this map; that omission is what keeps it
+                // private to the team.
+                "remarkForLead", escape.getRemarkForLead(),
                 "specialInclusions", specialInclusions,
                 "payment", map("milestones", milestones)
         );
@@ -491,7 +504,16 @@ public class QuotationDataService {
                 "startTime", item.getStartTime(),
                 "notes", item.getNotes(),
                 "longDescription", item.getLongDescription(),
-                "price", item.getPrice()
+                "price", item.getPrice(),
+                // Item-level Initialize/Booked/Drop status — currently only
+                // meaningful for Activity (Hotel exposes its own separate
+                // status inside the "hotel" map below). "dropped" is a
+                // convenience boolean for templates that just want to
+                // show/hide a block, e.g. {{#dropped}}...{{/dropped}}.
+                "status", item.getStatus(),
+                "droppingReason", item.getDroppingReason(),
+                "cancellationCharge", item.getCancellationCharge(),
+                "dropped", BookingStatus.DROP.equals(item.getStatus())
         );
         if (item.getHotelDetail() != null) {
             Hotel hotel = item.getReferenceId() != null ? hotels.get(item.getReferenceId()) : null;
@@ -528,10 +550,15 @@ public class QuotationDataService {
                     starIcons.add(map());
                 }
             }
+            boolean dropped = BookingStatus.DROP.equals(item.getHotelDetail().getStatus());
             m.put("hotel", map(
                     "roomCount", item.getHotelDetail().getRoomCount(),
                     "paxPerRoom", item.getHotelDetail().getPaxPerRoom(),
                     "totalPrice", item.getHotelDetail().getTotalPrice(),
+                    "status", item.getHotelDetail().getStatus(),
+                    "dropped", dropped,
+                    "droppingReason", item.getHotelDetail().getDroppingReason(),
+                    "cancellationCharge", item.getHotelDetail().getCancellationCharge(),
                     "mealPlanName", mealPlanNames.get(item.getHotelDetail().getMealPlanId()),
                     "roomTypeName", roomTypeNames.get(item.getHotelDetail().getRoomTypeId()),
                     "stars", stars,

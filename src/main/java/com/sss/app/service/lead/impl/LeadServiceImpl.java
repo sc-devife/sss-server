@@ -16,12 +16,14 @@ import com.sss.app.service.integration.ProviderLeadMetadata;
 import com.sss.app.service.lead.LeadService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -64,11 +66,14 @@ public class LeadServiceImpl implements LeadService {
     }
 
     @Override
-    public List<LeadResponseDTO> getAllLeads() {
-        return leadHelper.getAllLeads()
-                .stream()
-                .map(lead -> enrichAgencyDetails(lead, toResponseWithEscapePoints(lead)))
-                .collect(Collectors.toList());
+    public Page<LeadResponseDTO> getAllLeads(String search, String status, Boolean priority, LocalDateTime start, LocalDateTime end,
+                                              String escapePointId, List<String> sources, Boolean archived, Pageable pageable) {
+        // Page<T>.map preserves the pagination metadata (totalElements,
+        // totalPages, ...) while transforming just the page's own content —
+        // the enrichment below never runs against more than one page's worth
+        // of leads.
+        return leadHelper.getAllLeads(search, status, priority, start, end, escapePointId, sources, archived, pageable)
+                .map(lead -> enrichAgencyDetails(lead, toResponseWithEscapePoints(lead)));
     }
 
     @Override

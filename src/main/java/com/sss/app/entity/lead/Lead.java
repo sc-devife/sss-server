@@ -92,6 +92,13 @@ public class Lead extends Auditable {
     @Column(name = "follow_up_due_date")
     private LocalDate followUpDueDate;
 
+    // Soft-delete/Archive marker — set only via the "archive" lifecycle
+    // action (LeadLifecycleService.archive), never cleared. Excluded from
+    // the default Leads list query (LeadSpecifications.notDeleted) rather
+    // than repurposing the fixed status lifecycle for it.
+    @Column(name = "deleted_at")
+    private java.time.LocalDateTime deletedAt;
+
     @PrePersist
     protected void onCreate() {
         if (this.uid == null) {

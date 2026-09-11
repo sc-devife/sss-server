@@ -8,6 +8,7 @@ import com.sss.app.entity.users.User;
 import com.sss.app.exception.NotFoundException;
 import com.sss.app.repository.OrganizationRepository;
 import com.sss.app.repository.OrganizationSettingsRepository;
+import com.sss.app.security.OrgAccessGuard;
 import com.sss.app.service.files.CloudinaryService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -22,15 +23,18 @@ public class OrganizationsHelper {
     private final OrganizationRepository organizationRepository;
     private final OrganizationSettingsRepository organizationSettingsRepository;
     private final CloudinaryService cloudinaryService;
+    private final OrgAccessGuard orgAccessGuard;
     @PersistenceContext
     private EntityManager entityManager;
 
     public OrganizationsHelper(OrganizationRepository organizationRepository,
                                 OrganizationSettingsRepository organizationSettingsRepository,
-                                CloudinaryService cloudinaryService) {
+                                CloudinaryService cloudinaryService,
+                                OrgAccessGuard orgAccessGuard) {
         this.organizationRepository = organizationRepository;
         this.organizationSettingsRepository = organizationSettingsRepository;
         this.cloudinaryService = cloudinaryService;
+        this.orgAccessGuard = orgAccessGuard;
     }
 
     public OrganizationSettings getSettings(Long orgId) {
@@ -47,14 +51,22 @@ public class OrganizationsHelper {
                 .orElseThrow(() -> new NotFoundException("Organization not found"));
     }
 
+    // Both "get...ByUid" methods below are read/mutate entry points that take
+    // a caller-supplied uid — without requireAccessToOrg, orgId is fully
+    // client-controlled and any authenticated user (from any org) could
+    // read/edit/delete another organization's record just by changing the
+    // uid in the request. Super Admins bypass by design (OrgAccessGuard).
     public Organizations getOrganizationByUid(String uid) {
-        return organizationRepository.findByUid(uid)
+        Organizations organization = organizationRepository.findByUid(uid)
                 .orElseThrow(() -> new NotFoundException("Organization not found with uid: " + uid));
-
+        orgAccessGuard.requireAccessToOrg(organization.getSeqp());
+        return organization;
     }
     public Organizations getOrganizationsByUid(String uid) {
-        return organizationRepository.findByUid(uid)
+        Organizations organization = organizationRepository.findByUid(uid)
                 .orElseThrow(() -> new NotFoundException("Organization not found with uid: " + uid));
+        orgAccessGuard.requireAccessToOrg(organization.getSeqp());
+        return organization;
     }
     @Transactional
     public Organizations createOrganizations(OrganizationsDto request) {
@@ -113,8 +125,9 @@ public class OrganizationsHelper {
 
     @Transactional
     public void deleteOrganizations(String orgRegName) {
-        organizationRepository.findByRegisteredName(orgRegName)
+        Organizations organization = organizationRepository.findByRegisteredName(orgRegName)
                 .orElseThrow(() -> new NotFoundException("Organization not found with name: " + orgRegName));
+        orgAccessGuard.requireAccessToOrg(organization.getSeqp());
         organizationRepository.deleteByRegisteredName(orgRegName);
     }
 }

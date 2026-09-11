@@ -12,16 +12,23 @@ import com.sss.app.mapper.lead.LeadMapper;
 import com.sss.app.repository.integration.meta.LeadSourceMetadataRepository;
 import com.sss.app.repository.lead.LeadAgencyDetailsRepository;
 import com.sss.app.repository.lead.LeadRepository;
+import com.sss.app.repository.lead.LeadSpecifications;
 import com.sss.app.repository.library.escapepoint.EscapePointRepository;
 import com.sss.app.security.OrgAccessGuard;
+import com.sss.app.entity.notification.NotificationType;
 import com.sss.app.service.integration.NormalizedLeadPayload;
 import com.sss.app.service.integration.ProviderLeadMetadata;
+import com.sss.app.service.notification.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -39,6 +46,7 @@ public class LeadsHelper {
     private final EscapePointRepository escapePointRepository;
     private final LeadSourceMetadataRepository leadSourceMetadataRepository;
     private final LeadAgencyDetailsRepository leadAgencyDetailsRepository;
+    private final NotificationService notificationService;
 
     private User currentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -74,6 +82,12 @@ public class LeadsHelper {
             agencyDetails.setLeadId(saved.getSeqp());
             leadAgencyDetailsRepository.save(agencyDetails);
         }
+
+        notificationService.notifyUsers(
+                notificationService.resolveOrgManagers(saved.getOrgId()), saved.getOrgId(),
+                NotificationType.LEAD_CREATED, "New Lead",
+                saved.getName() + " has been added as a new lead.",
+                NotificationType.RelatedEntityType.LEAD, saved.getUid());
 
         return saved;
     }
@@ -198,8 +212,38 @@ public class LeadsHelper {
         return lead;
     }
 
-    public List<Lead> getAllLeads() {
-        return leadRepository.findAllByOrgIdOrderByCreatedAtDesc(currentUser().getOrgId());
+    // Leads page's Search + Status + Priority + Month/Week/Day/All +
+    // pagination — everything is applied as one Specification-built query at
+    // the DB level, not fetched-then-filtered in Java. `search`/`status` are
+    // only "and"-ed in when non-blank; `priority` when true adds the
+    // Priority-pseudo-status filter (mutually exclusive with `status` in
+    // practice — the controller only ever sends one); `start`/`end` (both
+    // non-null or both null — the controller guarantees this) back the
+    // date-period filter, `start` inclusive/`end` exclusive, "All" passes
+    // both null for no restriction.
+    public Page<Lead> getAllLeads(String search, String status, Boolean priority, LocalDateTime start, LocalDateTime end,
+                                   String escapePointId, List<String> sources, Boolean archived, Pageable pageable) {
+        Specification<Lead> spec = Specification.where(LeadSpecifications.hasOrgId(currentUser().getOrgId()))
+                .and(Boolean.TRUE.equals(archived) ? LeadSpecifications.isArchived() : LeadSpecifications.notDeleted());
+        if (search != null && !search.isBlank()) {
+            spec = spec.and(LeadSpecifications.matchesSearch(search.trim()));
+        }
+        if (status != null && !status.isBlank()) {
+            spec = spec.and(LeadSpecifications.hasStatus(status.trim()));
+        }
+        if (Boolean.TRUE.equals(priority)) {
+            spec = spec.and(LeadSpecifications.isPriority());
+        }
+        if (start != null && end != null) {
+            spec = spec.and(LeadSpecifications.createdBetween(start, end));
+        }
+        if (escapePointId != null && !escapePointId.isBlank()) {
+            spec = spec.and(LeadSpecifications.hasEscapePoint(escapePointId.trim()));
+        }
+        if (sources != null && !sources.isEmpty()) {
+            spec = spec.and(LeadSpecifications.matchesSources(sources));
+        }
+        return leadRepository.findAll(spec, pageable);
     }
 
     // Deliberately not a lifecycle action (no status implication) — a plain

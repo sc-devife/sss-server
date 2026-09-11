@@ -21,4 +21,7 @@ public interface LeadLifecycleService {
 
     /** Excel writeup: manual "Mark as Priority Lead" override, available regardless of auto-detection. */
     LeadResponseDTO togglePriority(UUID leadId);
+
+    /** Soft-delete: sets deletedAt, removing the lead from the default Leads list. Does not change status. */
+    void archive(UUID leadId);
 }

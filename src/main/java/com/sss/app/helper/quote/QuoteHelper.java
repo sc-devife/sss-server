@@ -2,7 +2,9 @@ package com.sss.app.helper.quote;
 
 import com.sss.app.dto.quote.QuoteCreateRequestDTO;
 import com.sss.app.dto.quote.QuoteUpdateRequestDTO;
+import com.sss.app.entity.escape.Escape;
 import com.sss.app.entity.itinerary.Itinerary;
+import com.sss.app.entity.notification.NotificationType;
 import com.sss.app.entity.quote.Quote;
 import com.sss.app.entity.users.User;
 import com.sss.app.exception.ConflictException;
@@ -11,6 +13,7 @@ import com.sss.app.helper.itinerary.ItineraryHelper;
 import com.sss.app.mapper.quote.QuoteMapper;
 import com.sss.app.repository.quote.QuoteRepository;
 import com.sss.app.security.OrgAccessGuard;
+import com.sss.app.service.notification.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -27,6 +30,7 @@ public class QuoteHelper {
     private final QuoteMapper quoteMapper;
     private final ItineraryHelper itineraryHelper;
     private final OrgAccessGuard orgAccessGuard;
+    private final NotificationService notificationService;
 
     private User currentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -42,7 +46,25 @@ public class QuoteHelper {
             quote.setName(buildAutoName(itinerary));
         }
 
-        return quoteRepository.save(quote);
+        Quote saved = quoteRepository.save(quote);
+        notifyForQuote(saved, NotificationType.QUOTATION_CREATED, "Quotation Created",
+                "Quotation " + saved.getName() + " has been created.");
+        return saved;
+    }
+
+    // Escape/Quotation notifications go to the escape's assignee, falling
+    // back to org managers when the escape has no assignee yet — same policy
+    // every other Escape-adjacent notification hook in this codebase uses.
+    private void notifyForQuote(Quote quote, String type, String title, String message) {
+        Escape escape = quote.getItinerary().getEscape();
+        Long recipient = notificationService.resolveEscapeRecipient(escape);
+        if (recipient != null) {
+            notificationService.notify(recipient, escape.getOrgId(), type, title, message,
+                    NotificationType.RelatedEntityType.QUOTE, quote.getUid());
+        } else {
+            notificationService.notifyUsers(notificationService.resolveOrgManagers(escape.getOrgId()), escape.getOrgId(),
+                    type, title, message, NotificationType.RelatedEntityType.QUOTE, quote.getUid());
+        }
     }
 
     // "<itinerary name> - Quote <next number>" — mirrors Itinerary's own
@@ -111,7 +133,10 @@ public class QuoteHelper {
             throw new ConflictException("Only a draft quote can be marked as sent");
         }
         quote.setStatus("sent");
-        return quoteRepository.save(quote);
+        Quote saved = quoteRepository.save(quote);
+        notifyForQuote(saved, NotificationType.QUOTATION_SENT, "Quotation Sent",
+                "Quotation " + saved.getName() + " has been sent.");
+        return saved;
     }
 
     /** Draft or sent -> rejected: the customer declined this quote. */
@@ -121,6 +146,9 @@ public class QuoteHelper {
             throw new ConflictException("Only a draft or sent quote can be marked as rejected");
         }
         quote.setStatus("rejected");
-        return quoteRepository.save(quote);
+        Quote saved = quoteRepository.save(quote);
+        notifyForQuote(saved, NotificationType.QUOTATION_REJECTED, "Quotation Rejected",
+                "Quotation " + saved.getName() + " has been rejected.");
+        return saved;
     }
 }

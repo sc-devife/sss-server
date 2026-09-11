@@ -23,4 +23,10 @@ public class ItineraryItemResponseDTO {
     private Integer sortOrder;
     private TransportDetailDTO transportDetail;
     private HotelDetailDTO hotelDetail;
+
+    // Item-level Initialize/Booked/Drop status — see
+    // ItineraryItemUpdateRequestDTO's own comment.
+    private String status;
+    private String droppingReason;
+    private BigDecimal cancellationCharge;
 }

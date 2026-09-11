@@ -3,6 +3,7 @@ package com.sss.app.service.quote.impl;
 import com.sss.app.dto.quote.PricingBreakdownDTO;
 import com.sss.app.dto.quote.QuoteComputeRequestDTO;
 import com.sss.app.dto.quote.QuoteComputeResponseDTO;
+import com.sss.app.entity.itinerary.BookingStatus;
 import com.sss.app.entity.itinerary.ItineraryItem;
 import com.sss.app.entity.itinerary.ItineraryItemHotelDetail;
 import com.sss.app.entity.itinerary.ItineraryItemHotelInclusion;
@@ -76,14 +77,18 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
         PricingBreakdownDTO breakdown = new PricingBreakdownDTO();
 
         for (ItineraryItem item : items) {
-            BigDecimal price = resolvePrice(item, warnings);
-            if (price != null) {
-                subtotal = subtotal.add(price);
-                switch (item.getItemType()) {
-                    case "hotel" -> breakdown.setHotelsInr(breakdown.getHotelsInr().add(price));
-                    case "activity" -> breakdown.setActivitiesInr(breakdown.getActivitiesInr().add(price));
-                    case "transport" -> breakdown.setTransportInr(breakdown.getTransportInr().add(price));
-                    default -> breakdown.setOtherInr(breakdown.getOtherInr().add(price));
+            ItemPriceResult result = resolvePrice(item, warnings);
+            if (result != null) {
+                subtotal = subtotal.add(result.amount());
+                if (result.isCancellation()) {
+                    breakdown.setCancellationInr(breakdown.getCancellationInr().add(result.amount()));
+                } else {
+                    switch (item.getItemType()) {
+                        case "hotel" -> breakdown.setHotelsInr(breakdown.getHotelsInr().add(result.amount()));
+                        case "activity" -> breakdown.setActivitiesInr(breakdown.getActivitiesInr().add(result.amount()));
+                        case "transport" -> breakdown.setTransportInr(breakdown.getTransportInr().add(result.amount()));
+                        default -> breakdown.setOtherInr(breakdown.getOtherInr().add(result.amount()));
+                    }
                 }
             }
         }
@@ -137,6 +142,7 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
         quote.setDiscountType(discountType);
         quote.setDiscountValue(discountValue);
         quote.setTotalInr(total.setScale(2, RoundingMode.HALF_UP));
+        quote.setCancellationChargesInr(breakdown.getCancellationInr());
         quote.setCurrencyCode(request.getDisplayCurrencyCode());
         quote.setFxRateSnapshot(request.getFxRateSnapshot());
         Quote saved = quoteRepository.save(quote);
@@ -155,14 +161,35 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
         return response;
     }
 
-    private BigDecimal resolvePrice(ItineraryItem item, List<String> warnings) {
+    // isCancellation flags a Dropped hotel's cancellation charge — the
+    // caller buckets these into PricingBreakdownDTO.cancellationInr instead
+    // of hotelsInr, so an active-hotel total and a cancellation total never
+    // get mixed together.
+    private record ItemPriceResult(BigDecimal amount, boolean isCancellation) {
+        private static ItemPriceResult of(BigDecimal amount) {
+            return new ItemPriceResult(amount, false);
+        }
+    }
+
+    private ItemPriceResult resolvePrice(ItineraryItem item, List<String> warnings) {
         switch (item.getItemType()) {
             case "activity" -> {
+                // A dropped activity is no longer priced as an active
+                // booking — same rule as a dropped hotel (see the "hotel"
+                // branch below): its only contribution is whatever
+                // cancellation charge was actually levied (zero if none was
+                // entered), regardless of the original price.
+                if (BookingStatus.DROP.equals(item.getStatus())) {
+                    BigDecimal charge = item.getCancellationChargeInr() != null
+                            ? item.getCancellationChargeInr()
+                            : BigDecimal.ZERO;
+                    return new ItemPriceResult(charge, true);
+                }
                 // This specific booking's own price wins over the library's
                 // generic default — an agent may well have negotiated or
                 // overridden it for this itinerary.
                 if (item.getPrice() != null) {
-                    return item.getPrice();
+                    return ItemPriceResult.of(item.getPrice());
                 }
                 if (item.getReferenceId() == null) {
                     warnings.add("Custom activity on day " + item.getDayNumber() + " has no price set — excluded");
@@ -177,13 +204,13 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
                     warnings.add("Activity \"" + activity.getName() + "\" (day " + item.getDayNumber() + ") has no price set — excluded");
                     return null;
                 }
-                return activity.getBasePrice();
+                return ItemPriceResult.of(activity.getBasePrice());
             }
             case "transport" -> {
                 ItineraryItemTransportDetail detail = transportDetailRepository.findByItineraryItem_Seqp(item.getSeqp()).orElse(null);
                 BigDecimal detailPrice = resolveTransportDetailPrice(detail);
                 if (detailPrice != null) {
-                    return detailPrice;
+                    return ItemPriceResult.of(detailPrice);
                 }
                 if (item.getReferenceId() == null) {
                     warnings.add("Custom transport on day " + item.getDayNumber() + " has no price set — excluded");
@@ -198,13 +225,23 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
                     warnings.add("Transport on day " + item.getDayNumber() + " has no price set — excluded");
                     return null;
                 }
-                return transport.getBasePrice();
+                return ItemPriceResult.of(transport.getBasePrice());
             }
             case "hotel" -> {
                 ItineraryItemHotelDetail detail = hotelDetailRepository.findByItineraryItem_Seqp(item.getSeqp()).orElse(null);
                 if (detail == null) {
                     warnings.add("Hotel on day " + item.getDayNumber() + " has no booking details set — excluded");
                     return null;
+                }
+                // A dropped stay is no longer priced as an active hotel
+                // booking — its only contribution is whatever cancellation
+                // charge the hotel actually levied (zero if none was
+                // entered), regardless of what the original room price was.
+                if (BookingStatus.DROP.equals(detail.getStatus())) {
+                    BigDecimal charge = detail.getCancellationChargeInr() != null
+                            ? detail.getCancellationChargeInr()
+                            : BigDecimal.ZERO;
+                    return new ItemPriceResult(charge, true);
                 }
                 BigDecimal stayPrice = detail.getTotalPrice() != null
                         ? detail.getTotalPrice()
@@ -220,7 +257,7 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
                         .map(ItineraryItemHotelInclusion::getTotalPrice)
                         .filter(java.util.Objects::nonNull)
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
-                return stayPrice.add(inclusionsTotal);
+                return ItemPriceResult.of(stayPrice.add(inclusionsTotal));
             }
             default -> {
                 return null;

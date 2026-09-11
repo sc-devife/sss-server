@@ -34,4 +34,16 @@ public class HotelDetailDTO {
     private BigDecimal totalPrice;
 
     private List<HotelInclusionDTO> inclusions;
+
+    // Initialize / Booked / Drop — see BookingStatus. Ignored by the
+    // server on the very first save of a hotel's detail (always forced to
+    // Initialize then); only meaningful on an update.
+    private String status;
+
+    // Required when status is being changed to Drop; ignored otherwise.
+    private String droppingReason;
+
+    // Optional cancellation/drop charge from the hotel — only meaningful
+    // when status is Drop.
+    private BigDecimal cancellationCharge;
 }

@@ -2,6 +2,7 @@ package com.sss.app.service.escape.impl;
 
 import com.sss.app.dto.escape.EscapeCreateRequestDTO;
 import com.sss.app.dto.escape.EscapeResponseDTO;
+import com.sss.app.dto.escape.EscapeSummaryNotesRequestDTO;
 import com.sss.app.dto.escape.EscapeUpdateRequestDTO;
 import com.sss.app.dto.library.escapepoint.EscapePointResponseDto;
 import com.sss.app.dto.traveller.TravellerCreateRequestDTO;
@@ -40,6 +41,13 @@ public class EscapeServiceImpl implements EscapeService {
         return response;
     }
 
+
+    @Override
+    public EscapeResponseDTO updateSummaryNotes(UUID uid, EscapeSummaryNotesRequestDTO request) {
+        EscapeResponseDTO response = escapeMapper.toResponse(escapeHelper.updateSummaryNotes(uid, request));
+        enrichEscapePointLocations(response);
+        return response;
+    }
 
     @Override
     public EscapeResponseDTO getEscapeById(UUID id) {

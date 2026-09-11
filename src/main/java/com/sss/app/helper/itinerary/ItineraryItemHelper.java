@@ -7,7 +7,9 @@ import com.sss.app.dto.itinerary.ItineraryItemReorderRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryItemUpdateRequestDTO;
 import com.sss.app.dto.itinerary.TransportDetailDTO;
 import com.sss.app.dto.itinerary.TransportLegDTO;
+import com.sss.app.dto.quote.QuoteComputeRequestDTO;
 import com.sss.app.entity.escape.Escape;
+import com.sss.app.entity.itinerary.BookingStatus;
 import com.sss.app.entity.itinerary.Itinerary;
 import com.sss.app.entity.itinerary.ItineraryItem;
 import com.sss.app.entity.itinerary.ItineraryItemHotelDetail;
@@ -16,6 +18,7 @@ import com.sss.app.entity.itinerary.ItineraryItemTransportDetail;
 import com.sss.app.entity.itinerary.ItineraryItemTransportLeg;
 import com.sss.app.entity.library.mealplan.MealPlan;
 import com.sss.app.entity.library.roomtype.RoomType;
+import com.sss.app.entity.quote.Quote;
 import com.sss.app.entity.users.User;
 import com.sss.app.exception.BadRequestException;
 import com.sss.app.exception.NotFoundException;
@@ -30,16 +33,21 @@ import com.sss.app.repository.library.mealplan.MealPlanRepository;
 import com.sss.app.repository.library.roomtype.RoomTypeRepository;
 import com.sss.app.repository.library.serviceprovider.ServiceProviderRepository;
 import com.sss.app.repository.library.transport.TransportRepository;
+import com.sss.app.repository.quote.QuoteRepository;
 import com.sss.app.security.OrgAccessGuard;
+import com.sss.app.service.audit.AuditLogService;
+import com.sss.app.service.quote.QuoteComputationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -80,6 +88,9 @@ public class ItineraryItemHelper {
     private final MealPlanRepository mealPlanRepository;
     private final RoomTypeRepository roomTypeRepository;
     private final OrgAccessGuard orgAccessGuard;
+    private final AuditLogService auditLogService;
+    private final QuoteRepository quoteRepository;
+    private final QuoteComputationService quoteComputationService;
 
     private User currentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -120,32 +131,55 @@ public class ItineraryItemHelper {
 
     public ItineraryItem update(UUID uid, ItineraryItemUpdateRequestDTO request) {
         ItineraryItem item = getByUid(uid);
+        String previousStatus = item.getStatus();
 
-        if (request.getItemType() != null || request.getReferenceId() != null || request.getTitle() != null) {
-            String newType = request.getItemType() != null ? request.getItemType() : item.getItemType();
-            UUID newRefId = request.getReferenceId() != null ? request.getReferenceId() : item.getReferenceId();
-            String newTitle = request.getTitle() != null ? request.getTitle() : item.getTitle();
-            validateReference(newType, newRefId, newTitle);
-            item.setItemType(newType);
-            item.setReferenceId(newRefId);
-            item.setTitle(newTitle);
-            item.setSource(newRefId != null ? "library" : "custom");
+        // Item-level Drop (currently Activity only — Hotel has its own
+        // separate Drop path on HotelDetailDTO/saveHotelDetail). Mirrors
+        // that same rule: only status/droppingReason/cancellationChargeInr
+        // are written, every other field (title, price, notes, etc.) is
+        // left exactly as it was.
+        boolean droppingItemNow = "activity".equals(item.getItemType())
+                && BookingStatus.DROP.equals(request.getStatus())
+                && !BookingStatus.DROP.equals(previousStatus);
+
+        if (droppingItemNow) {
+            if (request.getDroppingReason() == null || request.getDroppingReason().isBlank()) {
+                throw new BadRequestException("Dropping reason is required to mark an activity as Drop");
+            }
+            item.setStatus(BookingStatus.DROP);
+            item.setDroppingReason(request.getDroppingReason());
+            item.setCancellationChargeInr(request.getCancellationCharge());
+        } else {
+            if (request.getItemType() != null || request.getReferenceId() != null || request.getTitle() != null) {
+                String newType = request.getItemType() != null ? request.getItemType() : item.getItemType();
+                UUID newRefId = request.getReferenceId() != null ? request.getReferenceId() : item.getReferenceId();
+                String newTitle = request.getTitle() != null ? request.getTitle() : item.getTitle();
+                validateReference(newType, newRefId, newTitle);
+                item.setItemType(newType);
+                item.setReferenceId(newRefId);
+                item.setTitle(newTitle);
+                item.setSource(newRefId != null ? "library" : "custom");
+            }
+            if (request.getDayNumber() != null) {
+                item.setDayNumber(request.getDayNumber());
+            }
+            if (request.getStartTime() != null) {
+                item.setStartTime(request.getStartTime());
+            }
+            if (request.getNotes() != null) {
+                item.setNotes(request.getNotes());
+            }
+            if (request.getLongDescription() != null) {
+                item.setLongDescription(request.getLongDescription());
+            }
+            if (request.getPrice() != null) {
+                item.setPrice(request.getPrice());
+            }
+            if (request.getStatus() != null) {
+                item.setStatus(request.getStatus());
+            }
         }
-        if (request.getDayNumber() != null) {
-            item.setDayNumber(request.getDayNumber());
-        }
-        if (request.getStartTime() != null) {
-            item.setStartTime(request.getStartTime());
-        }
-        if (request.getNotes() != null) {
-            item.setNotes(request.getNotes());
-        }
-        if (request.getLongDescription() != null) {
-            item.setLongDescription(request.getLongDescription());
-        }
-        if (request.getPrice() != null) {
-            item.setPrice(request.getPrice());
-        }
+
         ItineraryItem saved = itineraryItemRepository.save(item);
         if (request.getTransportDetail() != null) {
             saveTransportDetail(saved, request.getTransportDetail());
@@ -153,7 +187,29 @@ public class ItineraryItemHelper {
         if (request.getHotelDetail() != null) {
             saveHotelDetail(saved, request.getHotelDetail());
         }
+
+        if (previousStatus != null && !previousStatus.equals(saved.getStatus())) {
+            recordItemStatusChange(saved, previousStatus);
+            // Reflects the changed (or reverted) price contribution in every
+            // quote on this itinerary automatically — same computation
+            // "Compute pricing" already runs, just re-triggered with each
+            // quote's own last-used parameters.
+            recomputeQuotesForItinerary(saved);
+        }
         return saved;
+    }
+
+    private void recordItemStatusChange(ItineraryItem item, String previousStatus) {
+        String prefix = item.getItemType().toUpperCase();
+        Object newValue = BookingStatus.DROP.equals(item.getStatus())
+                ? Map.of(
+                        "status", item.getStatus(),
+                        "reason", item.getDroppingReason() != null ? item.getDroppingReason() : "",
+                        "cancellationCharge", item.getCancellationChargeInr() != null ? item.getCancellationChargeInr() : BigDecimal.ZERO)
+                : item.getStatus();
+        auditLogService.record("Escape", item.getItinerary().getEscape().getSeqp(),
+                prefix + (BookingStatus.DROP.equals(item.getStatus()) ? "_DROPPED" : "_STATUS_CHANGED"),
+                previousStatus, newValue);
     }
 
     /**
@@ -245,42 +301,110 @@ public class ItineraryItemHelper {
     }
 
     /**
-     * Upserts the 1:1 hotel detail row and fully replaces its special
-     * inclusions (delete-and-reinsert, same rationale as transport legs).
-     * mealPlanId/roomTypeId are resolved and validated against the real
-     * library tables, same as HotelHelper does for Hotel's own relations.
+     * Upserts the 1:1 hotel detail row. Two very different modes hang off
+     * this one method:
+     * <ul>
+     *   <li><b>Normal save</b> (new booking, or an update that isn't a Drop)
+     *   — same as before: full field patch + inclusions delete-and-reinsert.
+     *   A brand-new booking always lands on Initialize regardless of what
+     *   the client sent, so status can never be picked at creation time.</li>
+     *   <li><b>Drop</b> — an existing booking whose status is being set to
+     *   Drop. Only status/droppingReason/cancellationChargeInr are written;
+     *   every normal booking field (room type, occupancy, price, inclusions)
+     *   is left exactly as it was.</li>
+     * </ul>
+     * Any actual status change (in either mode) is audit-logged against the
+     * owning Escape, and triggers a quote recompute so the Quotation/billing
+     * total picks up the change immediately — the same computation the
+     * "Compute pricing" button already runs, just re-triggered automatically
+     * with each quote's own last-used parameters.
      */
     private void saveHotelDetail(ItineraryItem item, HotelDetailDTO dto) {
-        validateHotelNights(item, dto.getNights());
-        ItineraryItemHotelDetail detail = hotelDetailRepository.findByItineraryItem_Seqp(item.getSeqp())
-                .orElseGet(() -> ItineraryItemHotelDetail.builder().itineraryItem(item).build());
+        Optional<ItineraryItemHotelDetail> existing = hotelDetailRepository.findByItineraryItem_Seqp(item.getSeqp());
+        ItineraryItemHotelDetail detail = existing.orElseGet(() -> ItineraryItemHotelDetail.builder().itineraryItem(item).build());
         detail.setItineraryItem(item);
-        detail.setMealPlan(resolveMealPlan(dto.getMealPlanId()));
-        detail.setRoomType(resolveRoomType(dto.getRoomTypeId()));
-        detail.setNights(dto.getNights() != null ? dto.getNights() : 1);
-        detail.setPaxPerRoom(dto.getPaxPerRoom());
-        detail.setRoomCount(dto.getRoomCount());
-        detail.setAdultsWithExtraBed(dto.getAdultsWithExtraBed());
-        detail.setChildrenWithExtraBed(dto.getChildrenWithExtraBed());
-        detail.setChildrenNoBed(dto.getChildrenNoBed());
-        detail.setComplimentaryChildCount(dto.getComplimentaryChildCount());
-        detail.setPrice(dto.getPrice());
-        detail.setTotalPrice(dto.getTotalPrice());
-        hotelDetailRepository.save(detail);
+        String previousStatus = existing.map(ItineraryItemHotelDetail::getStatus).orElse(null);
+        boolean isNew = existing.isEmpty();
+        boolean droppingNow = !isNew && BookingStatus.DROP.equals(dto.getStatus());
 
-        hotelInclusionRepository.deleteAllByItineraryItem_Seqp(item.getSeqp());
-        if (dto.getInclusions() != null && !dto.getInclusions().isEmpty()) {
-            List<ItineraryItemHotelInclusion> inclusions = dto.getInclusions().stream()
-                    .map(inclusionDto -> ItineraryItemHotelInclusion.builder()
-                            .itineraryItem(item)
-                            .service(inclusionDto.getService())
-                            .startTime(inclusionDto.getStartTime())
-                            .durationMinutes(inclusionDto.getDurationMinutes())
-                            .totalPrice(inclusionDto.getTotalPrice())
-                            .comments(inclusionDto.getComments())
-                            .build())
-                    .toList();
-            hotelInclusionRepository.saveAll(inclusions);
+        if (droppingNow) {
+            if (dto.getDroppingReason() == null || dto.getDroppingReason().isBlank()) {
+                throw new BadRequestException("Dropping reason is required to mark a hotel as Drop");
+            }
+            detail.setStatus(BookingStatus.DROP);
+            detail.setDroppingReason(dto.getDroppingReason());
+            detail.setCancellationChargeInr(dto.getCancellationCharge());
+            hotelDetailRepository.save(detail);
+        } else {
+            if (isNew) {
+                detail.setStatus(BookingStatus.INITIALIZE);
+            } else if (dto.getStatus() != null) {
+                detail.setStatus(dto.getStatus());
+            }
+            validateHotelNights(item, dto.getNights());
+            detail.setMealPlan(resolveMealPlan(dto.getMealPlanId()));
+            detail.setRoomType(resolveRoomType(dto.getRoomTypeId()));
+            detail.setNights(dto.getNights() != null ? dto.getNights() : 1);
+            detail.setPaxPerRoom(dto.getPaxPerRoom());
+            detail.setRoomCount(dto.getRoomCount());
+            detail.setAdultsWithExtraBed(dto.getAdultsWithExtraBed());
+            detail.setChildrenWithExtraBed(dto.getChildrenWithExtraBed());
+            detail.setChildrenNoBed(dto.getChildrenNoBed());
+            detail.setComplimentaryChildCount(dto.getComplimentaryChildCount());
+            detail.setPrice(dto.getPrice());
+            detail.setTotalPrice(dto.getTotalPrice());
+            hotelDetailRepository.save(detail);
+
+            hotelInclusionRepository.deleteAllByItineraryItem_Seqp(item.getSeqp());
+            if (dto.getInclusions() != null && !dto.getInclusions().isEmpty()) {
+                List<ItineraryItemHotelInclusion> inclusions = dto.getInclusions().stream()
+                        .map(inclusionDto -> ItineraryItemHotelInclusion.builder()
+                                .itineraryItem(item)
+                                .service(inclusionDto.getService())
+                                .startTime(inclusionDto.getStartTime())
+                                .durationMinutes(inclusionDto.getDurationMinutes())
+                                .totalPrice(inclusionDto.getTotalPrice())
+                                .comments(inclusionDto.getComments())
+                                .build())
+                        .toList();
+                hotelInclusionRepository.saveAll(inclusions);
+            }
+        }
+
+        if (previousStatus != null && !previousStatus.equals(detail.getStatus())) {
+            recordHotelStatusChange(item, detail, previousStatus);
+            // Any status change affects what this hotel contributes to
+            // pricing (Drop, or reverting a Drop back to Booked/Initialize)
+            // — re-run the same computation "Compute pricing" already does,
+            // for every quote on this itinerary, using each quote's own
+            // last-used parameters so nothing needs re-entering.
+            recomputeQuotesForItinerary(item);
+        }
+    }
+
+    private void recordHotelStatusChange(ItineraryItem item, ItineraryItemHotelDetail detail, String previousStatus) {
+        Object newValue = BookingStatus.DROP.equals(detail.getStatus())
+                ? Map.of(
+                        "status", detail.getStatus(),
+                        "reason", detail.getDroppingReason() != null ? detail.getDroppingReason() : "",
+                        "cancellationCharge", detail.getCancellationChargeInr() != null ? detail.getCancellationChargeInr() : BigDecimal.ZERO)
+                : detail.getStatus();
+        auditLogService.record("Escape", item.getItinerary().getEscape().getSeqp(),
+                BookingStatus.DROP.equals(detail.getStatus()) ? "HOTEL_DROPPED" : "HOTEL_STATUS_CHANGED",
+                previousStatus, newValue);
+    }
+
+    private void recomputeQuotesForItinerary(ItineraryItem item) {
+        List<Quote> quotes = quoteRepository.findAllByOrgIdAndItinerary_Seqp(item.getOrgId(), item.getItinerary().getSeqp());
+        for (Quote quote : quotes) {
+            QuoteComputeRequestDTO request = new QuoteComputeRequestDTO();
+            request.setTaxProfileUid(quote.getTaxProfileId());
+            request.setTcsRatePercent(quote.getTcsRatePercent());
+            request.setDiscountType(quote.getDiscountType());
+            request.setDiscountValue(quote.getDiscountValue());
+            request.setDisplayCurrencyCode(quote.getCurrencyCode());
+            request.setFxRateSnapshot(quote.getFxRateSnapshot());
+            quoteComputationService.compute(quote.getUid(), request);
         }
     }
 
@@ -345,6 +469,9 @@ public class ItineraryItemHelper {
                     dto.setTotalPrice(detail.getTotalPrice());
                     dto.setInclusions(hotelInclusionRepository.findAllByItineraryItem_SeqpOrderBySeqpAsc(item.getSeqp())
                             .stream().map(this::toInclusionDto).toList());
+                    dto.setStatus(detail.getStatus());
+                    dto.setDroppingReason(detail.getDroppingReason());
+                    dto.setCancellationCharge(detail.getCancellationChargeInr());
                     return dto;
                 })
                 .orElse(null);

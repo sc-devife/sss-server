@@ -92,6 +92,12 @@ public class User {
     @Column(name = "blocked")
     private Boolean blocked;
 
+    // Notification system — per-user preference, defaults true. Toggled via
+    // the Profile page's Settings popover (PATCH /users/me/notification-sound).
+    @Builder.Default
+    @Column(name = "notification_sound_enabled")
+    private Boolean notificationSoundEnabled = true;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference
     @ToString.Exclude

@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,27 +21,32 @@ public class RoomTypeController {
 
     private final RoomTypeService roomTypeService;
 
+    @PreAuthorize("@permissionService.hasPermission('library.write')")
     @PostMapping
     public ResponseEntity<RoomTypeResponseDTO> create(@Valid @RequestBody RoomTypeCreateRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(roomTypeService.create(dto));
     }
 
+    @PreAuthorize("@permissionService.hasPermission('library.read')")
     @GetMapping("/{id}")
     public ResponseEntity<RoomTypeResponseDTO> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(roomTypeService.getById(id));
     }
 
+    @PreAuthorize("@permissionService.hasPermission('library.read')")
     @GetMapping
     public ResponseEntity<List<RoomTypeResponseDTO>> getAll() {
         return ResponseEntity.ok(roomTypeService.getAll());
     }
 
+    @PreAuthorize("@permissionService.hasPermission('library.write')")
     @PutMapping("/{id}")
     public ResponseEntity<RoomTypeResponseDTO> update(@PathVariable UUID id,
                                                         @RequestBody RoomTypeUpdateRequestDTO dto) {
         return ResponseEntity.ok(roomTypeService.update(id, dto));
     }
 
+    @PreAuthorize("@permissionService.hasPermission('library.write')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         roomTypeService.delete(id);

@@ -17,4 +17,8 @@ public class PricingBreakdownDTO {
     private BigDecimal activitiesInr = BigDecimal.ZERO;
     private BigDecimal transportInr = BigDecimal.ZERO;
     private BigDecimal otherInr = BigDecimal.ZERO;
+
+    // Cancellation charges from Dropped hotel bookings — kept separate from
+    // hotelsInr so that bucket stays an accurate "active hotel cost" figure.
+    private BigDecimal cancellationInr = BigDecimal.ZERO;
 }

@@ -7,6 +7,7 @@ import com.sss.app.entity.UserCredential;
 import com.sss.app.entity.roles.Role;
 import com.sss.app.entity.team.Team;
 import com.sss.app.entity.team.UserTeamLink;
+import com.sss.app.entity.notification.NotificationType;
 import com.sss.app.entity.userrolelinks.UserRoleLink;
 import com.sss.app.entity.users.User;
 import com.sss.app.exception.ConflictException;
@@ -18,6 +19,7 @@ import com.sss.app.repository.UserRoleLinkRepository;
 import com.sss.app.repository.team.TeamRepository;
 import com.sss.app.repository.team.UserTeamLinkRepository;
 import com.sss.app.security.OrgAccessGuard;
+import com.sss.app.service.notification.NotificationService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
@@ -44,6 +46,7 @@ public class UsersHelper {
     private final UserTeamLinkRepository userTeamLinkRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final OrgAccessGuard orgAccessGuard;
+    private final NotificationService notificationService;
 
     @PersistenceContext
     private final EntityManager entityManager;
@@ -52,8 +55,8 @@ public class UsersHelper {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 
-    /** Users in the caller's own organization (Super Admins see the org they pass explicitly — not wired here yet). */
-    public List<User> fetchAllUsers(Long ignoredLegacyParam) {
+    /** Users in the caller's own organization. */
+    public List<User> fetchAllUsers() {
         return userRepository.findUsersWithRoles(currentUser().getOrgId());
     }
 
@@ -164,6 +167,20 @@ public class UsersHelper {
         return getUserByUid(uid);
     }
 
+    // Self-service preference (Profile page's Settings popover) — same
+    // save-then-clear-and-refetch shape as setBlocked, updatable regardless
+    // of the users.write permission gate since it only ever touches uid.
+    @Transactional
+    public User updateNotificationSoundPreference(String uid, boolean enabled) {
+        User user = getUserByUid(uid);
+        user.setNotificationSoundEnabled(enabled);
+        userRepository.save(user);
+
+        entityManager.flush();
+        entityManager.clear();
+        return getUserByUid(uid);
+    }
+
     @Transactional
     public User reassignRoles(String uid, List<String> roles) {
         User user = getUserByUid(uid);
@@ -203,6 +220,13 @@ public class UsersHelper {
                 .toList();
         currentRoleLinks.addAll(linksToAdd);
         userRoleLinkRepository.saveAll(linksToAdd);
+
+        if (!roleLinksToDelete.isEmpty() || !rolesToAdd.isEmpty()) {
+            notificationService.notify(user.getSeqp(), user.getOrgId(),
+                    NotificationType.USER_ROLE_CHANGED, "Role Changed",
+                    "Your role has been updated.",
+                    NotificationType.RelatedEntityType.USER, java.util.UUID.fromString(user.getUid()));
+        }
 
         // entityManager.refresh(user) used to be called here to pick up the
         // change, but cascading REFRESH onto this collection throws

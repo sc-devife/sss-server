@@ -2,30 +2,38 @@ package com.sss.app.repository.lead;
 
 import com.sss.app.entity.lead.Lead;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+// JpaSpecificationExecutor backs the Leads page's combined search/status/
+// date-range/pagination query (LeadSpecifications + LeadsHelper.getAllLeads)
+// — one dynamic query built at the DB level instead of fetching everything
+// and filtering in Java.
 @Repository
-public interface LeadRepository extends JpaRepository<Lead, Long> {
+public interface LeadRepository extends JpaRepository<Lead, Long>, JpaSpecificationExecutor<Lead> {
 
     Optional<Lead> findByUid(UUID uid);
+
+    // Auto-cancellation sweep (AutoCancellationServiceImpl) — every lead
+    // still in one of the given (non-terminal) statuses whose travel date is
+    // already in the past. Mirrors EscapeRepository's equivalent — a record
+    // only matches while its status stays in that list, so once it's marked
+    // lost it naturally drops out of the next sweep.
+    List<Lead> findAllByStatusInAndTravelDateBefore(List<String> statuses, LocalDate date);
 
     // Example: find leads by status
     List<Lead> findByStatus(String status);
 
     // Example: find leads by destination (for travel use case)
     List<Lead> findByDestinationIgnoreCase(String destination);
-
-    // Newest lead first, so the Leads list always surfaces what just came in
-    // without the frontend needing its own default sort.
-    List<Lead> findAllByOrgIdOrderByCreatedAtDesc(Long orgId);
-
 
     long countByOrgId(Long orgId);
 

@@ -9,12 +9,16 @@ import com.sss.app.dto.escape.EscapeAdvanceRequestDTO;
 import com.sss.app.dto.escape.EscapeAssignRequestDTO;
 import com.sss.app.dto.escape.EscapeCancelRequestDTO;
 import com.sss.app.dto.escape.EscapeResponseDTO;
+import com.sss.app.dto.escape.EscapeSummaryNotesRequestDTO;
 import com.sss.app.dto.traveller.TravellerCreateRequestDTO;
 import com.sss.app.service.assignment.LeadAssignmentService;
 import com.sss.app.service.audit.AuditLogService;
 import com.sss.app.service.escape.EscapeService;
 import com.sss.app.service.escape.EscapeLifecycleService;
 import com.sss.app.service.billingtemplate.BillingTemplateService;
+import com.sss.app.service.escapedocs.DocSections;
+import com.sss.app.service.escapedocs.EscapeDocsService;
+import com.sss.app.service.escapedocs.EscapeDocumentResult;
 import com.sss.app.service.quotationtemplate.QuotationPdfResult;
 import com.sss.app.service.quotationtemplate.QuotationTemplateService;
 import jakarta.validation.Valid;
@@ -40,6 +44,7 @@ public class EscapeController {
     private final LeadAssignmentService leadAssignmentService;
     private final QuotationTemplateService quotationTemplateService;
     private final BillingTemplateService billingTemplateService;
+    private final EscapeDocsService escapeDocsService;
 
     @PreAuthorize("@permissionService.hasPermission('trips.write')")
     @PostMapping("/create")
@@ -54,6 +59,17 @@ public class EscapeController {
            @PathVariable UUID id,
            @Valid @RequestBody EscapeUpdateRequestDTO request) {
         return ResponseEntity.ok(escapeService.updateEscape(id, request));
+    }
+
+    // Internal Comments (private, team-only) / Remark for Lead
+    // (client-facing, appears in the Quotation) — Section 8's Summary tab.
+    // Kept separate from the full-object PUT /update/{id}, which
+    // unconditionally overwrites plain fields on every save; see
+    // EscapeHelper.updateSummaryNotes.
+    @PreAuthorize("@permissionService.hasPermission('trips.write')")
+    @PutMapping("/{id}/summary-notes")
+    public ResponseEntity<EscapeResponseDTO> updateSummaryNotes(@PathVariable UUID id, @RequestBody EscapeSummaryNotesRequestDTO request) {
+        return ResponseEntity.ok(escapeService.updateSummaryNotes(id, request));
     }
 
     @PreAuthorize("@permissionService.hasPermission('trips.read')")
@@ -184,5 +200,54 @@ public class EscapeController {
     @PostMapping("/{id}/invoice-preview/send-email")
     public ResponseEntity<SendEmailResponseDTO> invoicePreviewSendEmail(@PathVariable UUID id, @RequestParam(required = false) UUID templateUid) {
         return ResponseEntity.ok(billingTemplateService.sendEmailForEscape(id, templateUid));
+    }
+
+    // ----- Docs tab (Section: Planning > Docs) — a flexible, checkbox-driven
+    // document, distinct from the org-customizable Quotation/Invoice above.
+    // Read-only: these three endpoints never write anything, the booleans
+    // only choose what's rendered into the output. -----
+
+    @PreAuthorize("@permissionService.hasPermission('trips.read')")
+    @GetMapping(value = "/{id}/docs-preview", produces = MediaType.TEXT_HTML_VALUE)
+    public ResponseEntity<String> docsPreview(@PathVariable UUID id,
+            @RequestParam(defaultValue = "true") boolean transports,
+            @RequestParam(defaultValue = "true") boolean bankAccount,
+            @RequestParam(defaultValue = "true") boolean itinerary,
+            @RequestParam(defaultValue = "true") boolean inclusionsExclusions,
+            @RequestParam(defaultValue = "true") boolean termsAndConditions) {
+        return ResponseEntity.ok(escapeDocsService.renderHtml(id,
+                new DocSections(transports, bankAccount, itinerary, inclusionsExclusions, termsAndConditions)));
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('trips.read')")
+    @GetMapping(value = "/{id}/docs-preview/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> docsPreviewPdf(@PathVariable UUID id,
+            @RequestParam(defaultValue = "true") boolean transports,
+            @RequestParam(defaultValue = "true") boolean bankAccount,
+            @RequestParam(defaultValue = "true") boolean itinerary,
+            @RequestParam(defaultValue = "true") boolean inclusionsExclusions,
+            @RequestParam(defaultValue = "true") boolean termsAndConditions) {
+        EscapeDocumentResult result = escapeDocsService.renderPdf(id,
+                new DocSections(transports, bankAccount, itinerary, inclusionsExclusions, termsAndConditions));
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename(result.filename(), java.nio.charset.StandardCharsets.UTF_8).build().toString())
+                .body(result.bytes());
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('trips.read')")
+    @GetMapping(value = "/{id}/docs-preview/word", produces = "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+    public ResponseEntity<byte[]> docsPreviewWord(@PathVariable UUID id,
+            @RequestParam(defaultValue = "true") boolean transports,
+            @RequestParam(defaultValue = "true") boolean bankAccount,
+            @RequestParam(defaultValue = "true") boolean itinerary,
+            @RequestParam(defaultValue = "true") boolean inclusionsExclusions,
+            @RequestParam(defaultValue = "true") boolean termsAndConditions) {
+        EscapeDocumentResult result = escapeDocsService.renderWord(id,
+                new DocSections(transports, bankAccount, itinerary, inclusionsExclusions, termsAndConditions));
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename(result.filename(), java.nio.charset.StandardCharsets.UTF_8).build().toString())
+                .body(result.bytes());
     }
 }

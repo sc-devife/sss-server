@@ -7,11 +7,21 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 public interface EscapeRepository extends JpaRepository<Escape, Long> {
+    // Auto-cancellation sweep (AutoCancellationServiceImpl) — every escape
+    // still in one of the given (pre-confirmation) statuses whose trip start
+    // date is already in the past. A record only ever matches this while its
+    // status stays in that list, so once it's cancelled it naturally drops
+    // out of the next sweep — no separate "already processed" flag needed.
+    List<Escape> findAllByStatusInAndStartDateBefore(List<String> statuses, LocalDate date);
+
+    // "Travel date approaching" notification sweep (EscapeTravelDateReminderServiceImpl).
+    List<Escape> findAllByStatusInAndStartDateAndTravelDateReminderSentAtIsNull(List<String> statuses, LocalDate date);
     @EntityGraph(attributePaths = {"lead", "travellers", "escapePoints"})
     Optional<Escape> findBySeqp(Long seqp);
 

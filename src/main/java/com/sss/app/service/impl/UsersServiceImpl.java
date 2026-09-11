@@ -85,8 +85,8 @@ public class UsersServiceImpl implements UsersService {
     }
 
     @Override
-    public List<UserResponseDto> fetchAllUsers(Long companyId) {
-        List<User> users = usersHelper.fetchAllUsers(companyId);
+    public List<UserResponseDto> fetchAllUsers() {
+        List<User> users = usersHelper.fetchAllUsers();
         List<UserResponseDto> dtos = userMapper.toUserResponseDtoList(users);
 
         // A user can hold multiple concurrent sessions now (one per device) —
@@ -162,5 +162,14 @@ public class UsersServiceImpl implements UsersService {
     @Override
     public UserResponseDto setBlocked(String uid, boolean blocked) {
         return userMapper.toUserResponseDto(usersHelper.setBlocked(uid, blocked));
+    }
+
+    // Self-scoped — uid always comes from the security principal, never the
+    // request, same as updateCurrentUser above.
+    @Override
+    public UserResponseDto updateCurrentUserNotificationSoundPreference(boolean enabled) {
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User updated = usersHelper.updateNotificationSoundPreference(user.getUid(), enabled);
+        return toProfileResponseDto(updated);
     }
 }

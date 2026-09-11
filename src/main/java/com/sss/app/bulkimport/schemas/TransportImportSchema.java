@@ -3,6 +3,7 @@ package com.sss.app.bulkimport.schemas;
 import com.sss.app.bulkimport.BulkImportSchema;
 import com.sss.app.dto.library.transport.TransportCreateRequestDTO;
 import com.sss.app.entity.library.serviceprovider.ServiceProvider;
+import com.sss.app.repository.library.escapepoint.EscapePointRepository;
 import com.sss.app.repository.library.serviceprovider.ServiceProviderRepository;
 import com.sss.app.service.library.transport.TransportService;
 import lombok.RequiredArgsConstructor;
@@ -18,14 +19,29 @@ import static com.sss.app.bulkimport.RowUtils.blankToNull;
 import static com.sss.app.bulkimport.RowUtils.parseDecimalOrNull;
 import static com.sss.app.bulkimport.RowUtils.parseIntOrNull;
 
+/**
+ * Every field the Transport page's manual create/edit form exposes (see
+ * TransportPanel.tsx), so a bulk-imported transport has the same field
+ * coverage as one created by hand. No fields are left out here — unlike
+ * Hotel/Activity/EscapePoint, Transport has no image upload or other
+ * plain-text-unfriendly field.
+ */
 @Component
 @RequiredArgsConstructor
 public class TransportImportSchema implements BulkImportSchema {
 
-    private static final Set<String> VALID_MODES = Set.of("car", "coach", "flight", "train", "boat");
+    // Mirrors lib/transport-modes.ts's MODE_OPTIONS exactly — the previous
+    // 5-value set (car, coach, flight, train, boat) silently rejected 15 of
+    // the 20 modes the manual form actually supports, including common ones
+    // like "bus" and "taxi" that were already in live use.
+    private static final Set<String> VALID_MODES = Set.of(
+            "flight", "train", "bus", "coach", "car", "taxi", "van", "boat", "ferry", "cruise",
+            "helicopter", "motorcycle", "bicycle", "walking", "cable_car", "funicular",
+            "camel", "horse", "atv", "other");
 
     private final TransportService transportService;
     private final ServiceProviderRepository serviceProviderRepository;
+    private final EscapePointRepository escapePointRepository;
 
     @Override
     public String entityType() {
@@ -34,7 +50,8 @@ public class TransportImportSchema implements BulkImportSchema {
 
     @Override
     public List<String> columns() {
-        return List.of("modeCode", "vehicleTypeCode", "capacity", "providerName", "basePrice", "status");
+        return List.of("modeCode", "vehicleTypeCode", "capacity", "providerName", "basePrice",
+                "pickupLocation", "dropLocation", "escapePointCode", "status");
     }
 
     @Override
@@ -47,11 +64,15 @@ public class TransportImportSchema implements BulkImportSchema {
         List<String> errors = new ArrayList<>();
         String modeCode = row.get("modeCode");
         if (modeCode != null && !modeCode.isBlank() && !VALID_MODES.contains(modeCode.trim())) {
-            errors.add("\"modeCode\" must be one of: car, coach, flight, train, boat");
+            errors.add("\"modeCode\" must be one of: " + String.join(", ", VALID_MODES));
         }
         String providerName = row.get("providerName");
         if (providerName != null && !providerName.isBlank() && findProvider(providerName).isEmpty()) {
             errors.add("No service provider found named \"" + providerName + "\"");
+        }
+        String escapePointCode = row.get("escapePointCode");
+        if (escapePointCode != null && !escapePointCode.isBlank() && escapePointRepository.findById(escapePointCode.trim()).isEmpty()) {
+            errors.add("No escape point found with code \"" + escapePointCode + "\"");
         }
         return errors;
     }
@@ -64,10 +85,17 @@ public class TransportImportSchema implements BulkImportSchema {
         dto.setCapacity(parseIntOrNull(row.get("capacity")));
         dto.setBasePrice(parseDecimalOrNull(row.get("basePrice")));
         dto.setStatus(blankToNull(row.get("status")));
+        dto.setPickupLocation(blankToNull(row.get("pickupLocation")));
+        dto.setDropLocation(blankToNull(row.get("dropLocation")));
 
         String providerName = blankToNull(row.get("providerName"));
         if (providerName != null) {
             findProvider(providerName).ifPresent(p -> dto.setProviderId(p.getUid()));
+        }
+
+        String escapePointCode = blankToNull(row.get("escapePointCode"));
+        if (escapePointCode != null) {
+            escapePointRepository.findById(escapePointCode).ifPresent(d -> dto.setEscapePointId(d.getUid()));
         }
 
         transportService.create(dto);

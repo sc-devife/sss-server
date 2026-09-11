@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,27 +21,32 @@ public class MealPlanController {
 
     private final MealPlanService mealPlanService;
 
+    @PreAuthorize("@permissionService.hasPermission('library.write')")
     @PostMapping
     public ResponseEntity<MealPlanResponseDTO> create(@Valid @RequestBody MealPlanCreateRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(mealPlanService.create(dto));
     }
 
+    @PreAuthorize("@permissionService.hasPermission('library.read')")
     @GetMapping("/{id}")
     public ResponseEntity<MealPlanResponseDTO> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(mealPlanService.getById(id));
     }
 
+    @PreAuthorize("@permissionService.hasPermission('library.read')")
     @GetMapping
     public ResponseEntity<List<MealPlanResponseDTO>> getAll() {
         return ResponseEntity.ok(mealPlanService.getAll());
     }
 
+    @PreAuthorize("@permissionService.hasPermission('library.write')")
     @PutMapping("/{id}")
     public ResponseEntity<MealPlanResponseDTO> update(@PathVariable UUID id,
                                                         @RequestBody MealPlanUpdateRequestDTO dto) {
         return ResponseEntity.ok(mealPlanService.update(id, dto));
     }
 
+    @PreAuthorize("@permissionService.hasPermission('library.write')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         mealPlanService.delete(id);
