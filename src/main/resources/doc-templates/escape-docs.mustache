@@ -13,6 +13,7 @@
     font-size: 13px;
     line-height: 1.5;
   }
+
   .header {
     display: flex;
     align-items: center;
@@ -21,6 +22,7 @@
     padding-bottom: 16px;
     margin-bottom: 24px;
   }
+
   .header-org { display: flex; align-items: center; gap: 12px; }
   .header-org img { height: 44px; max-width: 160px; object-fit: contain; }
   .header-org .org-name { font-size: 16px; font-weight: 700; color: #16404d; }
@@ -29,13 +31,17 @@
   .header-title .trip-code { font-size: 12px; color: #6b7280; letter-spacing: 0.04em; }
 
   .section { margin-bottom: 28px; }
+
   .section h2 {
     font-size: 14px;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: #16404d;
-    border-bottom: 1px solid #e5e7eb;
-    padding-bottom: 6px;
+    color: #ffffff;
+    background: #275a68e6;
+    text-align: center;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 12px;
     margin: 0 0 12px;
   }
 
@@ -44,30 +50,175 @@
     grid-template-columns: 1fr 1fr;
     gap: 10px 28px;
   }
-  .kv .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; }
-  .kv .value { font-size: 13px; font-weight: 600; color: #1f2937; }
+
+  .kv .label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6b7280;
+  }
+
+  .kv .value {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1f2937;
+  }
 
   .day-block { margin-bottom: 16px; }
   .day-block h3 { font-size: 12.5px; color: #16404d; margin: 0 0 6px; }
-  .item { padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 6px; margin-bottom: 6px; }
+
+  .item {
+    padding: 8px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    margin-bottom: 6px;
+  }
+
   .item .item-title { font-weight: 600; }
   .item .item-meta { color: #6b7280; font-size: 12px; margin-top: 2px; }
   .item .item-notes { color: #4b5563; font-size: 12px; margin-top: 4px; }
 
-  .leg { padding-left: 14px; color: #4b5563; font-size: 12px; margin-top: 3px; }
+  .leg {
+    padding-left: 14px;
+    color: #4b5563;
+    font-size: 12px;
+    margin-top: 3px;
+  }
 
-  table.bank { border-collapse: collapse; width: 100%; }
-  table.bank td { padding: 5px 0; font-size: 13px; }
-  table.bank td.label { color: #6b7280; width: 180px; }
-  table.bank td.value { font-weight: 600; }
+  table.bank {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  table.bank td {
+    padding: 6px 10px 6px 0;
+    font-size: 13px;
+    vertical-align: top;
+  }
+
+  table.bank td.label {
+    color: #6b7280;
+    width: 140px;
+    white-space: nowrap;
+  }
+
+  table.bank td.value {
+    font-weight: 600;
+    padding-right: 24px;
+  }
 
   .content-item { margin-bottom: 12px; }
   .content-item .content-name { font-weight: 600; margin-bottom: 3px; }
   .content-item .content-body p { margin: 0 0 6px; }
-  .content-item .content-body ul, .content-item .content-body ol { margin: 0 0 6px; padding-left: 20px; }
 
-  .empty { color: #9ca3af; font-style: italic; }
-  .footer { margin-top: 32px; padding-top: 12px; border-top: 1px solid #e5e7eb; font-size: 11px; color: #9ca3af; text-align: center; }
+  .content-item .content-body ul,
+  .content-item .content-body ol {
+    margin: 0 0 6px;
+    padding-left: 20px;
+  }
+
+  .empty {
+    color: #9ca3af;
+    font-style: italic;
+  }
+
+  .footer {
+    margin-top: 32px;
+    padding-top: 12px;
+    border-top: 1px solid #e5e7eb;
+    font-size: 11px;
+    color: #9ca3af;
+    text-align: center;
+  }
+
+  .greeting {
+    margin-bottom: 24px;
+    font-size: 13px;
+    color: #374151;
+  }
+
+  .hotel-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1.4fr;
+    gap: 8px;
+    padding: 7px 10px;
+    font-size: 12.5px;
+  }
+
+  .hotel-row.head {
+    background: #f3f4f6;
+    color: #374151;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    border-radius: 4px 4px 0 0;
+  }
+
+  .hotel-row.body {
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .hotel-row.body:last-child {
+    border-bottom: none;
+  }
+
+  .hotel-name { font-weight: 600; }
+
+  .hotel-stars {
+    color: #d97706;
+    font-size: 11px;
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  .payment-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 14px;
+  }
+
+  .payment-stat {
+    padding: 10px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+  }
+
+  .payment-stat .label {
+    font-size: 16px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #6b7280;
+  }
+
+  .payment-stat .value {
+    font-size: 16px;
+    font-weight: 700;
+    color: #16404d;
+    margin-top: 3px;
+  }
+
+  .payment-received {
+    display: flex;
+    gap: 16px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+  }
+
+  .payment-received .label {
+    font-size: 16px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6b7280;
+  }
+
+  .payment-received .value {
+    font-size: 16px;
+    font-weight: 700;
+    color: #00A86B;
+  }
 </style>
 </head>
 <body>
@@ -81,6 +232,12 @@
       <h1>Escape Document</h1>
       <div class="trip-code">{{tripCode}}</div>
     </div>
+  </div>
+
+  <div class="greeting">
+    <p>Dear {{primaryTravellerName}},</p>
+    <p>Thank you for planning your trip to <strong>{{escapePointNames}}</strong> with {{organization.name}}! We are delighted to confirm that your booking has been placed on hold on a time-limit basis, as per the details provided below. We sincerely appreciate the opportunity to assist you and look forward to making your travel experience truly memorable.</p>
+    <p>Please review the details below and feel free to reach out to us should you require any assistance or clarification.</p>
   </div>
 
   <div class="section">
@@ -97,6 +254,27 @@
       {{#organization.contactEmail}}<div class="kv"><div class="label">Contact Email</div><div class="value">{{organization.contactEmail}}</div></div>{{/organization.contactEmail}}
       {{#organization.contactPhone}}<div class="kv"><div class="label">Contact Phone</div><div class="value">{{organization.contactPhone}}</div></div>{{/organization.contactPhone}}
     </div>
+  </div>
+
+  <div class="section">
+    <h2>Hotel Section</h2>
+    {{^hotels}}<div class="empty">No hotel bookings on this itinerary.</div>{{/hotels}}
+    {{#hasHotels}}
+    <div style="border: 1px solid #e5e7eb; border-radius: 6px; overflow: hidden;">
+      <div class="hotel-row head">
+        <div>Hotel</div><div>Check In</div><div>Check Out</div><div>Accommodation</div>
+      </div>
+      {{#hotels}}
+      <div class="hotel-row body">
+        <div>
+          <div class="hotel-name">{{hotelName}}</div>
+          {{#stars}}<div class="hotel-stars">{{#starIcons}}★{{/starIcons}}</div>{{/stars}}
+        </div>
+        <div>{{checkIn}}</div><div>{{checkOut}}</div><div>{{accommodation}}</div>
+      </div>
+      {{/hotels}}
+    </div>
+    {{/hasHotels}}
   </div>
 
   {{#showTransports}}
@@ -119,18 +297,55 @@
   </div>
   {{/showTransports}}
 
+  <div class="section">
+    <div class="payment-pair">
+      <div class="payment-stat">
+        <div class="label">Total Price (incl. tax)</div>
+        <div class="value">₹{{paymentSchedule.totalFormatted}}</div>
+      </div>
+      <div class="payment-stat">
+        <div class="label">Per Person</div>
+        <div class="value">₹{{paymentSchedule.perPaxFormatted}}</div>
+      </div>
+    </div>
+
+    <h2>Payment Schedule</h2>
+
+    <div class="payment-received">
+      <div class="label">Amount Received:</div>
+      <div class="value">₹{{paymentSchedule.amountReceivedFormatted}}</div>
+    </div>
+
+    <div class="payment-pair">
+      <div class="payment-stat">
+        <div class="label">Due Amount</div>
+        <div class="value">₹{{paymentSchedule.dueAmountFormatted}}</div>
+      </div>
+      <div class="payment-stat">
+        <div class="label">Due Date (Time Limit)</div>
+        <div class="value">{{#paymentSchedule.hasDueDate}}{{paymentSchedule.dueDateFormatted}}{{/paymentSchedule.hasDueDate}}{{^paymentSchedule.hasDueDate}}—{{/paymentSchedule.hasDueDate}}</div>
+      </div>
+    </div>
+  </div>
+
   {{#showBankAccount}}
   <div class="section">
     <h2>Bank Account</h2>
     {{^hasBankDetails}}<div class="empty">No bank account configured for this organization.</div>{{/hasBankDetails}}
     {{#hasBankDetails}}
     <table class="bank">
-      <tr><td class="label">Account Name</td><td class="value">{{bank.accountName}}</td></tr>
-      <tr><td class="label">Account Number</td><td class="value">{{bank.accountNumber}}</td></tr>
-      <tr><td class="label">Bank Name</td><td class="value">{{bank.bankName}}</td></tr>
-      <tr><td class="label">Branch</td><td class="value">{{bank.branchName}}</td></tr>
-      <tr><td class="label">IFSC</td><td class="value">{{bank.ifsc}}</td></tr>
-      <tr><td class="label">SWIFT Code</td><td class="value">{{bank.swiftCode}}</td></tr>
+      <tr>
+        <td class="label">Account Name</td><td class="value">{{bank.accountName}}</td>
+        <td class="label">Account Number</td><td class="value">{{bank.accountNumber}}</td>
+      </tr>
+      <tr>
+        <td class="label">Bank Name</td><td class="value">{{bank.bankName}}</td>
+        <td class="label">Branch</td><td class="value">{{bank.branchName}}</td>
+      </tr>
+      <tr>
+        <td class="label">IFSC</td><td class="value">{{bank.ifsc}}</td>
+        <td class="label">SWIFT Code</td><td class="value">{{bank.swiftCode}}</td>
+      </tr>
     </table>
     {{/hasBankDetails}}
   </div>
@@ -170,6 +385,7 @@
     </div>
     {{/inclusions}}
   </div>
+
   <div class="section">
     <h2>Exclusions</h2>
     {{^exclusions}}<div class="empty">None added.</div>{{/exclusions}}

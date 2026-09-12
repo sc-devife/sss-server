@@ -12,6 +12,9 @@ import org.apache.poi.xwpf.usermodel.UnderlinePatterns;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
+import org.apache.poi.xwpf.usermodel.XWPFTable;
+import org.apache.poi.xwpf.usermodel.XWPFTableCell;
+import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
@@ -94,11 +97,18 @@ public class EscapeDocsServiceImpl implements EscapeDocsService {
     private byte[] buildWordDocument(Map<String, Object> data, DocSections sections) {
         try (XWPFDocument doc = new XWPFDocument()) {
             appendHeading(doc, "Escape Document", 24, true);
+            appendGreeting(doc, data);
             appendOverview(doc, data);
+            appendHotelSection(doc, (List<Map<String, Object>>) data.get("hotels"));
 
             if (sections.transports()) {
                 appendTransports(doc, (List<Map<String, Object>>) data.get("transportDays"));
             }
+
+            // Always-on, placed immediately before Bank Account regardless of
+            // whether Transports rendered above it.
+            appendPaymentSchedule(doc, (Map<String, Object>) data.get("paymentSchedule"));
+
             if (sections.bankAccount() && Boolean.TRUE.equals(data.get("hasBankDetails"))) {
                 appendBankAccount(doc, (Map<String, Object>) data.get("bank"));
             }
@@ -119,6 +129,106 @@ public class EscapeDocsServiceImpl implements EscapeDocsService {
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to build Escape Document (.docx)", e);
         }
+    }
+
+    // Always-on, mirrors the template's own greeting paragraph — never gated
+    // by a checkbox, same as the Overview/Hotel Section/Payment Schedule
+    // blocks below.
+    @SuppressWarnings("unchecked")
+    private void appendGreeting(XWPFDocument doc, Map<String, Object> data) {
+        Map<String, Object> organization = (Map<String, Object>) data.get("organization");
+        String orgName = organization != null ? (String) organization.get("name") : "us";
+        appendParagraph(doc, "Dear " + asText(data.get("primaryTravellerName")) + ",", false);
+        appendParagraph(doc, "Thank you for planning your trip to " + asText(data.get("escapePointNames"))
+                + " with " + orgName + "! Please find your escape details below.", false);
+    }
+
+    // Hotel/Check-in/Check-out/Accommodation — a compact table distinct from
+    // the full day-wise Itinerary section, always shown. The hotel name's
+    // own star rating renders as a second line inside the same cell, right
+    // below the (unchanged) hotel name.
+    private void appendHotelSection(XWPFDocument doc, List<Map<String, Object>> hotels) {
+        appendHeading(doc, "Hotel Section", 16, false);
+        if (hotels == null || hotels.isEmpty()) {
+            appendParagraph(doc, "No hotel bookings on this itinerary.", false);
+            return;
+        }
+        XWPFTable table = doc.createTable(hotels.size() + 1, 4);
+        setRow(table, 0, "Hotel", "Check In", "Check Out", "Accommodation");
+        for (int i = 0; i < hotels.size(); i++) {
+            Map<String, Object> hotel = hotels.get(i);
+            XWPFTableRow row = table.getRow(i + 1);
+            setHotelNameCell(row.getCell(0), asText(hotel.get("hotelName")), hotel.get("stars"));
+            setCellText(row.getCell(1), asText(hotel.get("checkIn")));
+            setCellText(row.getCell(2), asText(hotel.get("checkOut")));
+            setCellText(row.getCell(3), asText(hotel.get("accommodation")));
+        }
+    }
+
+    // Total Price/Per Person as a side-by-side pair, then Amount Received on
+    // its own, then Due Amount/Due Date as a second pair — always shown,
+    // placed immediately before Bank Account.
+    private void appendPaymentSchedule(XWPFDocument doc, Map<String, Object> schedule) {
+        appendHeading(doc, "Payment Schedule", 16, false);
+        if (schedule == null) {
+            return;
+        }
+        XWPFTable topRow = doc.createTable(1, 2);
+        setStatCell(topRow.getRow(0).getCell(0), "Total Price (incl. tax)", "₹" + asText(schedule.get("totalFormatted")));
+        setStatCell(topRow.getRow(0).getCell(1), "Per Person", "₹" + asText(schedule.get("perPaxFormatted")));
+
+        appendLabelValue(doc, "Amount Received", "₹" + asText(schedule.get("amountReceivedFormatted")));
+
+        XWPFTable bottomRow = doc.createTable(1, 2);
+        setStatCell(bottomRow.getRow(0).getCell(0), "Due Amount", "₹" + asText(schedule.get("dueAmountFormatted")));
+        String dueDate = Boolean.TRUE.equals(schedule.get("hasDueDate")) ? asText(schedule.get("dueDateFormatted")) : "—";
+        setStatCell(bottomRow.getRow(0).getCell(1), "Due Date (Time Limit)", dueDate);
+    }
+
+    private void setRow(XWPFTable table, int rowIndex, String... values) {
+        XWPFTableRow row = table.getRow(rowIndex);
+        for (int i = 0; i < values.length; i++) {
+            XWPFRun run = row.getCell(i).getParagraphs().get(0).createRun();
+            run.setText(values[i]);
+            run.setBold(rowIndex == 0);
+            run.setFontSize(11);
+        }
+    }
+
+    private void setCellText(XWPFTableCell cell, String text) {
+        XWPFRun run = cell.getParagraphs().get(0).createRun();
+        run.setText(text);
+        run.setFontSize(11);
+    }
+
+    private void setHotelNameCell(XWPFTableCell cell, String name, Object stars) {
+        XWPFRun nameRun = cell.getParagraphs().get(0).createRun();
+        nameRun.setText(name);
+        nameRun.setBold(true);
+        nameRun.setFontSize(11);
+        if (stars instanceof Integer starCount && starCount > 0) {
+            XWPFParagraph starsParagraph = cell.addParagraph();
+            XWPFRun starsRun = starsParagraph.createRun();
+            starsRun.setText("★".repeat(starCount));
+            starsRun.setFontSize(10);
+            starsRun.setColor("B45309");
+        }
+    }
+
+    // A small label-over-value tile, laid out two-per-row via a borderless
+    // table cell — mirrors the HTML template's .payment-stat/.overview-grid
+    // "label on top, value below" pattern.
+    private void setStatCell(XWPFTableCell cell, String label, String value) {
+        XWPFRun labelRun = cell.getParagraphs().get(0).createRun();
+        labelRun.setText(label);
+        labelRun.setBold(true);
+        labelRun.setFontSize(9);
+        labelRun.setColor("6B7280");
+        XWPFParagraph valueParagraph = cell.addParagraph();
+        XWPFRun valueRun = valueParagraph.createRun();
+        valueRun.setText(value);
+        valueRun.setBold(true);
+        valueRun.setFontSize(13);
     }
 
     @SuppressWarnings("unchecked")
@@ -176,18 +286,34 @@ public class EscapeDocsServiceImpl implements EscapeDocsService {
         }
     }
 
+    // 2-column-pair layout: each row is label/value/label/value (e.g.
+    // "Account Name … Account Number …" on one row).
     private void appendBankAccount(XWPFDocument doc, Map<String, Object> bank) {
         appendHeading(doc, "Bank Account", 16, false);
         if (bank == null) {
             appendParagraph(doc, "No bank account configured for this organization.", false);
             return;
         }
-        appendLabelValue(doc, "Account Name", asText(bank.get("accountName")));
-        appendLabelValue(doc, "Account Number", asText(bank.get("accountNumber")));
-        appendLabelValue(doc, "Bank Name", asText(bank.get("bankName")));
-        appendLabelValue(doc, "Branch", asText(bank.get("branchName")));
-        appendLabelValue(doc, "IFSC", asText(bank.get("ifsc")));
-        appendLabelValue(doc, "SWIFT Code", asText(bank.get("swiftCode")));
+        XWPFTable table = doc.createTable(3, 4);
+        setPairRow(table, 0, "Account Name", asText(bank.get("accountName")), "Account Number", asText(bank.get("accountNumber")));
+        setPairRow(table, 1, "Bank Name", asText(bank.get("bankName")), "Branch", asText(bank.get("branchName")));
+        setPairRow(table, 2, "IFSC", asText(bank.get("ifsc")), "SWIFT Code", asText(bank.get("swiftCode")));
+    }
+
+    private void setPairRow(XWPFTable table, int rowIndex, String label1, String value1, String label2, String value2) {
+        XWPFTableRow row = table.getRow(rowIndex);
+        setLabelCell(row.getCell(0), label1);
+        setCellText(row.getCell(1), value1);
+        setLabelCell(row.getCell(2), label2);
+        setCellText(row.getCell(3), value2);
+    }
+
+    private void setLabelCell(XWPFTableCell cell, String label) {
+        XWPFRun run = cell.getParagraphs().get(0).createRun();
+        run.setText(label);
+        run.setBold(true);
+        run.setFontSize(10);
+        run.setColor("6B7280");
     }
 
     @SuppressWarnings("unchecked")

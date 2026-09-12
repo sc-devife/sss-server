@@ -41,11 +41,36 @@ public class ServiceProvider extends Auditable {
     @Column(name = "type_code", nullable = false)
     private String typeCode;
 
+    // Kept for bulk-import compatibility (see ServiceProviderImportSchema) —
+    // no longer shown on the Add/Edit form, which uses the three fields
+    // below instead (same "legacy column untouched" precedent as Hotel's
+    // own contactInfo -> phoneNumber/email split).
     @Column(name = "contact_info")
     private String contactInfo;
 
+    @Column(name = "contact_name")
+    private String contactName;
+
+    @Column(name = "contact_number", length = 30)
+    private String contactNumber;
+
+    @Column(name = "contact_email")
+    private String contactEmail;
+
     @Column(name = "country_code")
     private String countryCode;
+
+    // Meaning depends on typeCode — vehicles/activities/guides/"other" count,
+    // labeled dynamically on the form (see ServiceProvidersPanel.tsx). One
+    // column rather than four type-specific ones since it's always exactly
+    // one quantity value regardless of which type is selected.
+    @Column
+    private Integer quantity;
+
+    // Only meaningful when typeCode == "other" — the free-text description
+    // of what "Other" actually means for this provider.
+    @Column(name = "other_type_label")
+    private String otherTypeLabel;
 
     // Which destination this provider serves — same "destination_id"
     // ManyToOne already used by Hotel/Transport/Activity.

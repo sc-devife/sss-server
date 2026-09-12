@@ -17,7 +17,17 @@ public class ServiceProviderResponseDTO {
 
     private String contactInfo;
 
+    private String contactName;
+
+    private String contactNumber;
+
+    private String contactEmail;
+
     private String countryCode;
+
+    private Integer quantity;
+
+    private String otherTypeLabel;
 
     private EscapePointResponseDto escapePoint;
 

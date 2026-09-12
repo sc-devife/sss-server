@@ -2,6 +2,7 @@ package com.sss.app.service.escape;
 
 import com.sss.app.dto.escape.EscapeResponseDTO;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 /**
@@ -12,4 +13,7 @@ import java.util.UUID;
 public interface EscapeLifecycleService {
     EscapeResponseDTO advance(UUID escapeId, String targetStatus);
     EscapeResponseDTO cancel(UUID escapeId, String reason);
+    // Idempotent: sets status to Hold + the given date the first time, and
+    // just updates the date on subsequent calls while already on Hold.
+    EscapeResponseDTO hold(UUID escapeId, LocalDate holdDate);
 }

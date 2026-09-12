@@ -17,7 +17,11 @@ public class TransportResponseDTO {
 
     private String vehicleTypeCode;
 
+    private String vehicleNumber;
+
     private Integer capacity;
+
+    private String ownerType;
 
     private ServiceProviderResponseDTO provider;
 
@@ -26,6 +30,12 @@ public class TransportResponseDTO {
     private String pickupLocation;
 
     private String dropLocation;
+
+    private String contactName;
+
+    private String contactNumber;
+
+    private String contactEmail;
 
     private EscapePointResponseDto escapePoint;
 

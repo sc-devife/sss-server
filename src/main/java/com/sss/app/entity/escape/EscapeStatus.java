@@ -17,6 +17,9 @@ public final class EscapeStatus {
     public static final String ONGOING = "Ongoing";
     public static final String COMPLETED = "Completed";
     public static final String CANCELLED = "Cancelled";
+    // Deliberately excluded from ORDER, same as CANCELLED — reached only via
+    // EscapeLifecycleService.hold(), never via the forward-only advance().
+    public static final String HOLD = "Hold";
 
     public static final List<String> ORDER = List.of(
             PLANNING, ITINERARY_DRAFTING, QUOTATION_SENT, QUOTE_ACCEPTED, PAYMENT_PENDING,

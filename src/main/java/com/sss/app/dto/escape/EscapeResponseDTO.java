@@ -26,4 +26,6 @@ public class EscapeResponseDTO extends EscapeDTO {
     private String internalComments;
     // Client-facing rich text, rendered in the generated Quotation.
     private String remarkForLead;
+    // Only meaningful when status == "Hold" — see EscapeStatus.HOLD.
+    private java.time.LocalDate holdDate;
 }

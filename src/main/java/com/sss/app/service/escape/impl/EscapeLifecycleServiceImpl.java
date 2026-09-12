@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.Set;
 import java.util.UUID;
 
@@ -112,6 +113,49 @@ public class EscapeLifecycleServiceImpl implements EscapeLifecycleService {
             notificationService.notifyUsers(notificationService.resolveOrgManagers(saved.getOrgId()), saved.getOrgId(),
                     NotificationType.ESCAPE_CANCELLED, "Escape Cancelled", message,
                     NotificationType.RelatedEntityType.ESCAPE, saved.getUid());
+        }
+
+        return escapeMapper.toResponse(saved);
+    }
+
+    // Idempotent: first call moves status -> Hold and audit-logs it exactly
+    // like advance() does; a later call while already on Hold only updates
+    // holdDate (no status write, no re-notification) — the Docs tab's own
+    // "already on Hold, just let them change the date" flow relies on this.
+    @Override
+    public EscapeResponseDTO hold(UUID escapeId, LocalDate holdDate) {
+        Escape escape = escapeHelper.getEscapeById(escapeId);
+
+        if (EscapeStatus.CANCELLED.equals(escape.getStatus())) {
+            throw new ConflictException("This escape is cancelled and cannot be put on hold");
+        }
+        if (EscapeStatus.COMPLETED.equals(escape.getStatus())) {
+            throw new ConflictException("This escape is already completed and cannot be put on hold");
+        }
+
+        String previousStatus = escape.getStatus();
+        boolean alreadyOnHold = EscapeStatus.HOLD.equals(previousStatus);
+
+        escape.setStatus(EscapeStatus.HOLD);
+        escape.setHoldDate(holdDate);
+        Escape saved = escapeRepository.save(escape);
+
+        auditLogService.record(ENTITY_TYPE, escape.getSeqp(),
+                alreadyOnHold ? "HOLD_DATE_UPDATED" : "STATUS_ADVANCED",
+                alreadyOnHold ? null : previousStatus,
+                alreadyOnHold ? holdDate.toString() : EscapeStatus.HOLD);
+
+        if (!alreadyOnHold) {
+            Long recipient = notificationService.resolveEscapeRecipient(saved);
+            String message = "Escape " + safeTripCode(saved) + " moved from " + previousStatus + " to " + EscapeStatus.HOLD + ".";
+            if (recipient != null) {
+                notificationService.notify(recipient, saved.getOrgId(), NotificationType.ESCAPE_STATUS_CHANGED,
+                        "Escape Status Changed", message, NotificationType.RelatedEntityType.ESCAPE, saved.getUid());
+            } else {
+                notificationService.notifyUsers(notificationService.resolveOrgManagers(saved.getOrgId()), saved.getOrgId(),
+                        NotificationType.ESCAPE_STATUS_CHANGED, "Escape Status Changed", message,
+                        NotificationType.RelatedEntityType.ESCAPE, saved.getUid());
+            }
         }
 
         return escapeMapper.toResponse(saved);

@@ -100,6 +100,11 @@ public class Escape extends Auditable {
     @Column(name = "remark_for_lead", columnDefinition = "TEXT")
     private String remarkForLead;
 
+    // Set/updated only via EscapeLifecycleService.hold() — the date the
+    // escape's Hold status is tied to (see EscapeStatus.HOLD).
+    @Column(name = "hold_date")
+    private LocalDate holdDate;
+
   /*  public void setTravellers(List<Escape> allById) {
     }*/
 

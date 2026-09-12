@@ -43,8 +43,18 @@ public class Transport extends Auditable {
     @Column(name = "vehicle_type_code")
     private String vehicleTypeCode;
 
+    @Column(name = "vehicle_number", length = 50)
+    private String vehicleNumber;
+
     @Column
     private Integer capacity;
+
+    // "single" (an individual owner-operator, identified by contactName/
+    // contactNumber, no provider) vs "multi" (a fleet/provider company,
+    // identified by `provider`) — drives which of those the Add/Edit form
+    // shows and requires, see TransportPanel.tsx.
+    @Column(name = "owner_type", length = 20)
+    private String ownerType;
 
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
@@ -60,6 +70,15 @@ public class Transport extends Auditable {
 
     @Column(name = "drop_location")
     private String dropLocation;
+
+    @Column(name = "contact_name")
+    private String contactName;
+
+    @Column(name = "contact_number", length = 30)
+    private String contactNumber;
+
+    @Column(name = "contact_email")
+    private String contactEmail;
 
     @ToString.Exclude
     @EqualsAndHashCode.Exclude

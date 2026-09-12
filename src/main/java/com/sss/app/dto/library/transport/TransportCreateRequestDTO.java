@@ -1,5 +1,6 @@
 package com.sss.app.dto.library.transport;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
@@ -14,7 +15,11 @@ public class TransportCreateRequestDTO {
 
     private String vehicleTypeCode;
 
+    private String vehicleNumber;
+
     private Integer capacity;
+
+    private String ownerType;
 
     private UUID providerId;
 
@@ -23,6 +28,13 @@ public class TransportCreateRequestDTO {
     private String pickupLocation;
 
     private String dropLocation;
+
+    private String contactName;
+
+    private String contactNumber;
+
+    @Email(message = "Invalid email")
+    private String contactEmail;
 
     // The EscapePoint's uid (String) — resolved to the entity in TransportHelper, matching Activity's escapePointId.
     private String escapePointId;

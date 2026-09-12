@@ -8,6 +8,7 @@ import com.sss.app.dto.escape.EscapeUpdateRequestDTO;
 import com.sss.app.dto.escape.EscapeAdvanceRequestDTO;
 import com.sss.app.dto.escape.EscapeAssignRequestDTO;
 import com.sss.app.dto.escape.EscapeCancelRequestDTO;
+import com.sss.app.dto.escape.EscapeHoldRequestDTO;
 import com.sss.app.dto.escape.EscapeResponseDTO;
 import com.sss.app.dto.escape.EscapeSummaryNotesRequestDTO;
 import com.sss.app.dto.traveller.TravellerCreateRequestDTO;
@@ -103,6 +104,14 @@ public class EscapeController {
     @PostMapping("/{id}/cancel")
     public ResponseEntity<EscapeResponseDTO> cancel(@PathVariable UUID id, @RequestBody EscapeCancelRequestDTO body) {
         return ResponseEntity.ok(escapeLifecycleService.cancel(id, body.getReason()));
+    }
+
+    // Idempotent — also how the Docs tab's "already on Hold, change the
+    // date" flow updates holdDate without disturbing status again.
+    @PreAuthorize("@permissionService.hasPermission('trips.write')")
+    @PostMapping("/{id}/hold")
+    public ResponseEntity<EscapeResponseDTO> hold(@PathVariable UUID id, @Valid @RequestBody EscapeHoldRequestDTO body) {
+        return ResponseEntity.ok(escapeLifecycleService.hold(id, body.getHoldDate()));
     }
 
     // Adds a traveller record to an already-created escape — the Travelers

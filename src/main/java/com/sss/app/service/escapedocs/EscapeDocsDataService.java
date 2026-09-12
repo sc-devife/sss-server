@@ -17,16 +17,19 @@ import java.util.UUID;
 
 /**
  * Wraps QuotationDataService's data map with the extra fields the Escape
- * Document needs (org bank details, a transport-only day grouping, the
- * Overview block's primary-traveller convenience alias) plus the five
- * section-visibility flags — same "wrap, don't re-query" pattern as
- * BillingDataService.
+ * Document needs (org bank details, a transport-only day grouping, a flat
+ * hotel-bookings list, a payment schedule summary, the Overview block's
+ * primary-traveller convenience alias) plus the five section-visibility
+ * flags — same "wrap, don't re-query" pattern as BillingDataService.
  */
 @Service
 @RequiredArgsConstructor
 public class EscapeDocsDataService {
 
     private static final DateTimeFormatter DAY_DATE = DateTimeFormatter.ofPattern("d MMM yyyy");
+    // "11/09/2026 (Friday)" — the Payment Schedule's own due-date format,
+    // distinct from every other date in this document.
+    private static final DateTimeFormatter DUE_DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy (EEEE)");
 
     private final QuotationDataService quotationDataService;
     private final OrganizationsHelper organizationsHelper;
@@ -63,6 +66,14 @@ public class EscapeDocsDataService {
             days.forEach(day -> day.put("dateFormatted", formatDate(day.get("date"))));
         }
         data.put("transportDays", buildTransportDays(days));
+
+        // Always-shown sections (Greeting/Hotel Section/Payment Schedule) —
+        // unlike the five checkbox-gated sections above, these are never
+        // toggled off, same as the Overview block.
+        List<Map<String, Object>> hotels = buildHotels(days);
+        data.put("hotels", hotels);
+        data.put("hasHotels", !hotels.isEmpty());
+        data.put("paymentSchedule", buildPaymentSchedule(data));
 
         Organizations org = organizationsHelper.getMyOrganization();
         List<BankAccountDto> bankAccounts = bankAccountService.getAccountsForOrg(org.getUid());
@@ -121,6 +132,87 @@ public class EscapeDocsDataService {
                 })
                 .filter(java.util.Objects::nonNull)
                 .toList();
+    }
+
+    // Flat list of hotel bookings across every day — Hotel/Check-in/
+    // Check-out/Accommodation, the Hotel Section's own compact table
+    // (distinct from the full day-wise Itinerary block).
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> buildHotels(List<Map<String, Object>> days) {
+        if (days == null) {
+            return List.of();
+        }
+        List<Map<String, Object>> hotels = new java.util.ArrayList<>();
+        for (Map<String, Object> day : days) {
+            List<Map<String, Object>> items = (List<Map<String, Object>>) day.get("items");
+            for (Map<String, Object> item : items) {
+                Map<String, Object> hotel = (Map<String, Object>) item.get("hotel");
+                if (hotel == null) {
+                    continue;
+                }
+                Map<String, Object> row = new LinkedHashMap<>();
+                row.put("hotelName", item.get("title"));
+                // Rendered below the hotel name — stars (Integer count) for
+                // Word, starIcons (one entry per star) for the HTML/PDF
+                // template's {{#starIcons}}★{{/starIcons}} loop.
+                row.put("stars", hotel.get("stars"));
+                row.put("starIcons", hotel.get("starIcons"));
+                row.put("checkIn", hotel.get("checkInFormatted"));
+                row.put("checkOut", formatDate(hotel.get("checkOutDate")));
+                row.put("accommodation", hotel.get("roomTypeName"));
+                hotels.add(row);
+            }
+        }
+        return hotels;
+    }
+
+    // Total (incl. tax)/per-person come straight from the existing pricing
+    // block; amount received/due amount/due date are derived from the same
+    // payment milestones QuotationDataService already assembles — same
+    // computation BillingDataService uses for its own invoice summary, just
+    // never throwing when there's no deal/quote yet (Docs must still render
+    // something even before either exists).
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> buildPaymentSchedule(Map<String, Object> data) {
+        Map<String, Object> pricing = (Map<String, Object>) data.get("pricing");
+        Map<String, Object> payment = (Map<String, Object>) data.get("payment");
+        List<Map<String, Object>> milestones = payment != null ? (List<Map<String, Object>>) payment.get("milestones") : null;
+        if (milestones == null) {
+            milestones = List.of();
+        }
+
+        java.math.BigDecimal total = asDecimal(pricing != null ? pricing.get("total") : null);
+        java.math.BigDecimal amountReceived = milestones.stream()
+                .map(m -> asDecimal(m.get("amountPaid")))
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+        java.math.BigDecimal dueAmount = total.subtract(amountReceived).max(java.math.BigDecimal.ZERO);
+        LocalDate dueDate = milestones.stream()
+                .filter(m -> !"paid".equals(m.get("status")))
+                .map(m -> (LocalDate) m.get("dueDate"))
+                .filter(java.util.Objects::nonNull)
+                .min(LocalDate::compareTo)
+                .orElse(null);
+
+        java.text.NumberFormat inrFormat = inrWholeFormat();
+        Map<String, Object> schedule = new LinkedHashMap<>();
+        schedule.put("totalFormatted", pricing != null ? pricing.get("totalFormatted") : null);
+        schedule.put("perPaxFormatted", pricing != null ? pricing.get("perPaxFormatted") : null);
+        schedule.put("amountReceivedFormatted", inrFormat.format(amountReceived));
+        schedule.put("dueAmountFormatted", inrFormat.format(dueAmount));
+        schedule.put("dueDateFormatted", dueDate != null ? dueDate.format(DUE_DATE) : null);
+        schedule.put("hasDueDate", dueDate != null);
+        return schedule;
+    }
+
+    private java.math.BigDecimal asDecimal(Object value) {
+        return value instanceof java.math.BigDecimal d ? d : java.math.BigDecimal.ZERO;
+    }
+
+    private java.text.NumberFormat inrWholeFormat() {
+        java.text.NumberFormat format = java.text.NumberFormat.getInstance(new java.util.Locale("en", "IN"));
+        format.setMaximumFractionDigits(0);
+        format.setMinimumFractionDigits(0);
+        return format;
     }
 
     private String formatDate(Object value) {
