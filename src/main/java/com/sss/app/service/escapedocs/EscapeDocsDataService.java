@@ -1,9 +1,11 @@
 package com.sss.app.service.escapedocs;
 
 import com.sss.app.dto.BankAccountDto;
+import com.sss.app.dto.escape.EscapeResponseDTO;
 import com.sss.app.entity.organizations.Organizations;
 import com.sss.app.helper.OrganizationsHelper;
 import com.sss.app.service.BankAccountService;
+import com.sss.app.service.escape.EscapeService;
 import com.sss.app.service.quotationtemplate.QuotationDataService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -34,18 +36,28 @@ public class EscapeDocsDataService {
     private final QuotationDataService quotationDataService;
     private final OrganizationsHelper organizationsHelper;
     private final BankAccountService bankAccountService;
+    private final EscapeService escapeService;
 
     @SuppressWarnings("unchecked")
     public Map<String, Object> buildData(UUID escapeUid, DocSections sections) {
         Map<String, Object> data = quotationDataService.buildData(escapeUid);
 
         List<Map<String, Object>> travellers = (List<Map<String, Object>>) data.get("travellers");
-        String primaryTravellerName = travellers.stream()
+        Map<String, Object> primaryTraveller = travellers.stream()
                 .filter(t -> Boolean.TRUE.equals(t.get("isPrimary")))
-                .map(t -> (String) t.get("name"))
                 .findFirst()
                 .orElse(null);
-        data.put("primaryTravellerName", primaryTravellerName);
+        data.put("primaryTravellerName", primaryTraveller != null ? primaryTraveller.get("name") : null);
+        // Used by the Send Email flow to resolve who to send to — never
+        // rendered directly into the document itself.
+        data.put("primaryTravellerEmail", primaryTraveller != null ? primaryTraveller.get("email") : null);
+
+        // QuotationDataService's map has no holdDate (Quotation/Invoice don't
+        // need it) — fetched fresh here rather than widening that shared map
+        // for a field only Docs' Send Email/Payment Schedule care about.
+        EscapeResponseDTO escape = escapeService.getEscapeById(escapeUid);
+        data.put("holdDate", escape.getHoldDate());
+        data.put("holdDateFormatted", formatDate(escape.getHoldDate()));
 
         // Mustache (mustache.java) has no "join a list"/"is this the last
         // item" construct — precomputed here rather than in the template.

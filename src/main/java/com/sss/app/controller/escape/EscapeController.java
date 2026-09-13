@@ -259,4 +259,19 @@ public class EscapeController {
                         ContentDisposition.attachment().filename(result.filename(), java.nio.charset.StandardCharsets.UTF_8).build().toString())
                 .body(result.bytes());
     }
+
+    // Emails the same PDF docsPreviewPdf above generates to the escape's
+    // primary traveller only — trips.write since, unlike the read-only
+    // preview/download endpoints above, this has a real side effect.
+    @PreAuthorize("@permissionService.hasPermission('trips.write')")
+    @PostMapping("/{id}/docs-preview/send-email")
+    public ResponseEntity<SendEmailResponseDTO> docsPreviewSendEmail(@PathVariable UUID id,
+            @RequestParam(defaultValue = "true") boolean transports,
+            @RequestParam(defaultValue = "true") boolean bankAccount,
+            @RequestParam(defaultValue = "true") boolean itinerary,
+            @RequestParam(defaultValue = "true") boolean inclusionsExclusions,
+            @RequestParam(defaultValue = "true") boolean termsAndConditions) {
+        return ResponseEntity.ok(escapeDocsService.sendEmail(id,
+                new DocSections(transports, bankAccount, itinerary, inclusionsExclusions, termsAndConditions)));
+    }
 }

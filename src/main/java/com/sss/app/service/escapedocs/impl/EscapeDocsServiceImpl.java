@@ -1,5 +1,8 @@
 package com.sss.app.service.escapedocs.impl;
 
+import com.sss.app.dto.email.SendEmailResponseDTO;
+import com.sss.app.exception.BadRequestException;
+import com.sss.app.service.email.EmailService;
 import com.sss.app.service.escapedocs.DocSections;
 import com.sss.app.service.escapedocs.EscapeDocsDataService;
 import com.sss.app.service.escapedocs.EscapeDocsService;
@@ -35,11 +38,14 @@ import java.util.UUID;
 public class EscapeDocsServiceImpl implements EscapeDocsService {
 
     private static final String TEMPLATE = "doc-templates/escape-docs.mustache";
+    private static final String EMAIL_BODY_TEMPLATE = "email-templates/escape-docs-email.mustache";
+    private static final String EMAIL_SUBJECT_TEMPLATE = "Your Escape Document {{tripCode}} — {{organization.name}}";
     private static final DateTimeFormatter DAY_DATE = DateTimeFormatter.ofPattern("d MMM yyyy");
 
     private final EscapeDocsDataService escapeDocsDataService;
     private final QuotationRenderingService quotationRenderingService;
     private final QuotationPdfService quotationPdfService;
+    private final EmailService emailService;
 
     @Override
     public String renderHtml(UUID escapeUid, DocSections sections) {
@@ -60,6 +66,35 @@ public class EscapeDocsServiceImpl implements EscapeDocsService {
         Map<String, Object> data = escapeDocsDataService.buildData(escapeUid, sections);
         byte[] docx = buildWordDocument(data, sections);
         return new EscapeDocumentResult(docx, filename(data, "docx"));
+    }
+
+    // Unlike the Quotation/Invoice "send to everyone" emails (lead + every
+    // traveller), this goes to exactly one address — the escape's primary
+    // traveller — per the Docs Send Email spec. No fallback to the lead: if
+    // the primary traveller has no email on file, this fails fast rather
+    // than silently emailing someone else.
+    @Override
+    public SendEmailResponseDTO sendEmail(UUID escapeUid, DocSections sections) {
+        Map<String, Object> data = escapeDocsDataService.buildData(escapeUid, sections);
+
+        Object emailObj = data.get("primaryTravellerEmail");
+        String primaryTravellerEmail = emailObj instanceof String s ? s.trim() : "";
+        if (primaryTravellerEmail.isEmpty()) {
+            throw new BadRequestException("The primary traveller does not have a valid email address — add one before sending.");
+        }
+
+        // Resolved (above) before rendering the PDF (a headless-Chrome
+        // render) so a recipient-less escape fails fast/cheap instead of
+        // after that work — same ordering QuotationTemplateServiceImpl uses.
+        String html = quotationRenderingService.renderClasspathTemplate(TEMPLATE, data);
+        byte[] pdf = quotationPdfService.render(html, watermarkText(data));
+
+        String subject = quotationRenderingService.renderInline(EMAIL_SUBJECT_TEMPLATE, data);
+        String body = quotationRenderingService.renderClasspathTemplate(EMAIL_BODY_TEMPLATE, data);
+        List<String> recipients = List.of(primaryTravellerEmail);
+        emailService.sendHtmlEmailWithAttachment(recipients, subject, body, pdf, filename(data, "pdf"));
+
+        return new SendEmailResponseDTO(recipients);
     }
 
     // Same "{tripCode} · {orgName}" convention as QuotationTemplateServiceImpl

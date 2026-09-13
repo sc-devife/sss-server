@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+<body style="margin:0;padding:0;background:#f4f5f7;font-family:Arial,Helvetica,sans-serif;color:#1a222c;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:24px 0;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;">
+          <tr>
+            <td style="background:#0d2645;padding:20px 28px;">
+              <span style="color:#ffffff;font-size:16px;font-weight:700;">{{organization.name}}</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px;">
+              <p style="margin:0 0 14px;font-size:14px;">Dear {{primaryTravellerName}},</p>
+              <p style="margin:0 0 14px;font-size:14px;line-height:1.6;">
+                Thank you for planning your trip to <strong>{{escapePointNames}}</strong> with <strong>{{organization.name}}</strong>!
+                We are delighted to confirm that your booking has been placed on hold on a time-limit basis, as per the
+                details provided below. We sincerely appreciate the opportunity to assist you and look forward to making
+                your travel experience truly memorable.
+              </p>
+              <p style="margin:0 0 14px;font-size:14px;line-height:1.6;">
+                Please review the details below and feel free to reach out to us should you require any assistance or
+                clarification.
+              </p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;border:1px solid #e5e8ec;border-radius:6px;">
+                <tr>
+                  <td style="padding:14px 18px 6px;font-size:13px;color:#4a5666;">Trip</td>
+                  <td style="padding:14px 18px 6px;font-size:13px;text-align:right;font-weight:700;">{{tripCode}} &middot; {{escapePointNames}}</td>
+                </tr>
+                <tr>
+                  <td style="padding:0 18px 6px;font-size:13px;color:#4a5666;">Hold date</td>
+                  <td style="padding:0 18px 6px;font-size:13px;text-align:right;font-weight:700;">{{holdDateFormatted}}</td>
+                </tr>
+                <tr>
+                  <td style="padding:0 18px 6px;font-size:13px;color:#4a5666;">Total amount</td>
+                  <td style="padding:0 18px 6px;font-size:13px;text-align:right;font-weight:700;">&#8377;{{paymentSchedule.totalFormatted}}</td>
+                </tr>
+                <tr>
+                  <td style="padding:0 18px 6px;font-size:13px;color:#4a5666;">Amount received</td>
+                  <td style="padding:0 18px 6px;font-size:13px;text-align:right;font-weight:700;">&#8377;{{paymentSchedule.amountReceivedFormatted}}</td>
+                </tr>
+                <tr>
+                  <td style="padding:0 18px 6px;font-size:13px;color:#4a5666;">Due amount</td>
+                  <td style="padding:0 18px 6px;font-size:15px;text-align:right;font-weight:800;color:#0d2645;">&#8377;{{paymentSchedule.dueAmountFormatted}}</td>
+                </tr>
+                <tr>
+                  <td style="padding:0 18px 16px;font-size:13px;color:#4a5666;">Due date</td>
+                  <td style="padding:0 18px 16px;font-size:13px;text-align:right;font-weight:700;">{{#paymentSchedule.hasDueDate}}{{paymentSchedule.dueDateFormatted}}{{/paymentSchedule.hasDueDate}}{{^paymentSchedule.hasDueDate}}&mdash;{{/paymentSchedule.hasDueDate}}</td>
+                </tr>
+              </table>
+              <p style="margin:0 0 14px;font-size:14px;line-height:1.6;">
+                Your full Escape Document is attached to this email as a PDF.
+              </p>
+              <p style="margin:24px 0 0;font-size:14px;">Warm regards,<br><strong>{{organization.name}}</strong></p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:16px 28px;background:#f4f5f7;font-size:11px;color:#8290a0;">
+              {{organization.contactPhone}}{{#organization.contactEmail}} &middot; {{organization.contactEmail}}{{/organization.contactEmail}}{{#organization.websiteUrl}} &middot; {{organization.websiteUrl}}{{/organization.websiteUrl}}
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
