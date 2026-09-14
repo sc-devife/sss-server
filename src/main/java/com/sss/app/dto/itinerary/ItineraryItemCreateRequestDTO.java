@@ -38,6 +38,10 @@ public class ItineraryItemCreateRequestDTO {
     // ItineraryItem.price.
     private BigDecimal price;
 
+    // Currently only meaningful for itemType "activity" — see
+    // ItineraryItem.travelersCount.
+    private Integer travelersCount;
+
     // Optional booking-specific transport detail — only meaningful when
     // itemType is transport-like, ignored otherwise. See TransportDetailDTO.
     private TransportDetailDTO transportDetail;

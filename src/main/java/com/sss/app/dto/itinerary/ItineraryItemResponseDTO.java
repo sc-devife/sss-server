@@ -20,6 +20,7 @@ public class ItineraryItemResponseDTO {
     private String notes;
     private String longDescription;
     private BigDecimal price;
+    private Integer travelersCount;
     private Integer sortOrder;
     private TransportDetailDTO transportDetail;
     private HotelDetailDTO hotelDetail;

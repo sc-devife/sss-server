@@ -86,6 +86,14 @@ public class ItineraryItem extends Auditable {
     @Column(precision = 12, scale = 2)
     private BigDecimal price;
 
+    // Currently populated for Activity items only, alongside price — the
+    // per-traveller rate (price) times this count is the booking's total
+    // (see QuoteComputationServiceImpl.resolvePrice). Defaults to the
+    // escape's own traveller count when the item is created, but is
+    // independently editable from there, same as price itself.
+    @Column(name = "travelers_count")
+    private Integer travelersCount;
+
     @Column(name = "sort_order", nullable = false)
     private Integer sortOrder;
 

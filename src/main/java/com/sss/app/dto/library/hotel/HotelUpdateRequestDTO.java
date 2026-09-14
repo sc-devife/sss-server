@@ -36,6 +36,8 @@ public class HotelUpdateRequestDTO {
 
     private String childAgeForExtraBed;
 
+    private java.math.BigDecimal basePrice;
+
     private java.time.LocalDate rateValidFrom;
 
     private java.time.LocalDate rateValidTo;

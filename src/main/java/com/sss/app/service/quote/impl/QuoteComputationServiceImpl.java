@@ -36,7 +36,8 @@ import java.util.UUID;
  * Section 6 Quotation Engine — sums pricing from itinerary items, preferring
  * whatever price was actually agreed for that specific booking over the
  * library's generic default: Activity reads its own item.price (falling
- * back to the library Activity's base_price); Transport reads its own
+ * back to the library Activity's base_price), times its own travelers_count
+ * (defaulting to 1); Transport reads its own
  * booking-detail row's sellingPrice (x pax count when marked per-person) or
  * flat price (falling back to the library Transport's base_price); Hotel
  * reads its own booking-detail row (total_price, or price x room_count when
@@ -187,9 +188,14 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
                 }
                 // This specific booking's own price wins over the library's
                 // generic default — an agent may well have negotiated or
-                // overridden it for this itinerary.
+                // overridden it for this itinerary. Either way, price is a
+                // per-traveller rate — multiplied by this booking's own
+                // travellers count (defaulting to 1 for items saved before
+                // that field existed) to get the actual total contribution.
+                BigDecimal travellersMultiplier = BigDecimal.valueOf(
+                        item.getTravelersCount() != null && item.getTravelersCount() > 0 ? item.getTravelersCount() : 1);
                 if (item.getPrice() != null) {
-                    return ItemPriceResult.of(item.getPrice());
+                    return ItemPriceResult.of(item.getPrice().multiply(travellersMultiplier));
                 }
                 if (item.getReferenceId() == null) {
                     warnings.add("Custom activity on day " + item.getDayNumber() + " has no price set — excluded");
@@ -204,7 +210,7 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
                     warnings.add("Activity \"" + activity.getName() + "\" (day " + item.getDayNumber() + ") has no price set — excluded");
                     return null;
                 }
-                return ItemPriceResult.of(activity.getBasePrice());
+                return ItemPriceResult.of(activity.getBasePrice().multiply(travellersMultiplier));
             }
             case "transport" -> {
                 ItineraryItemTransportDetail detail = transportDetailRepository.findByItineraryItem_Seqp(item.getSeqp()).orElse(null);

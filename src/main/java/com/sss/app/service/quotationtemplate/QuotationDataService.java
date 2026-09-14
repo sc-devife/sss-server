@@ -505,6 +505,16 @@ public class QuotationDataService {
                 "notes", item.getNotes(),
                 "longDescription", item.getLongDescription(),
                 "price", item.getPrice(),
+                // Both currently only meaningful for Activity — price is a
+                // per-traveller rate, travelersCount how many it's booked
+                // for, and totalPrice their product (see
+                // QuoteComputationServiceImpl.resolvePrice for the same
+                // calculation used to price the item in a Quote).
+                "travelersCount", item.getTravelersCount(),
+                "totalPrice", item.getPrice() != null
+                        ? item.getPrice().multiply(java.math.BigDecimal.valueOf(
+                                item.getTravelersCount() != null && item.getTravelersCount() > 0 ? item.getTravelersCount() : 1))
+                        : null,
                 // Item-level Initialize/Booked/Drop status — currently only
                 // meaningful for Activity (Hotel exposes its own separate
                 // status inside the "hotel" map below). "dropped" is a

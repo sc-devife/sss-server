@@ -111,6 +111,7 @@ public class ItineraryItemHelper {
                 .notes(request.getNotes())
                 .longDescription(request.getLongDescription())
                 .price(request.getPrice())
+                .travelersCount(request.getTravelersCount())
                 .sortOrder(nextSortOrder(itinerary.getSeqp()))
                 .build();
 
@@ -174,6 +175,9 @@ public class ItineraryItemHelper {
             }
             if (request.getPrice() != null) {
                 item.setPrice(request.getPrice());
+            }
+            if (request.getTravelersCount() != null) {
+                item.setTravelersCount(request.getTravelersCount());
             }
             if (request.getStatus() != null) {
                 item.setStatus(request.getStatus());

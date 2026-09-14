@@ -16,6 +16,11 @@ public class ItineraryItemUpdateRequestDTO {
     private String notes;
     private String longDescription;
     private BigDecimal price;
+
+    // Currently only meaningful for itemType "activity" — see
+    // ItineraryItem.travelersCount.
+    private Integer travelersCount;
+
     private TransportDetailDTO transportDetail;
     private HotelDetailDTO hotelDetail;
 

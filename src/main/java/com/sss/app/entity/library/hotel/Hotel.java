@@ -137,9 +137,15 @@ public class Hotel extends Auditable {
 
     private String childAgeForExtraBed; // e.g. "Below 6 years" - kept as String to allow free-form ranges
 
-    // Validity window for the currently-quoted rate — no rate/price field
-    // exists on Hotel itself yet, but stale rates silently going out of date
-    // is a real risk even before that lands, so this is worth tracking now.
+    // Starting/indicative rate — shown in the itinerary's hotel suggestion
+    // dropdown alongside stars. Not the price actually booked at (that's
+    // ItineraryItemHotelDetail.price, entered per-stay); this is the
+    // library-level "from" rate, same role Transport.basePrice/
+    // Activity.basePrice play for their own suggestion dropdowns.
+    @Column(name = "base_price", precision = 12, scale = 2)
+    private java.math.BigDecimal basePrice;
+
+    // Validity window for the currently-quoted rate above.
     @Column(name = "rate_valid_from")
     private java.time.LocalDate rateValidFrom;
 
