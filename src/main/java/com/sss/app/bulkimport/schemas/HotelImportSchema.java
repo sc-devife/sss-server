@@ -2,6 +2,7 @@ package com.sss.app.bulkimport.schemas;
 
 import com.sss.app.bulkimport.BulkImportSchema;
 import com.sss.app.dto.library.hotel.HotelCreateRequestDTO;
+import com.sss.app.dto.library.hotel.HotelRoomTypePricingRequestDTO;
 import com.sss.app.repository.library.escapepoint.EscapePointRepository;
 import com.sss.app.repository.library.location.LocationRepository;
 import com.sss.app.repository.library.mealplan.MealPlanRepository;
@@ -151,11 +152,15 @@ public class HotelImportSchema implements BulkImportSchema {
         }
         if (!mealPlanIds.isEmpty()) dto.setMealPlanIds(mealPlanIds);
 
-        Set<UUID> roomTypeIds = new HashSet<>();
+        // No per-room-type price column in the CSV — bulk-imported room
+        // types start priceless, same as any hotel-level field the sheet
+        // doesn't cover; price is filled in later via the Edit Hotel popup.
+        List<HotelRoomTypePricingRequestDTO> roomTypePricing = new ArrayList<>();
         for (String name : splitList(row.get("roomTypeNames"))) {
-            roomTypeRepository.findByNameIgnoreCase(name).ifPresent(r -> roomTypeIds.add(r.getUid()));
+            roomTypeRepository.findByNameIgnoreCase(name)
+                    .ifPresent(r -> roomTypePricing.add(pricingRow(r.getUid(), null)));
         }
-        if (!roomTypeIds.isEmpty()) dto.setRoomTypeIds(roomTypeIds);
+        if (!roomTypePricing.isEmpty()) dto.setRoomTypePricing(roomTypePricing);
 
         Set<UUID> serviceIds = new HashSet<>();
         for (String name : splitList(row.get("serviceNames"))) {
@@ -164,5 +169,12 @@ public class HotelImportSchema implements BulkImportSchema {
         if (!serviceIds.isEmpty()) dto.setServiceIds(serviceIds);
 
         hotelService.create(dto);
+    }
+
+    private HotelRoomTypePricingRequestDTO pricingRow(UUID roomTypeId, java.math.BigDecimal price) {
+        HotelRoomTypePricingRequestDTO row = new HotelRoomTypePricingRequestDTO();
+        row.setRoomTypeId(roomTypeId);
+        row.setPrice(price);
+        return row;
     }
 }

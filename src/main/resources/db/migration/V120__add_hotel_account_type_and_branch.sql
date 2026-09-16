@@ -1,0 +1,2 @@
+ALTER TABLE hotels ADD COLUMN branch_name VARCHAR(255);
+ALTER TABLE hotels ADD COLUMN account_type VARCHAR(20);

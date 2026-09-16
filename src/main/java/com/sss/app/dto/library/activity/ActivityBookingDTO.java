@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.UUID;
@@ -17,6 +18,9 @@ public class ActivityBookingDTO {
     private UUID itineraryItemUid;
 
     private UUID escapeUid;
+
+    // Human-readable trip code (e.g. "TRP-000123") — see Escape.tripCode.
+    private String tripCode;
 
     private String escapeStatus;
 
@@ -34,4 +38,14 @@ public class ActivityBookingDTO {
     private LocalTime startTime;
 
     private String notes;
+
+    // Initialize / Booked / Drop (see BookingStatus) — stored directly on
+    // ItineraryItem.status for Activity items (no separate detail table
+    // like Hotel's ItineraryItemHotelDetail).
+    private String bookingStatus;
+
+    // item.price × item.travelersCount (or the cancellation charge if
+    // Dropped) — mirrors QuoteComputationServiceImpl's activity pricing
+    // branch, so this figure matches what Quotation actually bills.
+    private BigDecimal totalAmount;
 }

@@ -15,5 +15,7 @@ public class UserAssignmentSettingsUpdateRequestDto {
     private List<Long> specialistEscapePoints;
     private Integer maxConcurrentAssignments;
     private Boolean eligibleForPriorityLeads;
+    private Boolean eligibleForLargeGroups;
+    private List<String> languages;
     private Boolean acceptingLeads;
 }

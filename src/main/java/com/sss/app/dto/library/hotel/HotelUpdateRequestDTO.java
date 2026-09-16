@@ -24,7 +24,9 @@ public class HotelUpdateRequestDTO {
 
     private Set<UUID> mealPlanIds;
 
-    private Set<UUID> roomTypeIds;
+    // Repeatable "Room Type + Price/Night" rows — null leaves room types
+    // untouched, an empty list clears them (see HotelCreateRequestDTO).
+    private List<HotelRoomTypePricingRequestDTO> roomTypePricing;
 
     private Set<UUID> serviceIds;
 
@@ -60,4 +62,18 @@ public class HotelUpdateRequestDTO {
     private String status;
 
     private String notes;
+
+    private String accountHolderName;
+
+    private String bankName;
+
+    private String branchName;
+
+    private String accountType;
+
+    private String accountNumber;
+
+    private String ifsc;
+
+    private String upiId;
 }

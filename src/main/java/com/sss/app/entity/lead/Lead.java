@@ -13,6 +13,7 @@ import lombok.ToString;
 
 import java.time.LocalDate;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -86,11 +87,29 @@ public class Lead extends Auditable {
     @Column(name = "travel_type")
     private String travelType; // honeymoon/family/friends/solo/business/other
 
+    // Fixed list (English, Hindi, Assamese, ...) — no master-data table, same
+    // "plain text[] of display-name strings" pattern as Hotel.amenities.
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.ARRAY)
+    @Column(columnDefinition = "text[]")
+    private List<String> languages;
+
     @Column(length = 500)
     private String notes;
 
     @Column(name = "follow_up_due_date")
     private LocalDate followUpDueDate;
+
+    // Lead-level assignment (Section 5, intake-time routing) — same shape as
+    // Escape.assignedToUserId/assignmentReason, set once by
+    // LeadAssignmentService.autoAssignLead at creation (LeadsHelper) or via
+    // manuallyAssignLead. When a Lead carrying this converts to an Escape,
+    // EscapeHelper/LeadAssignmentServiceImpl.autoAssign carries it over
+    // rather than picking someone fresh, so the same agent keeps the deal.
+    @Column(name = "assigned_to_user_id")
+    private Long assignedToUserId;
+
+    @Column(name = "assignment_reason")
+    private String assignmentReason;
 
     // Soft-delete/Archive marker — set only via the "archive" lifecycle
     // action (LeadLifecycleService.archive), never cleared. Excluded from

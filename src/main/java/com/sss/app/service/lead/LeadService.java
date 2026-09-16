@@ -35,6 +35,9 @@ public interface LeadService {
     LeadResponseDTO updateLead(UUID id, LeadCreateRequestDTO request);
     LeadResponseDTO setFollowUpDueDate(UUID id, LocalDate followUpDueDate);
 
+    /** Manual (re)assignment — see LeadAssignmentService.manuallyAssignLead. */
+    LeadResponseDTO assignLead(UUID id, Long userId, String reason);
+
     // Internal-only: resolves the external uid to the entity's internal
     // seqp for callers (e.g. audit log lookups) that must keep using the
     // Long-keyed AuditLog storage without leaking seqp through the response DTO.

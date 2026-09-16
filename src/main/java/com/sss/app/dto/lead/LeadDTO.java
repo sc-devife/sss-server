@@ -43,5 +43,6 @@ public class LeadDTO {
     private Boolean isPriority;
     private String originCity;
     private String travelType;
+    private List<String> languages;
     private String notes;
 }

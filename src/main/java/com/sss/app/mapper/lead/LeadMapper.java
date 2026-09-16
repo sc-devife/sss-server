@@ -24,6 +24,7 @@ public interface LeadMapper {
 
     @Mapping(target = "agencyDetails", ignore = true)
     @Mapping(target = "escapePointIds", ignore = true)
+    @Mapping(target = "assignedToUserName", ignore = true)
     LeadResponseDTO toResponse(Lead entity);
 
     // For updates — copy values from DTO into an existing entity. status is

@@ -134,11 +134,20 @@ public class UsersHelper {
         if (payload.getSpecialistEscapePoints() != null) {
             user.setSpecialistEscapePoints(payload.getSpecialistEscapePoints());
         }
-        if (payload.getMaxConcurrentAssignments() != null) {
-            user.setMaxConcurrentAssignments(payload.getMaxConcurrentAssignments());
-        }
+        // Unlike the other fields here, null is a meaningful value for this
+        // one (the frontend's "No cap" placeholder) rather than "field
+        // omitted" — the one caller of this endpoint (AgentAssignmentSettingsPanel)
+        // always sends the full settings object, so there's no "leave
+        // unchanged" case to preserve by guarding on non-null.
+        user.setMaxConcurrentAssignments(payload.getMaxConcurrentAssignments());
         if (payload.getEligibleForPriorityLeads() != null) {
             user.setEligibleForPriorityLeads(payload.getEligibleForPriorityLeads());
+        }
+        if (payload.getEligibleForLargeGroups() != null) {
+            user.setEligibleForLargeGroups(payload.getEligibleForLargeGroups());
+        }
+        if (payload.getLanguages() != null) {
+            user.setLanguages(payload.getLanguages());
         }
         if (payload.getAcceptingLeads() != null) {
             user.setAcceptingLeads(payload.getAcceptingLeads());

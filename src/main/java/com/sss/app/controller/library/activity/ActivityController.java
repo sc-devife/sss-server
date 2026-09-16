@@ -1,7 +1,12 @@
 package com.sss.app.controller.library.activity;
 
+import com.sss.app.dto.email.SendEmailResponseDTO;
 import com.sss.app.dto.library.activity.ActivityBookingDTO;
+import com.sss.app.dto.library.activity.ActivityBookingEmailPreviewDTO;
+import com.sss.app.dto.library.activity.ActivityBookingEmailSendRequestDTO;
 import com.sss.app.dto.library.activity.ActivityCreateRequestDTO;
+import com.sss.app.dto.library.activity.ActivityPaymentCreateRequestDTO;
+import com.sss.app.dto.library.activity.ActivityPaymentResponseDTO;
 import com.sss.app.dto.library.activity.ActivityResponseDTO;
 import com.sss.app.dto.library.activity.ActivityUpdateRequestDTO;
 import com.sss.app.service.library.activity.ActivityService;
@@ -58,5 +63,38 @@ public class ActivityController {
     @GetMapping("/{id}/bookings")
     public ResponseEntity<List<ActivityBookingDTO>> getBookings(@PathVariable UUID id) {
         return ResponseEntity.ok(activityService.getBookings(id));
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('library.write')")
+    @PostMapping("/{id}/bookings/{itineraryItemUid}/mark-booked")
+    public ResponseEntity<ActivityBookingDTO> markBooked(@PathVariable UUID id, @PathVariable UUID itineraryItemUid) {
+        return ResponseEntity.ok(activityService.markBooked(id, itineraryItemUid));
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('library.read')")
+    @GetMapping("/{id}/bookings/{itineraryItemUid}/booking-email-preview")
+    public ResponseEntity<ActivityBookingEmailPreviewDTO> getBookingEmailPreview(@PathVariable UUID id, @PathVariable UUID itineraryItemUid) {
+        return ResponseEntity.ok(activityService.getBookingEmailPreview(id, itineraryItemUid));
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('library.write')")
+    @PostMapping("/{id}/bookings/{itineraryItemUid}/send-email")
+    public ResponseEntity<SendEmailResponseDTO> sendBookingEmail(@PathVariable UUID id, @PathVariable UUID itineraryItemUid,
+                                                                    @RequestBody(required = false) ActivityBookingEmailSendRequestDTO dto) {
+        String subject = dto != null ? dto.getSubject() : null;
+        return ResponseEntity.ok(activityService.sendBookingEmail(id, itineraryItemUid, subject));
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('library.read')")
+    @GetMapping("/{id}/payments")
+    public ResponseEntity<List<ActivityPaymentResponseDTO>> getPayments(@PathVariable UUID id) {
+        return ResponseEntity.ok(activityService.getPayments(id));
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('library.write')")
+    @PostMapping("/{id}/payments")
+    public ResponseEntity<ActivityPaymentResponseDTO> createPayment(@PathVariable UUID id,
+                                                                       @Valid @RequestBody ActivityPaymentCreateRequestDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(activityService.createPayment(id, dto));
     }
 }

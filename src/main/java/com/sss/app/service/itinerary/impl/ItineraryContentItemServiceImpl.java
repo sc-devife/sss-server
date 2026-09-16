@@ -2,6 +2,7 @@ package com.sss.app.service.itinerary.impl;
 
 import com.sss.app.dto.itinerary.ItineraryContentItemAttachRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryContentItemCreateRequestDTO;
+import com.sss.app.dto.itinerary.ItineraryContentItemReorderRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryContentItemResponseDTO;
 import com.sss.app.dto.itinerary.ItineraryContentItemUpdateRequestDTO;
 import com.sss.app.entity.itinerary.ItineraryContentItem;
@@ -42,6 +43,11 @@ public class ItineraryContentItemServiceImpl implements ItineraryContentItemServ
     @Override
     public void delete(UUID uid) {
         itineraryContentItemHelper.delete(uid);
+    }
+
+    @Override
+    public List<ItineraryContentItemResponseDTO> reorder(ItineraryContentItemReorderRequestDTO request) {
+        return itineraryContentItemHelper.reorder(request).stream().map(this::toResponse).toList();
     }
 
     private ItineraryContentItemResponseDTO toResponse(ItineraryContentItem item) {

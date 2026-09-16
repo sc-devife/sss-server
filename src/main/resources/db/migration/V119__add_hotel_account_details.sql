@@ -1,0 +1,5 @@
+ALTER TABLE hotels ADD COLUMN account_holder_name VARCHAR(255);
+ALTER TABLE hotels ADD COLUMN bank_name VARCHAR(255);
+ALTER TABLE hotels ADD COLUMN account_number VARCHAR(255);
+ALTER TABLE hotels ADD COLUMN ifsc VARCHAR(20);
+ALTER TABLE hotels ADD COLUMN upi_id VARCHAR(255);

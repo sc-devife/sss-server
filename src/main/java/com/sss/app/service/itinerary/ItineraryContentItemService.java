@@ -2,6 +2,7 @@ package com.sss.app.service.itinerary;
 
 import com.sss.app.dto.itinerary.ItineraryContentItemAttachRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryContentItemCreateRequestDTO;
+import com.sss.app.dto.itinerary.ItineraryContentItemReorderRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryContentItemResponseDTO;
 import com.sss.app.dto.itinerary.ItineraryContentItemUpdateRequestDTO;
 
@@ -18,4 +19,6 @@ public interface ItineraryContentItemService {
     ItineraryContentItemResponseDTO update(UUID uid, ItineraryContentItemUpdateRequestDTO request);
 
     void delete(UUID uid);
+
+    List<ItineraryContentItemResponseDTO> reorder(ItineraryContentItemReorderRequestDTO request);
 }

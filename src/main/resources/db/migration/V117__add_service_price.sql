@@ -1,0 +1,1 @@
+ALTER TABLE services ADD COLUMN price NUMERIC(12, 2);

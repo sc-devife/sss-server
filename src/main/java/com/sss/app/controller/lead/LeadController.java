@@ -3,6 +3,7 @@ package com.sss.app.controller.lead;
 import com.sss.app.dto.audit.AuditLogResponseDTO;
 import com.sss.app.dto.escape.EscapeCreateRequestDTO;
 import com.sss.app.dto.escape.EscapeResponseDTO;
+import com.sss.app.dto.lead.LeadAssignRequestDTO;
 import com.sss.app.dto.lead.LeadCreateRequestDTO;
 import com.sss.app.dto.lead.LeadFollowUpDueDateRequestDTO;
 import com.sss.app.dto.lead.LeadReasonActionRequestDTO;
@@ -154,6 +155,15 @@ public class LeadController {
     @PutMapping(value = "/{id}/follow-up-due-date", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<LeadResponseDTO> setFollowUpDueDate(@PathVariable UUID id, @RequestBody LeadFollowUpDueDateRequestDTO body) {
         return ResponseEntity.ok(leadService.setFollowUpDueDate(id, body.getFollowUpDueDate()));
+    }
+
+    // Manual (re)assignment — the auto-assignment engine already runs once
+    // at intake (see LeadsHelper.createLead); this covers reassigning
+    // afterward or picking up a lead that was left unassigned.
+    @PreAuthorize("@permissionService.hasPermission('leads.assign')")
+    @PostMapping(value = "/{id}/assign", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<LeadResponseDTO> assign(@PathVariable UUID id, @Valid @RequestBody LeadAssignRequestDTO body) {
+        return ResponseEntity.ok(leadService.assignLead(id, body.getUserId(), body.getReason()));
     }
 
     @PreAuthorize("@permissionService.hasPermission('leads.read')")

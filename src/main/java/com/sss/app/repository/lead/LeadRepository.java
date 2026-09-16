@@ -35,6 +35,10 @@ public interface LeadRepository extends JpaRepository<Lead, Long>, JpaSpecificat
     // Example: find leads by destination (for travel use case)
     List<Lead> findByDestinationIgnoreCase(String destination);
 
+    // Assignment-capacity/load-balancing counterpart to EscapeRepository's
+    // equivalent — see LeadAssignmentServiceImpl.openWorkloadCount.
+    long countByAssignedToUserIdAndStatusNotIn(Long assignedToUserId, List<String> excludedStatuses);
+
     long countByOrgId(Long orgId);
 
     long countByOrgIdAndStatus(Long orgId, String status);

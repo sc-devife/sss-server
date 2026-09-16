@@ -9,7 +9,9 @@ import com.sss.app.entity.lead.LeadSourceType;
 import com.sss.app.entity.library.escapepoint.EscapePoint;
 import com.sss.app.helper.lead.LeadsHelper;
 import com.sss.app.mapper.lead.LeadMapper;
+import com.sss.app.repository.UserRepository;
 import com.sss.app.repository.lead.LeadAgencyDetailsRepository;
+import com.sss.app.service.assignment.LeadAssignmentService;
 import com.sss.app.service.integration.ChannelLeadResult;
 import com.sss.app.service.integration.NormalizedLeadPayload;
 import com.sss.app.service.integration.ProviderLeadMetadata;
@@ -32,6 +34,8 @@ public class LeadServiceImpl implements LeadService {
     private final LeadMapper leadMapper;
     private final LeadsHelper leadHelper;
     private final LeadAgencyDetailsRepository leadAgencyDetailsRepository;
+    private final LeadAssignmentService leadAssignmentService;
+    private final UserRepository userRepository;
 
     @Override
     public LeadResponseDTO createLead(LeadCreateRequestDTO payload) {
@@ -86,13 +90,31 @@ public class LeadServiceImpl implements LeadService {
         return toResponseWithEscapePoints(leadHelper.setFollowUpDueDate(id, followUpDueDate));
     }
 
+    @Override
+    public LeadResponseDTO assignLead(UUID id, Long userId, String reason) {
+        Lead lead = leadAssignmentService.manuallyAssignLead(id, userId, reason);
+        return enrichAgencyDetails(lead, toResponseWithEscapePoints(lead));
+    }
+
     // escapePoints is a Set<EscapePoint> on the entity but a List<String> of
     // uids on the DTO — MapStruct can't auto-map that (see LeadMapper's
     // ignore), so every response path funnels through here instead.
     private LeadResponseDTO toResponseWithEscapePoints(Lead lead) {
         LeadResponseDTO response = leadMapper.toResponse(lead);
         response.setEscapePointIds(lead.getEscapePoints().stream().map(EscapePoint::getUid).toList());
+        enrichAssignedToName(response);
         return response;
+    }
+
+    // Joins the lead's assigned agent through Lead.assignedToUserId — not
+    // duplicated as a stored name, just looked up and attached to the
+    // response. Same "resolved, not stored" pattern as
+    // EscapeServiceImpl.enrichAssignedToName.
+    private void enrichAssignedToName(LeadResponseDTO response) {
+        if (response.getAssignedToUserId() != null) {
+            userRepository.findById(response.getAssignedToUserId())
+                    .ifPresent(user -> response.setAssignedToUserName(user.getName()));
+        }
     }
 
     // agencyDetails has no matching field on the Lead entity (it's a

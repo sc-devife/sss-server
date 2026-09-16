@@ -1,15 +1,22 @@
 package com.sss.app.service.transaction.impl;
 
 import com.sss.app.dto.transaction.IncomingTransactionResponseDTO;
+import com.sss.app.dto.transaction.OutgoingTransactionResponseDTO;
+import com.sss.app.entity.library.activity.ActivityPayment;
+import com.sss.app.entity.library.hotel.HotelPayment;
 import com.sss.app.entity.payment.PaymentMilestone;
 import com.sss.app.entity.users.User;
 import com.sss.app.repository.UserRepository;
+import com.sss.app.repository.library.activity.ActivityPaymentRepository;
+import com.sss.app.repository.library.hotel.HotelPaymentRepository;
 import com.sss.app.repository.payment.PaymentMilestoneRepository;
 import com.sss.app.service.transaction.TransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -17,6 +24,8 @@ import java.util.List;
 public class TransactionServiceImpl implements TransactionService {
 
     private final PaymentMilestoneRepository paymentMilestoneRepository;
+    private final HotelPaymentRepository hotelPaymentRepository;
+    private final ActivityPaymentRepository activityPaymentRepository;
     private final UserRepository userRepository;
 
     private User currentUser() {
@@ -49,6 +58,54 @@ public class TransactionServiceImpl implements TransactionService {
         if (milestone.getMarkedPaidBy() != null) {
             userRepository.findById(milestone.getMarkedPaidBy()).map(User::getName).ifPresent(dto::setMarkedPaidByName);
         }
+        return dto;
+    }
+
+    @Override
+    public List<OutgoingTransactionResponseDTO> getOutgoingTransactions() {
+        Long orgId = currentUser().getOrgId();
+        List<OutgoingTransactionResponseDTO> combined = new ArrayList<>();
+        hotelPaymentRepository.findAllByOrgId(orgId).stream().map(this::toOutgoingResponse).forEach(combined::add);
+        activityPaymentRepository.findAllByOrgId(orgId).stream().map(this::toOutgoingResponse).forEach(combined::add);
+        combined.sort(Comparator.comparing(OutgoingTransactionResponseDTO::getPaymentDate).reversed());
+        return combined;
+    }
+
+    private OutgoingTransactionResponseDTO toOutgoingResponse(HotelPayment payment) {
+        OutgoingTransactionResponseDTO dto = new OutgoingTransactionResponseDTO();
+        dto.setPaymentUid(payment.getUid());
+        dto.setVendorType("Hotel");
+        dto.setVendorUid(payment.getHotel().getUid());
+        dto.setVendorName(payment.getHotel().getName());
+        dto.setEscapeUid(payment.getEscape().getUid());
+        dto.setTripCode(payment.getEscape().getTripCode());
+        dto.setTransactionId(payment.getTransactionId());
+        dto.setPaymentMethod(payment.getPaymentMethod());
+        dto.setAmount(payment.getAmount());
+        dto.setPaidBy(payment.getPaidBy());
+        dto.setPaymentDate(payment.getPaymentDate());
+        dto.setNotes(payment.getNotes());
+        dto.setStatus(payment.getStatus());
+        dto.setCreatedAt(payment.getCreatedAt());
+        return dto;
+    }
+
+    private OutgoingTransactionResponseDTO toOutgoingResponse(ActivityPayment payment) {
+        OutgoingTransactionResponseDTO dto = new OutgoingTransactionResponseDTO();
+        dto.setPaymentUid(payment.getUid());
+        dto.setVendorType("Activity");
+        dto.setVendorUid(payment.getActivity().getUid());
+        dto.setVendorName(payment.getActivity().getName());
+        dto.setEscapeUid(payment.getEscape().getUid());
+        dto.setTripCode(payment.getEscape().getTripCode());
+        dto.setTransactionId(payment.getTransactionId());
+        dto.setPaymentMethod(payment.getPaymentMethod());
+        dto.setAmount(payment.getAmount());
+        dto.setPaidBy(payment.getPaidBy());
+        dto.setPaymentDate(payment.getPaymentDate());
+        dto.setNotes(payment.getNotes());
+        dto.setStatus(payment.getStatus());
+        dto.setCreatedAt(payment.getCreatedAt());
         return dto;
     }
 }

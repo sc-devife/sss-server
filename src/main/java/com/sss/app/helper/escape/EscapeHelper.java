@@ -25,6 +25,7 @@ import com.sss.app.service.assignment.LeadAssignmentService;
 import com.sss.app.service.notification.NotificationService;
 import com.sss.app.util.RichTextSanitizer;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
@@ -34,6 +35,7 @@ import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class EscapeHelper {
 
     private final EscapeRepository escapeRepository;
@@ -85,14 +87,21 @@ public class EscapeHelper {
                 "A new Escape has been created" + (lead != null ? " for " + lead.getName() : "") + ".",
                 NotificationType.RelatedEntityType.ESCAPE, saved.getUid());
 
-        // Assignment happens exactly once, here — leads themselves are never
-        // individually assigned. Gated by the org's own setting (Phase 1),
-        // defaulting to on if no settings row exists yet.
+        // Conversion-time assignment — carries over the source Lead's own
+        // assignment if it already has one (see LeadAssignmentServiceImpl),
+        // otherwise scores fresh. Gated by the org's own setting, defaulting
+        // to on if no settings row exists yet. Best-effort: a failure here
+        // must not turn an otherwise-successful conversion into an error —
+        // the Escape is simply left unassigned for manual pickup.
         boolean autoAssignEnabled = organizationSettingsRepository.findById(saved.getOrgId())
                 .map(OrganizationSettings::getAutoAssignEnabled)
                 .orElse(true);
         if (Boolean.TRUE.equals(autoAssignEnabled)) {
-            leadAssignmentService.autoAssign(saved);
+            try {
+                leadAssignmentService.autoAssign(saved);
+            } catch (Exception e) {
+                log.error("Auto-assignment failed for Escape {} — left unassigned", saved.getUid(), e);
+            }
         }
 
         return saved;

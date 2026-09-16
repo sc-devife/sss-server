@@ -3,6 +3,7 @@ package com.sss.app.helper.itinerary;
 import com.sss.app.dto.itinerary.HotelDetailDTO;
 import com.sss.app.dto.itinerary.HotelInclusionDTO;
 import com.sss.app.dto.itinerary.ItineraryItemCreateRequestDTO;
+import com.sss.app.dto.itinerary.ItineraryItemReorderDaysRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryItemReorderRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryItemUpdateRequestDTO;
 import com.sss.app.dto.itinerary.TransportDetailDTO;
@@ -511,6 +512,40 @@ public class ItineraryItemHelper {
                     .filter(item -> item.getUid().equals(uid))
                     .findFirst()
                     .ifPresent(item -> item.setSortOrder(position));
+        }
+
+        return itineraryItemRepository.saveAll(items);
+    }
+
+    // Moves everything currently on `fromDayNumber` to `toDayNumber`,
+    // shifting every day strictly between them by one to close the gap —
+    // the exact same "remove from position, insert at position" semantics
+    // reorder() above already uses for sort_order, just applied to
+    // day_number instead. sort_order itself is left untouched, so each
+    // item's order within its (new) day is preserved automatically — it
+    // was already only ever compared against other items on the same day.
+    // The date a day shows is always escape.startDate + (dayNumber - 1),
+    // never stored per item, so moving items to a new dayNumber is by
+    // itself exactly "move the day's items to a new date" with no
+    // separate date field to touch.
+    public List<ItineraryItem> reorderDays(ItineraryItemReorderDaysRequestDTO request) {
+        Itinerary itinerary = itineraryHelper.getByUid(request.getItineraryUid());
+        int from = request.getFromDayNumber();
+        int to = request.getToDayNumber();
+        if (from == to) {
+            return itineraryItemRepository.findAllByItinerary_SeqpOrderByDayNumberAscSortOrderAsc(itinerary.getSeqp());
+        }
+
+        List<ItineraryItem> items = itineraryItemRepository.findAllByItinerary_SeqpOrderByDayNumberAscSortOrderAsc(itinerary.getSeqp());
+        for (ItineraryItem item : items) {
+            int day = item.getDayNumber();
+            if (day == from) {
+                item.setDayNumber(to);
+            } else if (from < to && day > from && day <= to) {
+                item.setDayNumber(day - 1);
+            } else if (from > to && day >= to && day < from) {
+                item.setDayNumber(day + 1);
+            }
         }
 
         return itineraryItemRepository.saveAll(items);

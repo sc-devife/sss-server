@@ -1,6 +1,7 @@
 package com.sss.app.service.itinerary.impl;
 
 import com.sss.app.dto.itinerary.ItineraryItemCreateRequestDTO;
+import com.sss.app.dto.itinerary.ItineraryItemReorderDaysRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryItemReorderRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryItemResponseDTO;
 import com.sss.app.dto.itinerary.ItineraryItemUpdateRequestDTO;
@@ -53,6 +54,11 @@ public class ItineraryItemServiceImpl implements ItineraryItemService {
     @Override
     public List<ItineraryItemResponseDTO> reorder(ItineraryItemReorderRequestDTO request) {
         return toResponseList(itineraryItemHelper.reorder(request));
+    }
+
+    @Override
+    public List<ItineraryItemResponseDTO> reorderDays(ItineraryItemReorderDaysRequestDTO request) {
+        return toResponseList(itineraryItemHelper.reorderDays(request));
     }
 
     // Batch-resolves reference labels once per list (one query per RefKind)

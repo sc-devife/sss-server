@@ -50,6 +50,8 @@ public class UserMapper {
         dto.setSpecialistEscapePoints(user.getSpecialistEscapePoints());
         dto.setMaxConcurrentAssignments(user.getMaxConcurrentAssignments());
         dto.setEligibleForPriorityLeads(user.getEligibleForPriorityLeads());
+        dto.setEligibleForLargeGroups(user.getEligibleForLargeGroups());
+        dto.setLanguages(user.getLanguages());
         dto.setAcceptingLeads(user.getAcceptingLeads());
         dto.setBlocked(user.getBlocked());
         dto.setNotificationSoundEnabled(user.getNotificationSoundEnabled());

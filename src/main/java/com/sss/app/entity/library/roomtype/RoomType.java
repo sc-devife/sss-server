@@ -1,22 +1,19 @@
 package com.sss.app.entity.library.roomtype;
 
-import com.sss.app.entity.library.hotel.Hotel;
 import com.sss.app.util.IdGenerator;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 /**
  * Master data entity representing a Room Type (e.g. Deluxe Room, Suite).
- * Shared/reusable across hotels - many-to-many with Hotel.
+ * Shared/reusable across hotels — each hotel's own price for a room type is
+ * held on the join row, see HotelRoomType.
  */
 @Entity
 @Table(name = "room_types")
@@ -42,12 +39,6 @@ public class RoomType {
     @Builder.Default
     @Column(nullable = false)
     private Boolean isActive = true;
-
-    // Excluded: same Hotel<->back-reference recursion risk as Location.hotels.
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    @ManyToMany(mappedBy = "roomTypes")
-    private List<Hotel> hotels;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

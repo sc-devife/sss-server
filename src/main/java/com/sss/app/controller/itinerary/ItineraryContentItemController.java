@@ -2,6 +2,7 @@ package com.sss.app.controller.itinerary;
 
 import com.sss.app.dto.itinerary.ItineraryContentItemAttachRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryContentItemCreateRequestDTO;
+import com.sss.app.dto.itinerary.ItineraryContentItemReorderRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryContentItemResponseDTO;
 import com.sss.app.dto.itinerary.ItineraryContentItemUpdateRequestDTO;
 import com.sss.app.service.itinerary.ItineraryContentItemService;
@@ -51,5 +52,11 @@ public class ItineraryContentItemController {
     public ResponseEntity<Void> delete(@PathVariable UUID uid) {
         itineraryContentItemService.delete(uid);
         return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('trips.write')")
+    @PostMapping("/reorder")
+    public ResponseEntity<List<ItineraryContentItemResponseDTO>> reorder(@Valid @RequestBody ItineraryContentItemReorderRequestDTO request) {
+        return ResponseEntity.ok(itineraryContentItemService.reorder(request));
     }
 }

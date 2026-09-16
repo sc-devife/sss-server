@@ -10,6 +10,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -47,6 +48,9 @@ public class Service {
     private String name; // e.g. "Candle Light Dinner", "Room Decoration"
 
     private String description;
+
+    @Column(precision = 12, scale = 2)
+    private BigDecimal price;
 
     @Builder.Default
     @Column(nullable = false)

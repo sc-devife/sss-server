@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+<body style="margin:0;padding:0;background:#f4f5f7;font-family:Arial,Helvetica,sans-serif;color:#1a222c;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:24px 0;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;">
+          <tr>
+            <td style="background:#0d2645;padding:20px 28px;">
+              <span style="color:#ffffff;font-size:16px;font-weight:700;">{{activityName}}</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px;">
+              <p style="margin:0 0 14px;font-size:14px;">Dear {{recipientName}},</p>
+              <p style="margin:0 0 14px;font-size:14px;line-height:1.6;">
+                Here are your activity booking details{{#tripCode}} for trip <strong>{{tripCode}}</strong>{{/tripCode}} — <strong>{{activityName}}</strong>.
+              </p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;border:1px solid #e5e8ec;border-radius:6px;">
+                {{#startDate}}
+                <tr>
+                  <td style="padding:10px 18px;font-size:13px;color:#4a5666;">Trip Dates</td>
+                  <td style="padding:10px 18px;font-size:13px;text-align:right;font-weight:700;">{{startDate}} to {{endDate}}</td>
+                </tr>
+                {{/startDate}}
+                {{#dayNumber}}
+                <tr>
+                  <td style="padding:10px 18px;font-size:13px;color:#4a5666;border-top:1px dashed #e5e8ec;">Day</td>
+                  <td style="padding:10px 18px;font-size:13px;text-align:right;font-weight:700;border-top:1px dashed #e5e8ec;">Day {{dayNumber}}</td>
+                </tr>
+                {{/dayNumber}}
+                {{#startTime}}
+                <tr>
+                  <td style="padding:10px 18px;font-size:13px;color:#4a5666;border-top:1px dashed #e5e8ec;">Start Time</td>
+                  <td style="padding:10px 18px;font-size:13px;text-align:right;font-weight:700;border-top:1px dashed #e5e8ec;">{{startTime}}</td>
+                </tr>
+                {{/startTime}}
+                {{#travelersCount}}
+                <tr>
+                  <td style="padding:10px 18px;font-size:13px;color:#4a5666;border-top:1px dashed #e5e8ec;">Travelers</td>
+                  <td style="padding:10px 18px;font-size:13px;text-align:right;font-weight:700;border-top:1px dashed #e5e8ec;">{{travelersCount}}</td>
+                </tr>
+                {{/travelersCount}}
+                <tr>
+                  <td style="padding:14px 18px;font-size:13px;color:#4a5666;border-top:1px dashed #e5e8ec;">Total Amount</td>
+                  <td style="padding:14px 18px;font-size:15px;text-align:right;font-weight:800;color:#1f8a4c;border-top:1px dashed #e5e8ec;">&#8377;{{totalAmountFormatted}}</td>
+                </tr>
+              </table>
+              <p style="margin:24px 0 0;font-size:14px;">Looking forward to hosting you!</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

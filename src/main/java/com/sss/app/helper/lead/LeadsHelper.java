@@ -6,9 +6,11 @@ import com.sss.app.entity.integration.meta.LeadSourceMetadata;
 import com.sss.app.entity.lead.Lead;
 import com.sss.app.entity.lead.LeadAgencyDetails;
 import com.sss.app.entity.lead.LeadSourceType;
+import com.sss.app.entity.organizations.OrganizationSettings;
 import com.sss.app.entity.users.User;
 import com.sss.app.exception.NotFoundException;
 import com.sss.app.mapper.lead.LeadMapper;
+import com.sss.app.repository.OrganizationSettingsRepository;
 import com.sss.app.repository.integration.meta.LeadSourceMetadataRepository;
 import com.sss.app.repository.lead.LeadAgencyDetailsRepository;
 import com.sss.app.repository.lead.LeadRepository;
@@ -16,10 +18,12 @@ import com.sss.app.repository.lead.LeadSpecifications;
 import com.sss.app.repository.library.escapepoint.EscapePointRepository;
 import com.sss.app.security.OrgAccessGuard;
 import com.sss.app.entity.notification.NotificationType;
+import com.sss.app.service.assignment.LeadAssignmentService;
 import com.sss.app.service.integration.NormalizedLeadPayload;
 import com.sss.app.service.integration.ProviderLeadMetadata;
 import com.sss.app.service.notification.NotificationService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,6 +40,7 @@ import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class LeadsHelper {
 
     private static final int NOTES_MAX_LENGTH = 500;
@@ -47,9 +52,37 @@ public class LeadsHelper {
     private final LeadSourceMetadataRepository leadSourceMetadataRepository;
     private final LeadAgencyDetailsRepository leadAgencyDetailsRepository;
     private final NotificationService notificationService;
+    private final OrganizationSettingsRepository organizationSettingsRepository;
+    private final LeadAssignmentService leadAssignmentService;
 
     private User currentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    }
+
+    // Same org-level kill switch EscapeHelper.createEscape checks before its
+    // own auto-assign call — one setting governs both intake-time Lead
+    // routing and conversion-time Escape assignment. Defaults to on if no
+    // settings row exists yet.
+    private boolean autoAssignEnabled(Long orgId) {
+        return organizationSettingsRepository.findById(orgId)
+                .map(OrganizationSettings::getAutoAssignEnabled)
+                .orElse(true);
+    }
+
+    // Auto-assignment is a best-effort enhancement on top of Lead creation,
+    // never a precondition for it — a failure here (lock timeout, transient
+    // DB error, etc.) must not turn an otherwise-successful "create lead"
+    // request into an error response. Swallow and log; the Lead is simply
+    // left unassigned for a Lead Assigner to pick up manually.
+    private void tryAutoAssignLead(Lead saved) {
+        if (!autoAssignEnabled(saved.getOrgId())) {
+            return;
+        }
+        try {
+            leadAssignmentService.autoAssignLead(saved);
+        } catch (Exception e) {
+            log.error("Auto-assignment failed for Lead {} — left unassigned", saved.getUid(), e);
+        }
     }
 
     public Lead createLead(LeadCreateRequestDTO payload) {
@@ -83,6 +116,11 @@ public class LeadsHelper {
             leadAgencyDetailsRepository.save(agencyDetails);
         }
 
+        // Routes the Lead to an agent right at intake, before it's ever
+        // converted — see LeadAssignmentService's class doc for why this no
+        // longer waits until conversion.
+        tryAutoAssignLead(saved);
+
         notificationService.notifyUsers(
                 notificationService.resolveOrgManagers(saved.getOrgId()), saved.getOrgId(),
                 NotificationType.LEAD_CREATED, "New Lead",
@@ -114,7 +152,9 @@ public class LeadsHelper {
                 .sourceChannel(channelCode)
                 .sourceRefId(sourceRefId)
                 .build();
-        return leadRepository.save(lead);
+        Lead saved = leadRepository.save(lead);
+        tryAutoAssignLead(saved);
+        return saved;
     }
 
     public record ChannelLeadResult(Lead lead, boolean wasDuplicate) {}
@@ -152,6 +192,7 @@ public class LeadsHelper {
                 .notes(truncateNotes(payload.getNotes()))
                 .build();
         lead = leadRepository.save(lead);
+        tryAutoAssignLead(lead);
 
         if (sourceMetadata != null) {
             LeadSourceMetadata metadata = LeadSourceMetadata.builder()

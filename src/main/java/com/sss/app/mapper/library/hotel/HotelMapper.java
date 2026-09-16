@@ -35,5 +35,10 @@ public interface HotelMapper {
     @Mapping(target = "services", ignore = true)
     void updateEntityFromDto(HotelUpdateRequestDTO dto, @MappingTarget Hotel entity);
 
+    // roomTypes is now a join entity (HotelRoomType) with fields that don't
+    // name-match HotelRoomTypeResponseDTO, so it can't auto-map — wired
+    // manually in HotelServiceImpl after this runs (same reason as the
+    // relations ignored above).
+    @Mapping(target = "roomTypes", ignore = true)
     HotelResponseDTO toResponse(Hotel entity);
 }

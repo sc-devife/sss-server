@@ -25,4 +25,20 @@ public class ActivityUpdateRequestDTO {
     private String status;
 
     private String notes;
+
+    private String email;
+
+    private String accountHolderName;
+
+    private String bankName;
+
+    private String branchName;
+
+    private String accountType;
+
+    private String accountNumber;
+
+    private String ifsc;
+
+    private String upiId;
 }

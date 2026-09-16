@@ -1,7 +1,12 @@
 package com.sss.app.controller.library.hotel;
 
+import com.sss.app.dto.email.SendEmailResponseDTO;
 import com.sss.app.dto.library.hotel.HotelBookingDTO;
+import com.sss.app.dto.library.hotel.HotelBookingEmailPreviewDTO;
+import com.sss.app.dto.library.hotel.HotelBookingEmailSendRequestDTO;
 import com.sss.app.dto.library.hotel.HotelCreateRequestDTO;
+import com.sss.app.dto.library.hotel.HotelPaymentCreateRequestDTO;
+import com.sss.app.dto.library.hotel.HotelPaymentResponseDTO;
 import com.sss.app.dto.library.hotel.HotelPriorityImageRequestDTO;
 import com.sss.app.dto.library.hotel.HotelResponseDTO;
 import com.sss.app.dto.library.hotel.HotelUpdateRequestDTO;
@@ -66,5 +71,38 @@ public class HotelController {
     @GetMapping("/{id}/bookings")
     public ResponseEntity<List<HotelBookingDTO>> getBookings(@PathVariable UUID id) {
         return ResponseEntity.ok(hotelService.getBookings(id));
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('library.write')")
+    @PostMapping("/{id}/bookings/{itineraryItemUid}/mark-booked")
+    public ResponseEntity<HotelBookingDTO> markBooked(@PathVariable UUID id, @PathVariable UUID itineraryItemUid) {
+        return ResponseEntity.ok(hotelService.markBooked(id, itineraryItemUid));
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('library.read')")
+    @GetMapping("/{id}/bookings/{itineraryItemUid}/booking-email-preview")
+    public ResponseEntity<HotelBookingEmailPreviewDTO> getBookingEmailPreview(@PathVariable UUID id, @PathVariable UUID itineraryItemUid) {
+        return ResponseEntity.ok(hotelService.getBookingEmailPreview(id, itineraryItemUid));
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('library.write')")
+    @PostMapping("/{id}/bookings/{itineraryItemUid}/send-email")
+    public ResponseEntity<SendEmailResponseDTO> sendBookingEmail(@PathVariable UUID id, @PathVariable UUID itineraryItemUid,
+                                                                    @RequestBody(required = false) HotelBookingEmailSendRequestDTO dto) {
+        String subject = dto != null ? dto.getSubject() : null;
+        return ResponseEntity.ok(hotelService.sendBookingEmail(id, itineraryItemUid, subject));
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('library.read')")
+    @GetMapping("/{id}/payments")
+    public ResponseEntity<List<HotelPaymentResponseDTO>> getPayments(@PathVariable UUID id) {
+        return ResponseEntity.ok(hotelService.getPayments(id));
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('library.write')")
+    @PostMapping("/{id}/payments")
+    public ResponseEntity<HotelPaymentResponseDTO> createPayment(@PathVariable UUID id,
+                                                                    @Valid @RequestBody HotelPaymentCreateRequestDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(hotelService.createPayment(id, dto));
     }
 }

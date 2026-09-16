@@ -68,6 +68,36 @@ public class Activity extends Auditable {
     @Column
     private String notes;
 
+    // Vendor/supplier email — recipient for the "Send Booking Email"
+    // booking-request flow (see HotelBookingEmailService's Hotel.email
+    // counterpart).
+    @Column
+    private String email;
+
+    // ----- Account tab: this activity vendor's own payout details (bank
+    // account or UPI) — same shape/purpose as Hotel's own Account tab. -----
+    @Column(name = "account_holder_name")
+    private String accountHolderName;
+
+    @Column(name = "bank_name")
+    private String bankName;
+
+    @Column(name = "branch_name")
+    private String branchName;
+
+    // "Savings" or "Current" — plain string, not an enum.
+    @Column(name = "account_type", length = 20)
+    private String accountType;
+
+    @Column(name = "account_number")
+    private String accountNumber;
+
+    @Column(length = 20)
+    private String ifsc;
+
+    @Column(name = "upi_id")
+    private String upiId;
+
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 

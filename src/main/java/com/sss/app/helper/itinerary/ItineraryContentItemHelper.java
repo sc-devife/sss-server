@@ -2,6 +2,7 @@ package com.sss.app.helper.itinerary;
 
 import com.sss.app.dto.itinerary.ItineraryContentItemAttachRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryContentItemCreateRequestDTO;
+import com.sss.app.dto.itinerary.ItineraryContentItemReorderRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryContentItemUpdateRequestDTO;
 import com.sss.app.entity.itinerary.Itinerary;
 import com.sss.app.entity.itinerary.ItineraryContentItem;
@@ -87,6 +88,29 @@ public class ItineraryContentItemHelper {
 
     public void delete(UUID uid) {
         itineraryContentItemRepository.delete(getByUid(uid));
+    }
+
+    // sort_order is one global sequence spanning every type on the
+    // itinerary (Terms/Inclusion/Exclusion combined) — same reason
+    // ItineraryItemHelper.reorder's sort_order spans every day. The caller
+    // is expected to send the FULL cross-type ordered list with only the
+    // one section it actually reordered rearranged (see
+    // ItineraryContentSection's reorder handler), so sections never
+    // interleave and reordering one never disturbs another's order.
+    public List<ItineraryContentItem> reorder(ItineraryContentItemReorderRequestDTO request) {
+        Itinerary itinerary = itineraryHelper.getByUid(request.getItineraryUid());
+        List<ItineraryContentItem> items = itineraryContentItemRepository.findAllByItinerary_SeqpOrderByTypeAscSortOrderAsc(itinerary.getSeqp());
+
+        for (int i = 0; i < request.getOrderedItemUids().size(); i++) {
+            UUID uid = request.getOrderedItemUids().get(i);
+            int position = i;
+            items.stream()
+                    .filter(item -> item.getUid().equals(uid))
+                    .findFirst()
+                    .ifPresent(item -> item.setSortOrder(position));
+        }
+
+        return itineraryContentItemRepository.saveAll(items);
     }
 
     private ItineraryContentItem getByUid(UUID uid) {

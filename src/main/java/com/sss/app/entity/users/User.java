@@ -82,6 +82,20 @@ public class User {
     @Column(name = "eligible_for_priority_leads")
     private Boolean eligibleForPriorityLeads;
 
+    // Assignment-engine gate for large-party leads/escapes (numberOfPeople >
+    // 5) — same "!flag || eligible" filter shape as eligibleForPriorityLeads,
+    // see LeadAssignmentServiceImpl.selectAssignee.
+    @Column(name = "eligible_for_large_groups")
+    private Boolean eligibleForLargeGroups;
+
+    // Agent's spoken languages — same text[] pattern as Lead.languages.
+    // Used to softly narrow assignment candidates toward agents whose
+    // languages overlap the lead's requested languages (falls back to the
+    // full pool when nobody matches, same as destination specialization).
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.ARRAY)
+    @Column(name = "languages", columnDefinition = "text[]")
+    private List<String> languages;
+
     // Section 5 Excel writeup: "Enable/Disable receiving leads temporarily."
     @Builder.Default
     @Column(name = "accepting_leads")

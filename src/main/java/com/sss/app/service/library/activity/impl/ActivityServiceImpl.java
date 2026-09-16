@@ -1,27 +1,40 @@
 package com.sss.app.service.library.activity.impl;
 
+import com.sss.app.dto.email.SendEmailResponseDTO;
+import com.sss.app.dto.itinerary.ItineraryItemUpdateRequestDTO;
 import com.sss.app.dto.library.activity.ActivityBookingDTO;
+import com.sss.app.dto.library.activity.ActivityBookingEmailPreviewDTO;
 import com.sss.app.dto.library.activity.ActivityCreateRequestDTO;
+import com.sss.app.dto.library.activity.ActivityPaymentCreateRequestDTO;
+import com.sss.app.dto.library.activity.ActivityPaymentResponseDTO;
 import com.sss.app.dto.library.activity.ActivityResponseDTO;
 import com.sss.app.dto.library.activity.ActivityUpdateRequestDTO;
 import com.sss.app.entity.escape.Escape;
+import com.sss.app.entity.itinerary.BookingStatus;
 import com.sss.app.entity.itinerary.Itinerary;
 import com.sss.app.entity.itinerary.ItineraryItem;
 import com.sss.app.entity.library.activity.Activity;
+import com.sss.app.entity.library.activity.ActivityPayment;
 import com.sss.app.entity.users.User;
 import com.sss.app.exception.ResourceNotFoundException;
 import com.sss.app.helper.library.activity.ActivityHelper;
 import com.sss.app.mapper.library.activity.ActivityMapper;
+import com.sss.app.repository.escape.EscapeRepository;
 import com.sss.app.repository.itinerary.ItineraryItemRepository;
+import com.sss.app.repository.library.activity.ActivityPaymentRepository;
 import com.sss.app.repository.library.activity.ActivityRepository;
 import com.sss.app.security.OrgAccessGuard;
+import com.sss.app.service.audit.AuditLogService;
+import com.sss.app.service.email.ActivityBookingEmailService;
 import com.sss.app.service.files.CloudinaryService;
+import com.sss.app.service.itinerary.ItineraryItemService;
 import com.sss.app.service.library.activity.ActivityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +51,11 @@ public class ActivityServiceImpl implements ActivityService {
     private final OrgAccessGuard orgAccessGuard;
     private final CloudinaryService cloudinaryService;
     private final ItineraryItemRepository itineraryItemRepository;
+    private final ItineraryItemService itineraryItemService;
+    private final ActivityBookingEmailService activityBookingEmailService;
+    private final ActivityPaymentRepository activityPaymentRepository;
+    private final EscapeRepository escapeRepository;
+    private final AuditLogService auditLogService;
 
     private User currentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -99,19 +117,136 @@ public class ActivityServiceImpl implements ActivityService {
                 .toList();
     }
 
+    // Simpler than Hotel's markBooked: an activity item has no separate
+    // detail table, so status lives directly on ItineraryItem and the
+    // existing update() path (same one the Escape Detail page's own status
+    // control uses) already writes it — audit log + quote recompute happen
+    // automatically inside ItineraryItemHelper.update().
+    @Override
+    public ActivityBookingDTO markBooked(UUID id, UUID itineraryItemUid) {
+        Activity activity = findEntityById(id);
+        ItineraryItem item = findBookingItem(activity, itineraryItemUid);
+
+        ItineraryItemUpdateRequestDTO request = new ItineraryItemUpdateRequestDTO();
+        request.setDayNumber(item.getDayNumber());
+        request.setItemType(item.getItemType());
+        request.setReferenceId(item.getReferenceId());
+        request.setTitle(item.getTitle());
+        request.setStartTime(item.getStartTime());
+        request.setNotes(item.getNotes());
+        request.setLongDescription(item.getLongDescription());
+        request.setPrice(item.getPrice());
+        request.setTravelersCount(item.getTravelersCount());
+        request.setStatus(BookingStatus.BOOKED);
+
+        itineraryItemService.update(item.getUid(), request);
+        return toBookingDTO(item);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ActivityBookingEmailPreviewDTO getBookingEmailPreview(UUID id, UUID itineraryItemUid) {
+        Activity activity = findEntityById(id);
+        ItineraryItem item = findBookingItem(activity, itineraryItemUid);
+        return activityBookingEmailService.buildPreview(activity, item);
+    }
+
+    @Override
+    public SendEmailResponseDTO sendBookingEmail(UUID id, UUID itineraryItemUid, String subject) {
+        Activity activity = findEntityById(id);
+        ItineraryItem item = findBookingItem(activity, itineraryItemUid);
+        return activityBookingEmailService.send(activity, item, subject);
+    }
+
+    private ItineraryItem findBookingItem(Activity activity, UUID itineraryItemUid) {
+        ItineraryItem item = itineraryItemRepository.findByUid(itineraryItemUid)
+                .orElseThrow(() -> new ResourceNotFoundException("ItineraryItem", itineraryItemUid));
+        if (!activity.getUid().equals(item.getReferenceId())) {
+            throw new IllegalArgumentException("Booking does not belong to this activity");
+        }
+        return item;
+    }
+
     private ActivityBookingDTO toBookingDTO(ItineraryItem item) {
         Itinerary itinerary = item.getItinerary();
         Escape escape = itinerary.getEscape();
         return new ActivityBookingDTO(
                 item.getUid(),
                 escape.getUid(),
+                escape.getTripCode(),
                 escape.getStatus(),
                 escape.getStartDate(),
                 escape.getEndDate(),
                 escape.getLead() != null ? escape.getLead().getName() : null,
                 item.getDayNumber(),
                 item.getStartTime(),
-                item.getNotes()
+                item.getNotes(),
+                item.getStatus(),
+                bookingTotalAmount(item)
+        );
+    }
+
+    // Mirrors QuoteComputationServiceImpl's activity-item pricing branch.
+    private BigDecimal bookingTotalAmount(ItineraryItem item) {
+        if (BookingStatus.DROP.equals(item.getStatus())) {
+            return item.getCancellationChargeInr() != null ? item.getCancellationChargeInr() : BigDecimal.ZERO;
+        }
+        if (item.getPrice() == null) {
+            return null;
+        }
+        int travellers = item.getTravelersCount() != null && item.getTravelersCount() > 0 ? item.getTravelersCount() : 1;
+        return item.getPrice().multiply(BigDecimal.valueOf(travellers));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ActivityPaymentResponseDTO> getPayments(UUID id) {
+        Activity activity = findEntityById(id);
+        return activityPaymentRepository.findAllByActivityUid(activity.getUid())
+                .stream()
+                .map(this::toPaymentResponse)
+                .toList();
+    }
+
+    @Override
+    public ActivityPaymentResponseDTO createPayment(UUID id, ActivityPaymentCreateRequestDTO dto) {
+        Activity activity = findEntityById(id);
+        Escape escape = escapeRepository.findByUid(dto.getEscapeUid())
+                .orElseThrow(() -> new ResourceNotFoundException("Escape", dto.getEscapeUid()));
+        orgAccessGuard.requireAccessToOrg(escape.getOrgId());
+
+        ActivityPayment payment = ActivityPayment.builder()
+                .orgId(activity.getOrgId())
+                .activity(activity)
+                .escape(escape)
+                .transactionId(dto.getTransactionId())
+                .paymentMethod(dto.getPaymentMethod())
+                .amount(dto.getAmount())
+                .paidBy(dto.getPaidBy())
+                .paymentDate(dto.getPaymentDate())
+                .notes(dto.getNotes())
+                .build();
+        ActivityPayment saved = activityPaymentRepository.save(payment);
+
+        auditLogService.record("Activity", activity.getSeqp(), "ACTIVITY_PAYMENT_RECORDED", null,
+                dto.getAmount() + " via " + dto.getPaymentMethod() + " for " + escape.getTripCode());
+
+        return toPaymentResponse(saved);
+    }
+
+    private ActivityPaymentResponseDTO toPaymentResponse(ActivityPayment payment) {
+        return new ActivityPaymentResponseDTO(
+                payment.getUid(),
+                payment.getEscape().getUid(),
+                payment.getEscape().getTripCode(),
+                payment.getTransactionId(),
+                payment.getPaymentMethod(),
+                payment.getAmount(),
+                payment.getPaidBy(),
+                payment.getPaymentDate(),
+                payment.getNotes(),
+                payment.getStatus(),
+                payment.getCreatedAt()
         );
     }
 

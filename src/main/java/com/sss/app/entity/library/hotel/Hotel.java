@@ -4,7 +4,6 @@ import com.sss.app.entity.common.Auditable;
 import com.sss.app.entity.library.escapepoint.EscapePoint;
 import com.sss.app.entity.library.location.Location;
 import com.sss.app.entity.library.mealplan.MealPlan;
-import com.sss.app.entity.library.roomtype.RoomType;
 import com.sss.app.entity.library.service.Service;
 import com.sss.app.util.IdGenerator;
 import jakarta.persistence.*;
@@ -102,18 +101,18 @@ public class Hotel extends Auditable {
     @org.hibernate.annotations.BatchSize(size = 50)
     private Set<MealPlan> mealPlans = new HashSet<>();
 
-    // ----- Room Types: ManyToMany (shared master data) -----
+    // ----- Room Types: OneToMany to the join entity, not a plain ManyToMany
+    // — each (Hotel, RoomType) pairing carries its own price/night, since the
+    // same shared RoomType master-data row ("Deluxe Room") can be priced
+    // differently at different hotels. See HotelRoomType. orphanRemoval so
+    // clearing/re-adding this collection (the update pattern used whenever
+    // the whole pricing list is resubmitted) deletes the dropped rows. -----
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "hotel_room_types",
-            joinColumns = @JoinColumn(name = "hotel_id"),
-            inverseJoinColumns = @JoinColumn(name = "room_type_id")
-    )
+    @OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
     @org.hibernate.annotations.BatchSize(size = 50)
-    private Set<RoomType> roomTypes = new HashSet<>();
+    private Set<HotelRoomType> roomTypes = new HashSet<>();
 
     // ----- Services: ManyToMany — hotel-level special add-ons (Candle Light
     // Dinner, Room Decoration, Honeymoon Setup, Birthday Decoration), not
@@ -191,6 +190,34 @@ public class Hotel extends Auditable {
 
     @Column(columnDefinition = "TEXT")
     private String notes;
+
+    // ----- Account tab: this hotel's own payout details (bank account or
+    // UPI), used when the agency settles a booking with the hotel directly —
+    // unrelated to the org-wide OrganizationBankDetails, which is the
+    // agency's own receivable account, not a vendor's. All optional; a
+    // hotel may be paid by bank transfer, UPI, or both. -----
+    @Column(name = "account_holder_name")
+    private String accountHolderName;
+
+    @Column(name = "bank_name")
+    private String bankName;
+
+    @Column(name = "branch_name")
+    private String branchName;
+
+    // "Savings" or "Current" — plain string, not an enum (same free-form
+    // choice as Hotel.status elsewhere on this entity).
+    @Column(name = "account_type", length = 20)
+    private String accountType;
+
+    @Column(name = "account_number")
+    private String accountNumber;
+
+    @Column(length = 20)
+    private String ifsc;
+
+    @Column(name = "upi_id")
+    private String upiId;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;

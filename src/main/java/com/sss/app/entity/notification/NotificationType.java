@@ -4,6 +4,7 @@ public final class NotificationType {
     private NotificationType() {}
 
     public static final String LEAD_CREATED = "LEAD_CREATED";
+    public static final String LEAD_ASSIGNED = "LEAD_ASSIGNED";
     public static final String LEAD_STATUS_CHANGED = "LEAD_STATUS_CHANGED";
     public static final String LEAD_CONVERTED = "LEAD_CONVERTED";
 

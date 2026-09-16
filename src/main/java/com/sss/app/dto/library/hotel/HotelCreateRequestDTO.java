@@ -30,7 +30,11 @@ public class HotelCreateRequestDTO {
 
     private Set<UUID> mealPlanIds;
 
-    private Set<UUID> roomTypeIds;
+    // Repeatable "Room Type + Price/Night" rows — null leaves room types
+    // untouched (n/a on create, since a brand-new hotel starts with none),
+    // an empty list clears them, matching every other relation's
+    // partial-update semantics in HotelHelper.applyRelations.
+    private List<HotelRoomTypePricingRequestDTO> roomTypePricing;
 
     private Set<UUID> serviceIds;
 
@@ -64,4 +68,18 @@ public class HotelCreateRequestDTO {
     private String status;
 
     private String notes;
+
+    private String accountHolderName;
+
+    private String bankName;
+
+    private String branchName;
+
+    private String accountType;
+
+    private String accountNumber;
+
+    private String ifsc;
+
+    private String upiId;
 }

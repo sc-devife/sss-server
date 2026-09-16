@@ -5,7 +5,6 @@ import com.sss.app.dto.library.service.ServiceResponseDTO;
 import com.sss.app.dto.library.escapepoint.EscapePointResponseDto;
 import com.sss.app.dto.library.location.LocationResponseDTO;
 import com.sss.app.dto.library.mealplan.MealPlanResponseDTO;
-import com.sss.app.dto.library.roomtype.RoomTypeResponseDTO;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -32,7 +31,7 @@ public class HotelResponseDTO {
 
     private Set<MealPlanResponseDTO> mealPlans;
 
-    private Set<RoomTypeResponseDTO> roomTypes;
+    private List<HotelRoomTypeResponseDTO> roomTypes;
 
     private Set<ServiceResponseDTO> services;
 
@@ -71,6 +70,20 @@ public class HotelResponseDTO {
     private String status;
 
     private String notes;
+
+    private String accountHolderName;
+
+    private String bankName;
+
+    private String branchName;
+
+    private String accountType;
+
+    private String accountNumber;
+
+    private String ifsc;
+
+    private String upiId;
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;

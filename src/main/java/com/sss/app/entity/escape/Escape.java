@@ -42,10 +42,13 @@ public class Escape extends Auditable {
     @JoinColumn(name = "lead_id", nullable = false) //rename
     private Lead lead;
 
-    // Assignment lives here, not on Lead — decided once, by the assignment
-    // engine, at the moment a lead is converted (see EscapeHelper.createEscape
-    // and LeadAssignmentService). Never inherited from Lead.assignedToUserId,
-    // which no longer exists — leads are never individually assigned.
+    // Set by the assignment engine at conversion time (see
+    // EscapeHelper.createEscape / LeadAssignmentServiceImpl.autoAssign). If
+    // the source Lead already carries its own assignment (Lead.
+    // assignedToUserId, set by autoAssignLead at intake), that's carried
+    // over as-is instead of re-running the engine, so the same agent keeps
+    // the deal from lead through conversion; otherwise the engine picks
+    // fresh here, same as before Lead-level routing existed.
     @Column(name = "assigned_to_user_id")
     private Long assignedToUserId;
 

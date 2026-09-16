@@ -1,11 +1,14 @@
 package com.sss.app.helper.library.hotel;
 
+import com.sss.app.dto.library.hotel.HotelRoomTypePricingRequestDTO;
 import com.sss.app.entity.library.escapepoint.EscapePoint;
 import com.sss.app.entity.library.hotel.Hotel;
+import com.sss.app.entity.library.hotel.HotelRoomType;
 import com.sss.app.entity.library.location.Location;
 import com.sss.app.entity.library.mealplan.MealPlan;
 import com.sss.app.entity.library.roomtype.RoomType;
 import com.sss.app.entity.library.service.Service;
+import com.sss.app.exception.BadRequestException;
 import com.sss.app.exception.ResourceNotFoundException;
 import com.sss.app.repository.library.escapepoint.EscapePointRepository;
 import com.sss.app.repository.library.location.LocationRepository;
@@ -16,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -62,13 +66,49 @@ public class HotelHelper {
         return mealPlans;
     }
 
-    public Set<RoomType> resolveRoomTypes(Set<UUID> roomTypeIds) {
-        if (roomTypeIds == null || roomTypeIds.isEmpty()) {
-            return new HashSet<>();
+    // Reconciles the hotel's room-type pricing list against what was
+    // submitted: updates the price on pairs that are kept, removes pairs
+    // that were dropped, adds pairs that are new. Deliberately NOT a
+    // clear()-then-re-add of the whole collection — for a
+    // cascade="all-delete-orphan" collection with a (hotel_id, room_type_id)
+    // unique constraint, clearing and immediately re-inserting the same
+    // pair within one flush can violate that constraint (Hibernate doesn't
+    // guarantee the DELETE for the cleared row lands before the INSERT for
+    // its replacement), so unchanged/kept pairs must be mutated in place
+    // instead of being deleted and recreated.
+    public void applyRoomTypePricing(Hotel hotel, List<HotelRoomTypePricingRequestDTO> pricing) {
+        Set<UUID> requestedIds = new HashSet<>();
+        for (HotelRoomTypePricingRequestDTO row : pricing) {
+            if (!requestedIds.add(row.getRoomTypeId())) {
+                throw new BadRequestException("The same room type was added more than once");
+            }
         }
-        Set<RoomType> roomTypes = new HashSet<>(roomTypeRepository.findAllByUidIn(roomTypeIds));
-        validateAllFound(roomTypeIds, roomTypes.size(), "RoomType");
-        return roomTypes;
+
+        Set<RoomType> roomTypes = requestedIds.isEmpty()
+                ? new HashSet<>()
+                : new HashSet<>(roomTypeRepository.findAllByUidIn(requestedIds));
+        validateAllFound(requestedIds, roomTypes.size(), "RoomType");
+        java.util.Map<UUID, RoomType> roomTypeByUid = new java.util.HashMap<>();
+        roomTypes.forEach(rt -> roomTypeByUid.put(rt.getUid(), rt));
+
+        Set<HotelRoomType> current = hotel.getRoomTypes();
+        java.util.Map<UUID, HotelRoomType> currentByRoomTypeUid = new java.util.HashMap<>();
+        current.forEach(hrt -> currentByRoomTypeUid.put(hrt.getRoomType().getUid(), hrt));
+
+        current.removeIf(hrt -> !requestedIds.contains(hrt.getRoomType().getUid()));
+
+        for (HotelRoomTypePricingRequestDTO row : pricing) {
+            HotelRoomType existing = currentByRoomTypeUid.get(row.getRoomTypeId());
+            if (existing != null) {
+                existing.setPrice(row.getPrice());
+            } else {
+                current.add(HotelRoomType.builder()
+                        .hotel(hotel)
+                        .roomType(roomTypeByUid.get(row.getRoomTypeId()))
+                        .price(row.getPrice())
+                        .build());
+            }
+        }
     }
 
     public Set<Service> resolveServices(Set<UUID> serviceIds) {
@@ -89,7 +129,7 @@ public class HotelHelper {
                                 String escapePointId,
                                 Set<String> escapePointIds,
                                 Set<UUID> mealPlanIds,
-                                Set<UUID> roomTypeIds,
+                                List<HotelRoomTypePricingRequestDTO> roomTypePricing,
                                 Set<UUID> serviceIds) {
         if (locationId != null) {
             hotel.setLocation(resolveLocation(locationId));
@@ -103,8 +143,8 @@ public class HotelHelper {
         if (mealPlanIds != null) {
             hotel.setMealPlans(resolveMealPlans(mealPlanIds));
         }
-        if (roomTypeIds != null) {
-            hotel.setRoomTypes(resolveRoomTypes(roomTypeIds));
+        if (roomTypePricing != null) {
+            applyRoomTypePricing(hotel, roomTypePricing);
         }
         if (serviceIds != null) {
             hotel.setServices(resolveServices(serviceIds));
