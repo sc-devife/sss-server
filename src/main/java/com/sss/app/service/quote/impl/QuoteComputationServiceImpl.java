@@ -213,6 +213,21 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
                 return ItemPriceResult.of(activity.getBasePrice().multiply(travellersMultiplier));
             }
             case "transport" -> {
+                // Same rule as a dropped hotel/activity (see those branches
+                // below/above): once Drop, this item is no longer priced as
+                // an active booking — its only contribution is whatever
+                // cancellation charge was actually levied (zero if none was
+                // entered), regardless of the original transport price.
+                // Transport has no dedicated detail-level status column (see
+                // ItineraryItemTransportDetail) — it uses the same base
+                // ItineraryItem.status/cancellationChargeInr fields Activity
+                // already relies on for the same reason.
+                if (BookingStatus.DROP.equals(item.getStatus())) {
+                    BigDecimal charge = item.getCancellationChargeInr() != null
+                            ? item.getCancellationChargeInr()
+                            : BigDecimal.ZERO;
+                    return new ItemPriceResult(charge, true);
+                }
                 ItineraryItemTransportDetail detail = transportDetailRepository.findByItineraryItem_Seqp(item.getSeqp()).orElse(null);
                 BigDecimal detailPrice = resolveTransportDetailPrice(detail);
                 if (detailPrice != null) {

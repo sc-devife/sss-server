@@ -7,6 +7,7 @@ import com.sss.app.entity.notification.NotificationType;
 import com.sss.app.exception.BadRequestException;
 import com.sss.app.exception.ConflictException;
 import com.sss.app.helper.escape.EscapeHelper;
+import com.sss.app.helper.itinerary.ItineraryItemHelper;
 import com.sss.app.mapper.escape.EscapeMapper;
 import com.sss.app.repository.escape.EscapeRepository;
 import com.sss.app.service.audit.AuditLogService;
@@ -27,6 +28,13 @@ public class EscapeLifecycleServiceImpl implements EscapeLifecycleService {
 
     private static final String ENTITY_TYPE = "Escape";
 
+    // Section P0-2 — the dropping reason auto-applied to every still-active
+    // Hotel/Activity/Transport booking cascaded by cancel(), below. Not the
+    // Escape's own cancellation reason (that's a separate free-text the user
+    // enters and is already recorded on the Escape's own audit entry) —
+    // deliberately a fixed, generic string per the audit's own example.
+    private static final String ESCAPE_CANCELLED_DROP_REASON = "Escape cancelled";
+
     // Suppressed here — the caller (DealHelper.acceptQuote / PaymentMilestoneHelper's
     // verify flow) already sends a more specific notification for these three
     // transitions; a generic "status changed" alongside it would be noise.
@@ -38,6 +46,7 @@ public class EscapeLifecycleServiceImpl implements EscapeLifecycleService {
     private final EscapeMapper escapeMapper;
     private final AuditLogService auditLogService;
     private final NotificationService notificationService;
+    private final ItineraryItemHelper itineraryItemHelper;
 
     @Override
     public EscapeResponseDTO advance(UUID escapeId, String targetStatus) {
@@ -103,6 +112,15 @@ public class EscapeLifecycleServiceImpl implements EscapeLifecycleService {
         escape.setStatus(EscapeStatus.CANCELLED);
         Escape saved = escapeRepository.save(escape);
         auditLogService.record(ENTITY_TYPE, escape.getSeqp(), "CANCELLED", previousStatus, reason);
+
+        // Cascade (Section P0-2): any still-active (Initialize/Booked)
+        // Hotel/Activity/Transport booking is dropped through the exact same
+        // mechanism a user would trigger themselves — same audit trail, same
+        // "left visible, never deleted" rule, same quote recompute. Runs in
+        // this same @Transactional method, so a failure here rolls back the
+        // status change above too, rather than leaving some bookings dropped
+        // and the Escape only half-cancelled.
+        itineraryItemHelper.dropActiveBookingsForEscape(saved, ESCAPE_CANCELLED_DROP_REASON);
 
         Long recipient = notificationService.resolveEscapeRecipient(saved);
         String message = "Escape " + safeTripCode(saved) + " has been cancelled.";

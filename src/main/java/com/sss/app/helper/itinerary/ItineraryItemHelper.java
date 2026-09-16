@@ -26,6 +26,7 @@ import com.sss.app.exception.NotFoundException;
 import com.sss.app.repository.itinerary.ItineraryItemHotelDetailRepository;
 import com.sss.app.repository.itinerary.ItineraryItemHotelInclusionRepository;
 import com.sss.app.repository.itinerary.ItineraryItemRepository;
+import com.sss.app.repository.itinerary.ItineraryRepository;
 import com.sss.app.repository.itinerary.ItineraryItemTransportDetailRepository;
 import com.sss.app.repository.itinerary.ItineraryItemTransportLegRepository;
 import com.sss.app.repository.library.activity.ActivityRepository;
@@ -77,6 +78,7 @@ public class ItineraryItemHelper {
             "free_time", RefKind.NONE);
 
     private final ItineraryItemRepository itineraryItemRepository;
+    private final ItineraryRepository itineraryRepository;
     private final ItineraryHelper itineraryHelper;
     private final HotelRepository hotelRepository;
     private final ActivityRepository activityRepository;
@@ -400,7 +402,11 @@ public class ItineraryItemHelper {
     }
 
     private void recomputeQuotesForItinerary(ItineraryItem item) {
-        List<Quote> quotes = quoteRepository.findAllByOrgIdAndItinerary_Seqp(item.getOrgId(), item.getItinerary().getSeqp());
+        recomputeQuotesForItinerary(item.getOrgId(), item.getItinerary().getSeqp());
+    }
+
+    private void recomputeQuotesForItinerary(Long orgId, Long itinerarySeqp) {
+        List<Quote> quotes = quoteRepository.findAllByOrgIdAndItinerary_Seqp(orgId, itinerarySeqp);
         for (Quote quote : quotes) {
             QuoteComputeRequestDTO request = new QuoteComputeRequestDTO();
             request.setTaxProfileUid(quote.getTaxProfileId());
@@ -411,6 +417,81 @@ public class ItineraryItemHelper {
             request.setFxRateSnapshot(quote.getFxRateSnapshot());
             quoteComputationService.compute(quote.getUid(), request);
         }
+    }
+
+    /**
+     * Escape-cancellation cascade (Section P0-2): drops every still-active
+     * (Initialize/Booked) Hotel/Activity/Transport booking across all of the
+     * Escape's itineraries, using exactly the same Drop mechanism a user
+     * triggers themselves — same audit entries (recordHotelStatusChange /
+     * recordItemStatusChange), same "left visible, never deleted" rule, same
+     * quote-recompute hook, just batched once per itinerary instead of once
+     * per item. Already-Drop bookings are left untouched (no redundant audit
+     * entry). Runs inside the caller's transaction (EscapeLifecycleServiceImpl.cancel()
+     * is @Transactional), so a failure here rolls back the whole cancellation
+     * rather than leaving some bookings dropped and others not.
+     *
+     * <p>Deliberately does not introduce a new "Cancelled" booking status —
+     * the vocabulary stays Initialize/Booked/Drop, per the audit's explicit
+     * instruction to reuse Drop rather than add a parallel concept.
+     *
+     * @return true if at least one booking was actually dropped.
+     */
+    public boolean dropActiveBookingsForEscape(Escape escape, String droppingReason) {
+        List<Itinerary> itineraries = itineraryRepository.findAllByOrgIdAndEscape_Seqp(escape.getOrgId(), escape.getSeqp());
+        boolean anyDropped = false;
+        for (Itinerary itinerary : itineraries) {
+            List<ItineraryItem> items = itineraryItemRepository.findAllByItinerary_SeqpOrderByDayNumberAscSortOrderAsc(itinerary.getSeqp());
+            boolean changedInItinerary = false;
+            for (ItineraryItem item : items) {
+                boolean changed = switch (item.getItemType()) {
+                    case "hotel" -> dropHotelForCascade(item, droppingReason);
+                    case "activity", "transport" -> dropItemForCascade(item, droppingReason);
+                    default -> false;
+                };
+                changedInItinerary = changedInItinerary || changed;
+            }
+            if (changedInItinerary) {
+                recomputeQuotesForItinerary(escape.getOrgId(), itinerary.getSeqp());
+            }
+            anyDropped = anyDropped || changedInItinerary;
+        }
+        return anyDropped;
+    }
+
+    // Same write + audit shape as the user-driven Drop path in
+    // saveHotelDetail(), minus the "must supply a reason" validation (the
+    // caller already supplies one) and minus touching any of the normal
+    // booking fields (room type, occupancy, price, inclusions) — those stay
+    // exactly as they were, same as a manual Drop. Existing
+    // cancellationChargeInr (if the booking already had one recorded) is
+    // preserved as-is; a cascade drop never invents a new charge.
+    private boolean dropHotelForCascade(ItineraryItem item, String droppingReason) {
+        ItineraryItemHotelDetail detail = hotelDetailRepository.findByItineraryItem_Seqp(item.getSeqp()).orElse(null);
+        if (detail == null || BookingStatus.DROP.equals(detail.getStatus())) {
+            return false;
+        }
+        String previousStatus = detail.getStatus();
+        detail.setStatus(BookingStatus.DROP);
+        detail.setDroppingReason(droppingReason);
+        hotelDetailRepository.save(detail);
+        recordHotelStatusChange(item, detail, previousStatus);
+        return true;
+    }
+
+    // Same shape for Activity/Transport, which share the base ItineraryItem
+    // status/droppingReason/cancellationChargeInr fields instead of a
+    // dedicated detail table.
+    private boolean dropItemForCascade(ItineraryItem item, String droppingReason) {
+        if (BookingStatus.DROP.equals(item.getStatus())) {
+            return false;
+        }
+        String previousStatus = item.getStatus();
+        item.setStatus(BookingStatus.DROP);
+        item.setDroppingReason(droppingReason);
+        itineraryItemRepository.save(item);
+        recordItemStatusChange(item, previousStatus);
+        return true;
     }
 
     /**
