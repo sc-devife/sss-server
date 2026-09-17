@@ -1,11 +1,13 @@
 package com.sss.app.service.itinerary.impl;
 
+import com.sss.app.dto.email.SendEmailResponseDTO;
 import com.sss.app.dto.itinerary.ItineraryItemCreateRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryItemReorderDaysRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryItemReorderRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryItemReplaceRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryItemResponseDTO;
 import com.sss.app.dto.itinerary.ItineraryItemUpdateRequestDTO;
+import com.sss.app.dto.library.transport.TransportCancellationEmailPreviewDTO;
 import com.sss.app.entity.itinerary.ItineraryItem;
 import com.sss.app.helper.itinerary.ItineraryItemHelper;
 import com.sss.app.service.itinerary.ItineraryItemService;
@@ -66,6 +68,16 @@ public class ItineraryItemServiceImpl implements ItineraryItemService {
     public ItineraryItemResponseDTO replaceHotel(UUID uid, ItineraryItemReplaceRequestDTO request) {
         ItineraryItem item = itineraryItemHelper.replaceHotel(uid, request);
         return toResponse(item, itineraryItemHelper.resolveLabel(item));
+    }
+
+    @Override
+    public TransportCancellationEmailPreviewDTO getTransportCancellationEmailPreview(UUID uid) {
+        return itineraryItemHelper.getTransportCancellationEmailPreview(uid);
+    }
+
+    @Override
+    public SendEmailResponseDTO sendTransportCancellationEmail(UUID uid, String subject) {
+        return itineraryItemHelper.sendTransportCancellationEmail(uid, subject);
     }
 
     // Batch-resolves reference labels once per list (one query per RefKind)

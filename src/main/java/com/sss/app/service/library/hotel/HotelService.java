@@ -33,7 +33,11 @@ public interface HotelService {
 
     HotelBookingEmailPreviewDTO getBookingEmailPreview(UUID id, UUID itineraryItemUid);
 
+    HotelBookingEmailPreviewDTO getCancellationEmailPreview(UUID id, UUID itineraryItemUid);
+
     SendEmailResponseDTO sendBookingEmail(UUID id, UUID itineraryItemUid, String subject);
+
+    SendEmailResponseDTO sendCancellationEmail(UUID id, UUID itineraryItemUid, String subject);
 
     List<HotelPaymentResponseDTO> getPayments(UUID id);
 

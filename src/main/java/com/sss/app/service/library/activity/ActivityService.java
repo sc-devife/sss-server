@@ -29,7 +29,11 @@ public interface ActivityService {
 
     ActivityBookingEmailPreviewDTO getBookingEmailPreview(UUID id, UUID itineraryItemUid);
 
+    ActivityBookingEmailPreviewDTO getCancellationEmailPreview(UUID id, UUID itineraryItemUid);
+
     SendEmailResponseDTO sendBookingEmail(UUID id, UUID itineraryItemUid, String subject);
+
+    SendEmailResponseDTO sendCancellationEmail(UUID id, UUID itineraryItemUid, String subject);
 
     List<ActivityPaymentResponseDTO> getPayments(UUID id);
 

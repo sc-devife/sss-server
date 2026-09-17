@@ -94,6 +94,20 @@ public class HotelController {
     }
 
     @PreAuthorize("@permissionService.hasPermission('library.read')")
+    @GetMapping("/{id}/bookings/{itineraryItemUid}/cancellation-email-preview")
+    public ResponseEntity<HotelBookingEmailPreviewDTO> getCancellationEmailPreview(@PathVariable UUID id, @PathVariable UUID itineraryItemUid) {
+        return ResponseEntity.ok(hotelService.getCancellationEmailPreview(id, itineraryItemUid));
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('library.write')")
+    @PostMapping("/{id}/bookings/{itineraryItemUid}/send-cancellation-email")
+    public ResponseEntity<SendEmailResponseDTO> sendCancellationEmail(@PathVariable UUID id, @PathVariable UUID itineraryItemUid,
+                                                                    @RequestBody(required = false) HotelBookingEmailSendRequestDTO dto) {
+        String subject = dto != null ? dto.getSubject() : null;
+        return ResponseEntity.ok(hotelService.sendCancellationEmail(id, itineraryItemUid, subject));
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('library.read')")
     @GetMapping("/{id}/payments")
     public ResponseEntity<List<HotelPaymentResponseDTO>> getPayments(@PathVariable UUID id) {
         return ResponseEntity.ok(hotelService.getPayments(id));

@@ -5,10 +5,12 @@ import com.sss.app.dto.itinerary.HotelInclusionDTO;
 import com.sss.app.dto.itinerary.ItineraryItemCreateRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryItemReorderDaysRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryItemReorderRequestDTO;
+import com.sss.app.dto.email.SendEmailResponseDTO;
 import com.sss.app.dto.itinerary.ItineraryItemReplaceRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryItemUpdateRequestDTO;
 import com.sss.app.dto.itinerary.TransportDetailDTO;
 import com.sss.app.dto.itinerary.TransportLegDTO;
+import com.sss.app.dto.library.transport.TransportCancellationEmailPreviewDTO;
 import com.sss.app.dto.quote.QuoteComputeRequestDTO;
 import com.sss.app.entity.escape.Escape;
 import com.sss.app.entity.itinerary.BookingStatus;
@@ -20,6 +22,7 @@ import com.sss.app.entity.itinerary.ItineraryItemTransportDetail;
 import com.sss.app.entity.itinerary.ItineraryItemTransportLeg;
 import com.sss.app.entity.library.mealplan.MealPlan;
 import com.sss.app.entity.library.roomtype.RoomType;
+import com.sss.app.entity.library.transport.Transport;
 import com.sss.app.entity.quote.Quote;
 import com.sss.app.entity.users.User;
 import com.sss.app.exception.BadRequestException;
@@ -39,6 +42,7 @@ import com.sss.app.repository.library.transport.TransportRepository;
 import com.sss.app.repository.quote.QuoteRepository;
 import com.sss.app.security.OrgAccessGuard;
 import com.sss.app.service.audit.AuditLogService;
+import com.sss.app.service.email.TransportCancellationEmailService;
 import com.sss.app.service.quote.QuoteComputationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -95,6 +99,7 @@ public class ItineraryItemHelper {
     private final AuditLogService auditLogService;
     private final QuoteRepository quoteRepository;
     private final QuoteComputationService quoteComputationService;
+    private final TransportCancellationEmailService transportCancellationEmailService;
 
     private User currentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -166,6 +171,35 @@ public class ItineraryItemHelper {
         auditLogService.record("Escape", oldItem.getItinerary().getEscape().getSeqp(), "HOTEL_REPLACED",
                 oldItem.getUid().toString(), saved.getUid().toString());
         return saved;
+    }
+
+    // Transport's Supplier Cancellation Email — mirrors Hotel/Activity's own
+    // booking-email preview/send pair, but item-scoped rather than
+    // vendor-scoped: Transport has no library-entity detail page of its own
+    // to trigger this from (unlike Hotel/Activity's Bookings tab), so it's
+    // triggered from the Escape Planning tab instead, keyed by the itinerary
+    // item directly. See TransportCancellationEmailService.
+    public TransportCancellationEmailPreviewDTO getTransportCancellationEmailPreview(UUID uid) {
+        ItineraryItem item = getByUid(uid);
+        Transport transport = resolveTransportForCancellation(item);
+        return transportCancellationEmailService.buildPreview(transport, item);
+    }
+
+    public SendEmailResponseDTO sendTransportCancellationEmail(UUID uid, String subject) {
+        ItineraryItem item = getByUid(uid);
+        Transport transport = resolveTransportForCancellation(item);
+        return transportCancellationEmailService.send(transport, item, subject);
+    }
+
+    private Transport resolveTransportForCancellation(ItineraryItem item) {
+        if (!"transport".equals(item.getItemType()) && !"pickup_drop".equals(item.getItemType())) {
+            throw new BadRequestException("Only transport items can send a cancellation email");
+        }
+        if (item.getReferenceId() == null) {
+            throw new BadRequestException("This transport item isn't linked to a library vendor to email");
+        }
+        return transportRepository.findByUid(item.getReferenceId())
+                .orElseThrow(() -> new NotFoundException("Transport not found"));
     }
 
     public List<ItineraryItem> getAllForItinerary(UUID itineraryUid) {

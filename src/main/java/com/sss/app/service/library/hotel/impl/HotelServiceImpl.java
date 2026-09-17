@@ -36,6 +36,7 @@ import com.sss.app.repository.library.hotel.HotelRepository;
 import com.sss.app.security.OrgAccessGuard;
 import com.sss.app.service.audit.AuditLogService;
 import com.sss.app.service.email.HotelBookingEmailService;
+import com.sss.app.service.email.HotelCancellationEmailService;
 import com.sss.app.service.files.CloudinaryService;
 import com.sss.app.service.itinerary.ItineraryItemService;
 import com.sss.app.service.library.hotel.HotelService;
@@ -64,6 +65,7 @@ public class HotelServiceImpl implements HotelService {
     private final ItineraryItemHotelDetailRepository hotelDetailRepository;
     private final ItineraryItemHotelInclusionRepository hotelInclusionRepository;
     private final HotelBookingEmailService hotelBookingEmailService;
+    private final HotelCancellationEmailService hotelCancellationEmailService;
     private final ItineraryItemHelper itineraryItemHelper;
     private final ItineraryItemService itineraryItemService;
     private final HotelPaymentRepository hotelPaymentRepository;
@@ -239,6 +241,20 @@ public class HotelServiceImpl implements HotelService {
         Hotel hotel = findEntityById(id);
         ItineraryItem item = findBookingItem(hotel, itineraryItemUid);
         return hotelBookingEmailService.send(hotel, item, subject);
+    }
+
+    @Override
+    public HotelBookingEmailPreviewDTO getCancellationEmailPreview(UUID id, UUID itineraryItemUid) {
+        Hotel hotel = findEntityById(id);
+        ItineraryItem item = findBookingItem(hotel, itineraryItemUid);
+        return hotelCancellationEmailService.buildPreview(hotel, item);
+    }
+
+    @Override
+    public SendEmailResponseDTO sendCancellationEmail(UUID id, UUID itineraryItemUid, String subject) {
+        Hotel hotel = findEntityById(id);
+        ItineraryItem item = findBookingItem(hotel, itineraryItemUid);
+        return hotelCancellationEmailService.send(hotel, item, subject);
     }
 
     private ItineraryItem findBookingItem(Hotel hotel, UUID itineraryItemUid) {

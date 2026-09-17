@@ -2,10 +2,13 @@ package com.sss.app.controller.itinerary;
 
 import com.sss.app.dto.itinerary.ItineraryItemCreateRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryItemReorderDaysRequestDTO;
+import com.sss.app.dto.email.SendEmailResponseDTO;
 import com.sss.app.dto.itinerary.ItineraryItemReorderRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryItemReplaceRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryItemResponseDTO;
 import com.sss.app.dto.itinerary.ItineraryItemUpdateRequestDTO;
+import com.sss.app.dto.library.transport.TransportCancellationEmailPreviewDTO;
+import com.sss.app.dto.library.transport.TransportCancellationEmailSendRequestDTO;
 import com.sss.app.service.itinerary.ItineraryItemService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -65,5 +68,19 @@ public class ItineraryItemController {
     @PostMapping("/{uid}/replace")
     public ResponseEntity<ItineraryItemResponseDTO> replaceHotel(@PathVariable UUID uid, @Valid @RequestBody ItineraryItemReplaceRequestDTO request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(itineraryItemService.replaceHotel(uid, request));
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('trips.read')")
+    @GetMapping("/{uid}/cancellation-email-preview")
+    public ResponseEntity<TransportCancellationEmailPreviewDTO> getCancellationEmailPreview(@PathVariable UUID uid) {
+        return ResponseEntity.ok(itineraryItemService.getTransportCancellationEmailPreview(uid));
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('trips.write')")
+    @PostMapping("/{uid}/send-cancellation-email")
+    public ResponseEntity<SendEmailResponseDTO> sendCancellationEmail(@PathVariable UUID uid,
+                                                                       @RequestBody(required = false) TransportCancellationEmailSendRequestDTO dto) {
+        String subject = dto != null ? dto.getSubject() : null;
+        return ResponseEntity.ok(itineraryItemService.sendTransportCancellationEmail(uid, subject));
     }
 }

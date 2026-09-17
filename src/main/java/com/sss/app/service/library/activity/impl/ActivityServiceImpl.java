@@ -26,6 +26,7 @@ import com.sss.app.repository.library.activity.ActivityRepository;
 import com.sss.app.security.OrgAccessGuard;
 import com.sss.app.service.audit.AuditLogService;
 import com.sss.app.service.email.ActivityBookingEmailService;
+import com.sss.app.service.email.ActivityCancellationEmailService;
 import com.sss.app.service.files.CloudinaryService;
 import com.sss.app.service.itinerary.ItineraryItemService;
 import com.sss.app.service.library.activity.ActivityService;
@@ -53,6 +54,7 @@ public class ActivityServiceImpl implements ActivityService {
     private final ItineraryItemRepository itineraryItemRepository;
     private final ItineraryItemService itineraryItemService;
     private final ActivityBookingEmailService activityBookingEmailService;
+    private final ActivityCancellationEmailService activityCancellationEmailService;
     private final ActivityPaymentRepository activityPaymentRepository;
     private final EscapeRepository escapeRepository;
     private final AuditLogService auditLogService;
@@ -156,6 +158,20 @@ public class ActivityServiceImpl implements ActivityService {
         Activity activity = findEntityById(id);
         ItineraryItem item = findBookingItem(activity, itineraryItemUid);
         return activityBookingEmailService.send(activity, item, subject);
+    }
+
+    @Override
+    public ActivityBookingEmailPreviewDTO getCancellationEmailPreview(UUID id, UUID itineraryItemUid) {
+        Activity activity = findEntityById(id);
+        ItineraryItem item = findBookingItem(activity, itineraryItemUid);
+        return activityCancellationEmailService.buildPreview(activity, item);
+    }
+
+    @Override
+    public SendEmailResponseDTO sendCancellationEmail(UUID id, UUID itineraryItemUid, String subject) {
+        Activity activity = findEntityById(id);
+        ItineraryItem item = findBookingItem(activity, itineraryItemUid);
+        return activityCancellationEmailService.send(activity, item, subject);
     }
 
     private ItineraryItem findBookingItem(Activity activity, UUID itineraryItemUid) {
