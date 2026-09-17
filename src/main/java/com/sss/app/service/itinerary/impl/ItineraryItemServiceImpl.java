@@ -3,6 +3,7 @@ package com.sss.app.service.itinerary.impl;
 import com.sss.app.dto.itinerary.ItineraryItemCreateRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryItemReorderDaysRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryItemReorderRequestDTO;
+import com.sss.app.dto.itinerary.ItineraryItemReplaceRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryItemResponseDTO;
 import com.sss.app.dto.itinerary.ItineraryItemUpdateRequestDTO;
 import com.sss.app.entity.itinerary.ItineraryItem;
@@ -61,6 +62,12 @@ public class ItineraryItemServiceImpl implements ItineraryItemService {
         return toResponseList(itineraryItemHelper.reorderDays(request));
     }
 
+    @Override
+    public ItineraryItemResponseDTO replaceHotel(UUID uid, ItineraryItemReplaceRequestDTO request) {
+        ItineraryItem item = itineraryItemHelper.replaceHotel(uid, request);
+        return toResponse(item, itineraryItemHelper.resolveLabel(item));
+    }
+
     // Batch-resolves reference labels once per list (one query per RefKind)
     // instead of once per item — see ItineraryItemHelper.resolveLabels. Keyed
     // by item uid, not referenceId, since ad-hoc items (no referenceId) still
@@ -89,6 +96,7 @@ public class ItineraryItemServiceImpl implements ItineraryItemService {
         dto.setStatus(item.getStatus());
         dto.setDroppingReason(item.getDroppingReason());
         dto.setCancellationCharge(item.getCancellationChargeInr());
+        dto.setReplacesItemUid(item.getReplacesItem() != null ? item.getReplacesItem().getUid() : null);
         if (TRANSPORT_ITEM_TYPES.contains(item.getItemType())) {
             dto.setTransportDetail(itineraryItemHelper.getTransportDetail(item));
         }

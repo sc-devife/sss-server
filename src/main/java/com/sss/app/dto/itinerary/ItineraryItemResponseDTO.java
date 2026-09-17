@@ -30,4 +30,8 @@ public class ItineraryItemResponseDTO {
     private String status;
     private String droppingReason;
     private BigDecimal cancellationCharge;
+
+    // Set only on a hotel item created by the Change/Replace Hotel flow —
+    // the (now Dropped) hotel item it replaces. See ItineraryItem.replacesItem.
+    private UUID replacesItemUid;
 }

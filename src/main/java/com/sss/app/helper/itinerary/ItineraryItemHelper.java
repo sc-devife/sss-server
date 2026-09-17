@@ -5,6 +5,7 @@ import com.sss.app.dto.itinerary.HotelInclusionDTO;
 import com.sss.app.dto.itinerary.ItineraryItemCreateRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryItemReorderDaysRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryItemReorderRequestDTO;
+import com.sss.app.dto.itinerary.ItineraryItemReplaceRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryItemUpdateRequestDTO;
 import com.sss.app.dto.itinerary.TransportDetailDTO;
 import com.sss.app.dto.itinerary.TransportLegDTO;
@@ -128,6 +129,45 @@ public class ItineraryItemHelper {
         return saved;
     }
 
+    // Change/Replace Hotel flow — drops the existing hotel through the exact
+    // same path a plain "Drop Hotel" edit would use (update()'s hotelDetail
+    // branch, saveHotelDetail's Drop mode), then creates the replacement
+    // through the exact same path a plain "Add Hotel" would use (create()),
+    // linking the two. No new business rules: reason-required, audit
+    // logging, and quote recompute all come from the two reused calls
+    // themselves. Runs in this same @Transactional method, so a failure
+    // partway through (e.g. the new hotel's reference is invalid) rolls
+    // back the old hotel's Drop too, rather than leaving it dropped with no
+    // replacement.
+    public ItineraryItem replaceHotel(UUID oldUid, ItineraryItemReplaceRequestDTO request) {
+        ItineraryItem oldItem = getByUid(oldUid);
+        if (!"hotel".equals(oldItem.getItemType())) {
+            throw new BadRequestException("Only hotel items can be replaced through this flow");
+        }
+        if (request.getDroppingReason() == null || request.getDroppingReason().isBlank()) {
+            throw new BadRequestException("Dropping reason is required to replace a hotel");
+        }
+
+        ItineraryItemUpdateRequestDTO dropRequest = new ItineraryItemUpdateRequestDTO();
+        HotelDetailDTO dropDetail = new HotelDetailDTO();
+        dropDetail.setStatus(BookingStatus.DROP);
+        dropDetail.setDroppingReason(request.getDroppingReason());
+        dropDetail.setCancellationCharge(request.getCancellationCharge());
+        dropRequest.setHotelDetail(dropDetail);
+        update(oldItem.getUid(), dropRequest);
+
+        ItineraryItemCreateRequestDTO newRequest = request.getNewHotel();
+        newRequest.setItineraryUid(oldItem.getItinerary().getUid());
+        newRequest.setItemType("hotel");
+        ItineraryItem newItem = create(newRequest);
+        newItem.setReplacesItem(oldItem);
+        ItineraryItem saved = itineraryItemRepository.save(newItem);
+
+        auditLogService.record("Escape", oldItem.getItinerary().getEscape().getSeqp(), "HOTEL_REPLACED",
+                oldItem.getUid().toString(), saved.getUid().toString());
+        return saved;
+    }
+
     public List<ItineraryItem> getAllForItinerary(UUID itineraryUid) {
         Itinerary itinerary = itineraryHelper.getByUid(itineraryUid);
         return itineraryItemRepository.findAllByItinerary_SeqpOrderByDayNumberAscSortOrderAsc(itinerary.getSeqp());
@@ -137,18 +177,18 @@ public class ItineraryItemHelper {
         ItineraryItem item = getByUid(uid);
         String previousStatus = item.getStatus();
 
-        // Item-level Drop (currently Activity only — Hotel has its own
+        // Item-level Drop (Activity and Transport — Hotel has its own
         // separate Drop path on HotelDetailDTO/saveHotelDetail). Mirrors
         // that same rule: only status/droppingReason/cancellationChargeInr
         // are written, every other field (title, price, notes, etc.) is
         // left exactly as it was.
-        boolean droppingItemNow = "activity".equals(item.getItemType())
+        boolean droppingItemNow = ("activity".equals(item.getItemType()) || "transport".equals(item.getItemType()))
                 && BookingStatus.DROP.equals(request.getStatus())
                 && !BookingStatus.DROP.equals(previousStatus);
 
         if (droppingItemNow) {
             if (request.getDroppingReason() == null || request.getDroppingReason().isBlank()) {
-                throw new BadRequestException("Dropping reason is required to mark an activity as Drop");
+                throw new BadRequestException("Dropping reason is required to mark this " + item.getItemType() + " as Drop");
             }
             item.setStatus(BookingStatus.DROP);
             item.setDroppingReason(request.getDroppingReason());

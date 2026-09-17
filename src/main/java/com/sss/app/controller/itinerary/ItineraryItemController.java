@@ -3,6 +3,7 @@ package com.sss.app.controller.itinerary;
 import com.sss.app.dto.itinerary.ItineraryItemCreateRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryItemReorderDaysRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryItemReorderRequestDTO;
+import com.sss.app.dto.itinerary.ItineraryItemReplaceRequestDTO;
 import com.sss.app.dto.itinerary.ItineraryItemResponseDTO;
 import com.sss.app.dto.itinerary.ItineraryItemUpdateRequestDTO;
 import com.sss.app.service.itinerary.ItineraryItemService;
@@ -58,5 +59,11 @@ public class ItineraryItemController {
     @PostMapping("/reorder-days")
     public ResponseEntity<List<ItineraryItemResponseDTO>> reorderDays(@Valid @RequestBody ItineraryItemReorderDaysRequestDTO request) {
         return ResponseEntity.ok(itineraryItemService.reorderDays(request));
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('trips.write')")
+    @PostMapping("/{uid}/replace")
+    public ResponseEntity<ItineraryItemResponseDTO> replaceHotel(@PathVariable UUID uid, @Valid @RequestBody ItineraryItemReplaceRequestDTO request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(itineraryItemService.replaceHotel(uid, request));
     }
 }

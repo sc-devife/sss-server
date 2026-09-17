@@ -111,6 +111,15 @@ public class ItineraryItem extends Auditable {
     @Column(name = "cancellation_charge_inr", precision = 12, scale = 2)
     private BigDecimal cancellationChargeInr;
 
+    // Set on the NEW hotel item created by the Change/Replace Hotel flow,
+    // pointing back at the (now Dropped) hotel it replaces — see
+    // ItineraryItemHelper.replaceHotel. Null for every other item.
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "replaces_item_id")
+    private ItineraryItem replacesItem;
+
     @PrePersist
     protected void onCreate() {
         if (this.uid == null) {
