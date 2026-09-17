@@ -613,8 +613,19 @@ public class ItineraryItemHelper {
         return dto;
     }
 
+    // Hard delete — unlike Drop, there's no surviving row to read back later,
+    // so the deleted item's own label/day is captured into the audit entry
+    // itself before it's gone. This is the only trace a deleted Transport
+    // item leaves behind (it has no Drop-based history path of its own).
     public void delete(UUID uid) {
         ItineraryItem item = getByUid(uid);
+        String prefix = item.getItemType().toUpperCase();
+        Map<String, Object> deletedValue = new HashMap<>();
+        deletedValue.put("label", resolveLabel(item));
+        deletedValue.put("dayNumber", item.getDayNumber());
+        auditLogService.record("Escape", item.getItinerary().getEscape().getSeqp(),
+                prefix + "_DELETED", null, deletedValue);
+
         transportLegRepository.deleteAllByItineraryItem_Seqp(item.getSeqp());
         transportDetailRepository.findByItineraryItem_Seqp(item.getSeqp()).ifPresent(transportDetailRepository::delete);
         hotelInclusionRepository.deleteAllByItineraryItem_Seqp(item.getSeqp());
