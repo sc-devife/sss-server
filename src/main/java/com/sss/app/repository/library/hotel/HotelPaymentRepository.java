@@ -27,4 +27,13 @@ public interface HotelPaymentRepository extends JpaRepository<HotelPayment, Long
             "WHERE p.orgId = :orgId " +
             "ORDER BY p.paymentDate DESC, p.createdAt DESC")
     List<HotelPayment> findAllByOrgId(@Param("orgId") Long orgId);
+
+    // Backs the Escape Payments workspace's supplier-payments section — the
+    // Escape's own org access is already checked by the caller resolving it
+    // (EscapeHelper.getEscapeById), so no separate orgId filter here.
+    @Query("SELECT p FROM HotelPayment p " +
+            "JOIN FETCH p.hotel h " +
+            "WHERE p.escape.seqp = :escapeSeqp " +
+            "ORDER BY p.paymentDate DESC, p.createdAt DESC")
+    List<HotelPayment> findAllByEscapeSeqp(@Param("escapeSeqp") Long escapeSeqp);
 }

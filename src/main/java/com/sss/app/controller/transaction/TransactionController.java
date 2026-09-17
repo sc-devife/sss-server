@@ -8,9 +8,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.UUID;
 
 // Section: Accounting > Transactions — a combined incoming/outgoing ledger.
 // Incoming is backed by PaymentMilestone (customer payments); Outgoing is
@@ -30,7 +32,10 @@ public class TransactionController {
 
     @PreAuthorize("@permissionService.hasPermission('trips.read')")
     @GetMapping("/outgoing")
-    public ResponseEntity<List<OutgoingTransactionResponseDTO>> getOutgoingTransactions() {
-        return ResponseEntity.ok(transactionService.getOutgoingTransactions());
+    public ResponseEntity<List<OutgoingTransactionResponseDTO>> getOutgoingTransactions(
+            @RequestParam(required = false) UUID escapeUid) {
+        return ResponseEntity.ok(escapeUid != null
+                ? transactionService.getOutgoingTransactionsForEscape(escapeUid)
+                : transactionService.getOutgoingTransactions());
     }
 }

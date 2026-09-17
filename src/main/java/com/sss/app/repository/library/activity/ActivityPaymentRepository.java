@@ -26,4 +26,12 @@ public interface ActivityPaymentRepository extends JpaRepository<ActivityPayment
             "WHERE p.orgId = :orgId " +
             "ORDER BY p.paymentDate DESC, p.createdAt DESC")
     List<ActivityPayment> findAllByOrgId(@Param("orgId") Long orgId);
+
+    // Backs the Escape Payments workspace's supplier-payments section — see
+    // HotelPaymentRepository.findAllByEscapeSeqp's own comment.
+    @Query("SELECT p FROM ActivityPayment p " +
+            "JOIN FETCH p.activity a " +
+            "WHERE p.escape.seqp = :escapeSeqp " +
+            "ORDER BY p.paymentDate DESC, p.createdAt DESC")
+    List<ActivityPayment> findAllByEscapeSeqp(@Param("escapeSeqp") Long escapeSeqp);
 }

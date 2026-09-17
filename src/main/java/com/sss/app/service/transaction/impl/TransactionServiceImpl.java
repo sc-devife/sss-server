@@ -2,10 +2,12 @@ package com.sss.app.service.transaction.impl;
 
 import com.sss.app.dto.transaction.IncomingTransactionResponseDTO;
 import com.sss.app.dto.transaction.OutgoingTransactionResponseDTO;
+import com.sss.app.entity.escape.Escape;
 import com.sss.app.entity.library.activity.ActivityPayment;
 import com.sss.app.entity.library.hotel.HotelPayment;
 import com.sss.app.entity.payment.PaymentMilestone;
 import com.sss.app.entity.users.User;
+import com.sss.app.helper.escape.EscapeHelper;
 import com.sss.app.repository.UserRepository;
 import com.sss.app.repository.library.activity.ActivityPaymentRepository;
 import com.sss.app.repository.library.hotel.HotelPaymentRepository;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +30,7 @@ public class TransactionServiceImpl implements TransactionService {
     private final HotelPaymentRepository hotelPaymentRepository;
     private final ActivityPaymentRepository activityPaymentRepository;
     private final UserRepository userRepository;
+    private final EscapeHelper escapeHelper;
 
     private User currentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -67,6 +71,20 @@ public class TransactionServiceImpl implements TransactionService {
         List<OutgoingTransactionResponseDTO> combined = new ArrayList<>();
         hotelPaymentRepository.findAllByOrgId(orgId).stream().map(this::toOutgoingResponse).forEach(combined::add);
         activityPaymentRepository.findAllByOrgId(orgId).stream().map(this::toOutgoingResponse).forEach(combined::add);
+        combined.sort(Comparator.comparing(OutgoingTransactionResponseDTO::getPaymentDate).reversed());
+        return combined;
+    }
+
+    // Backs the Escape Payments workspace's supplier-payments section — the
+    // exact same rows getOutgoingTransactions() would show for this escape,
+    // just pre-filtered server-side instead of scanning the whole org's
+    // outgoing ledger client-side.
+    @Override
+    public List<OutgoingTransactionResponseDTO> getOutgoingTransactionsForEscape(UUID escapeUid) {
+        Escape escape = escapeHelper.getEscapeById(escapeUid);
+        List<OutgoingTransactionResponseDTO> combined = new ArrayList<>();
+        hotelPaymentRepository.findAllByEscapeSeqp(escape.getSeqp()).stream().map(this::toOutgoingResponse).forEach(combined::add);
+        activityPaymentRepository.findAllByEscapeSeqp(escape.getSeqp()).stream().map(this::toOutgoingResponse).forEach(combined::add);
         combined.sort(Comparator.comparing(OutgoingTransactionResponseDTO::getPaymentDate).reversed());
         return combined;
     }
