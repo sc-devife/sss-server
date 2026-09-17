@@ -14,6 +14,8 @@ public interface TransportService {
 
     List<TransportResponseDTO> getAll();
 
+    List<TransportResponseDTO> getAllByProvider(UUID providerId);
+
     TransportResponseDTO update(UUID id, TransportUpdateRequestDTO dto);
 
     void delete(UUID id);

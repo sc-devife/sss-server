@@ -35,8 +35,8 @@ public class TransportController {
 
     @PreAuthorize("@permissionService.hasPermission('library.read')")
     @GetMapping
-    public ResponseEntity<List<TransportResponseDTO>> getAll() {
-        return ResponseEntity.ok(transportService.getAll());
+    public ResponseEntity<List<TransportResponseDTO>> getAll(@RequestParam(required = false) UUID providerId) {
+        return ResponseEntity.ok(providerId != null ? transportService.getAllByProvider(providerId) : transportService.getAll());
     }
 
     @PreAuthorize("@permissionService.hasPermission('library.write')")

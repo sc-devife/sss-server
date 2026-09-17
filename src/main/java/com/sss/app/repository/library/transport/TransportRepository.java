@@ -14,4 +14,9 @@ public interface TransportRepository extends JpaRepository<Transport, Long> {
     List<Transport> findAllByUidIn(List<UUID> uids);
 
     List<Transport> findAllByOrgIdAndDeletedAtIsNull(Long orgId);
+
+    // Backs the Service Provider Detail page's "Vehicles" section — every
+    // vehicle linked to this provider (Multi Vehicle Owner transports only;
+    // Single Vehicle Owner ones never set provider — see TransportPanel).
+    List<Transport> findAllByProvider_UidAndOrgIdAndDeletedAtIsNull(UUID providerUid, Long orgId);
 }

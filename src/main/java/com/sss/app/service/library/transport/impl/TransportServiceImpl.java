@@ -64,6 +64,14 @@ public class TransportServiceImpl implements TransportService {
     }
 
     @Override
+    public List<TransportResponseDTO> getAllByProvider(UUID providerId) {
+        return transportRepository.findAllByProvider_UidAndOrgIdAndDeletedAtIsNull(providerId, currentUser().getOrgId())
+                .stream()
+                .map(transportMapper::toResponse)
+                .toList();
+    }
+
+    @Override
     public TransportResponseDTO update(UUID id, TransportUpdateRequestDTO dto) {
         Transport transport = findEntityById(id);
         transportMapper.updateEntityFromDto(dto, transport);
