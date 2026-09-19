@@ -40,6 +40,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
             """)
     List<User> findUsersWithRoles(@Param("orgId") Long orgId);
 
+    // Same as findUsersWithRoles, newest-added user first — for the user
+    // listings (/users/all). Kept separate so lead-assignment and notification
+    // callers of findUsersWithRoles keep their existing (unordered) behavior.
+    @Query("""
+            SELECT DISTINCT u FROM User u
+            LEFT JOIN FETCH u.roles r
+            LEFT JOIN FETCH r.role
+            WHERE u.orgId = :orgId
+            ORDER BY u.createdAt DESC, u.seqp DESC
+            """)
+    List<User> findUsersWithRolesNewestFirst(@Param("orgId") Long orgId);
+
     @Query("""
             SELECT DISTINCT u FROM User u
             LEFT JOIN FETCH u.roles r

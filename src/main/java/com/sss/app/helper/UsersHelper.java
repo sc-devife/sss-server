@@ -57,7 +57,7 @@ public class UsersHelper {
 
     /** Users in the caller's own organization. */
     public List<User> fetchAllUsers() {
-        return userRepository.findUsersWithRoles(currentUser().getOrgId());
+        return userRepository.findUsersWithRolesNewestFirst(currentUser().getOrgId());
     }
 
     public User getUserByUid(String uid) {
