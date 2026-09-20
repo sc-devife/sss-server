@@ -13,7 +13,7 @@ public interface FollowUpService {
     FollowUpResponseDTO createFollowUp(FollowUpCreateRequestDTO request);
     FollowUpResponseDTO updateFollowUp(UUID uid, FollowUpUpdateRequestDTO request);
     FollowUpResponseDTO updateStatus(UUID uid, String status);
-    Page<FollowUpResponseDTO> getAllForCurrentUser(String filter, String search, Pageable pageable);
+    Page<FollowUpResponseDTO> getAllForCurrentUser(String filter, String search, java.time.LocalDate from, java.time.LocalDate to, Pageable pageable);
     List<FollowUpResponseDTO> getAllForLead(UUID leadUid);
     List<FollowUpResponseDTO> getAllForEscape(UUID escapeUid);
     long countOpenForCurrentUser();

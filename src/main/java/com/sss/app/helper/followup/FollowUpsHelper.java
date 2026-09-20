@@ -25,6 +25,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -145,19 +146,25 @@ public class FollowUpsHelper {
 
     // The /follow-ups page's own list — always scoped to the caller, never
     // another user's or another org's follow-ups.
-    public Page<FollowUp> getAllForCurrentUser(String filter, String search, Pageable pageable) {
+    // `from`/`to` (a Day picked as from == to, or a Between range) take over
+    // from the quick `filter` when either is given.
+    public Page<FollowUp> getAllForCurrentUser(String filter, String search, LocalDate from, LocalDate to, Pageable pageable) {
         User user = currentUser();
         Specification<FollowUp> spec = Specification
                 .where(FollowUpSpecifications.hasOrgId(user.getOrgId()))
                 .and(FollowUpSpecifications.assignedToUser(user.getSeqp()));
 
-        spec = switch (filter == null ? "today" : filter.toLowerCase()) {
-            case "yesterday" -> spec.and(FollowUpSpecifications.dueYesterday());
-            case "overdue" -> spec.and(FollowUpSpecifications.isActionableAndOpen()).and(FollowUpSpecifications.isOverdue());
-            case "upcoming" -> spec.and(FollowUpSpecifications.isActionableAndOpen()).and(FollowUpSpecifications.isUpcoming());
-            case "all" -> spec;
-            default -> spec.and(FollowUpSpecifications.dueToday());
-        };
+        if (from != null || to != null) {
+            spec = spec.and(FollowUpSpecifications.dueBetween(from, to));
+        } else {
+            spec = switch (filter == null ? "today" : filter.toLowerCase()) {
+                case "yesterday" -> spec.and(FollowUpSpecifications.dueYesterday());
+                case "overdue" -> spec.and(FollowUpSpecifications.isActionableAndOpen()).and(FollowUpSpecifications.isOverdue());
+                case "upcoming" -> spec.and(FollowUpSpecifications.isActionableAndOpen()).and(FollowUpSpecifications.isUpcoming());
+                case "all" -> spec;
+                default -> spec.and(FollowUpSpecifications.dueToday());
+            };
+        }
 
         if (search != null && !search.isBlank()) {
             spec = spec.and(FollowUpSpecifications.matchesSearch(search.trim()));

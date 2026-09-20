@@ -47,8 +47,8 @@ public class FollowUpServiceImpl implements FollowUpService {
     }
 
     @Override
-    public Page<FollowUpResponseDTO> getAllForCurrentUser(String filter, String search, Pageable pageable) {
-        return followUpsHelper.getAllForCurrentUser(filter, search, pageable).map(this::toResponse);
+    public Page<FollowUpResponseDTO> getAllForCurrentUser(String filter, String search, java.time.LocalDate from, java.time.LocalDate to, Pageable pageable) {
+        return followUpsHelper.getAllForCurrentUser(filter, search, from, to, pageable).map(this::toResponse);
     }
 
     @Override

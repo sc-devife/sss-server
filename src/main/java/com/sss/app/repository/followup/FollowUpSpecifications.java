@@ -51,6 +51,21 @@ public final class FollowUpSpecifications {
                 cb.lessThan(root.get("dueAt"), end));
     }
 
+    // Due date within [from, to] inclusive, whole days. Either end may be null
+    // for an open-ended range; a single day is from == to.
+    public static Specification<FollowUp> dueBetween(LocalDate from, LocalDate to) {
+        return (root, query, cb) -> {
+            var predicate = cb.conjunction();
+            if (from != null) {
+                predicate = cb.and(predicate, cb.greaterThanOrEqualTo(root.get("dueAt"), from.atStartOfDay()));
+            }
+            if (to != null) {
+                predicate = cb.and(predicate, cb.lessThan(root.get("dueAt"), to.plusDays(1).atStartOfDay()));
+            }
+            return predicate;
+        };
+    }
+
     public static Specification<FollowUp> isOverdue() {
         LocalDateTime now = LocalDateTime.now();
         return (root, query, cb) -> cb.lessThan(root.get("dueAt"), now);

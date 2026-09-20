@@ -35,14 +35,17 @@ public class FollowUpController {
     // The dedicated /follow-ups page's own list — always scoped to the
     // caller (LeadController's Search+Status+pagination shape).
     // `filter` is one of today|yesterday|overdue|upcoming|all, defaulting to
-    // "today" server-side (FollowUpsHelper.getAllForCurrentUser).
+    // "today" server-side (FollowUpsHelper.getAllForCurrentUser). `from`/`to`
+    // (inclusive due dates; a single day is from == to) override `filter`.
     @PreAuthorize("@permissionService.hasPermission('followups.read')")
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Page<FollowUpResponseDTO>> getAll(
             @RequestParam(required = false) String filter,
             @RequestParam(required = false) String search,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate from,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate to,
             @PageableDefault(size = 20, sort = "dueAt", direction = Sort.Direction.ASC) Pageable pageable) {
-        return ResponseEntity.ok(followUpService.getAllForCurrentUser(filter, search, pageable));
+        return ResponseEntity.ok(followUpService.getAllForCurrentUser(filter, search, from, to, pageable));
     }
 
     // Header badge — count of my open actionable follow-ups.
