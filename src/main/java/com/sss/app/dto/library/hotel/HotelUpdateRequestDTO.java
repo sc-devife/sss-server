@@ -63,6 +63,10 @@ public class HotelUpdateRequestDTO {
 
     private String notes;
 
+    private String about;
+
+    private String rulesAndPolicies;
+
     private String accountHolderName;
 
     private String bankName;

@@ -26,4 +26,11 @@ public class EscapePointResponseDto extends EscapePointDto {
     // countryCode/regionCode/cityCode resolution produced, now computed
     // server-side from real data instead of reference-data code lookups.
     private String locationLabel;
+
+    // How many (non-archived) hotels / activities are linked to this Escape
+    // Point — shown as columns on the Escape Points list. Only filled in by
+    // EscapePointsServiceImpl; null on Escape Points nested in other responses.
+    private Integer hotelCount;
+
+    private Integer activityCount;
 }

@@ -8,11 +8,15 @@ import com.sss.app.dto.library.escapepoint.EscapePointUpdateRequestDto;
 import com.sss.app.entity.library.escapepoint.EscapePoint;
 import com.sss.app.helper.library.escapepoint.EscapePointsHelper;
 import com.sss.app.mapper.library.escapepoint.EscapePointMapper;
+import com.sss.app.repository.library.activity.ActivityRepository;
+import com.sss.app.repository.library.hotel.HotelRepository;
 import com.sss.app.service.library.escapepoint.EscapePointLocationResolver;
 import com.sss.app.service.library.escapepoint.EscapePointsService;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class EscapePointsServiceImpl implements EscapePointsService {
@@ -20,12 +24,17 @@ public class EscapePointsServiceImpl implements EscapePointsService {
     private final EscapePointsHelper escapePointsHelper;
     private final EscapePointMapper escapePointMapper;
     private final EscapePointLocationResolver escapePointLocationResolver;
+    private final HotelRepository hotelRepository;
+    private final ActivityRepository activityRepository;
 
     public EscapePointsServiceImpl(EscapePointsHelper escapePointsHelper, EscapePointMapper escapePointMapper,
-                                    EscapePointLocationResolver escapePointLocationResolver) {
+                                    EscapePointLocationResolver escapePointLocationResolver,
+                                    HotelRepository hotelRepository, ActivityRepository activityRepository) {
         this.escapePointsHelper = escapePointsHelper;
         this.escapePointMapper = escapePointMapper;
         this.escapePointLocationResolver = escapePointLocationResolver;
+        this.hotelRepository = hotelRepository;
+        this.activityRepository = activityRepository;
     }
 
     @Override
@@ -70,7 +79,27 @@ public class EscapePointsServiceImpl implements EscapePointsService {
     }
 
     private List<EscapePointResponseDto> enrich(List<EscapePoint> entities, List<EscapePointResponseDto> dtos) {
-        escapePointLocationResolver.resolve(entities.stream().map(EscapePoint::getSeqp).toList(), dtos);
+        List<Long> seqps = entities.stream().map(EscapePoint::getSeqp).toList();
+        escapePointLocationResolver.resolve(seqps, dtos);
+
+        // Two grouped counts across every Escape Point in this response, rather
+        // than one query per Escape Point.
+        if (!seqps.isEmpty()) {
+            Map<Long, Integer> hotels = toCountMap(hotelRepository.countByEscapePointSeqps(seqps));
+            Map<Long, Integer> activities = toCountMap(activityRepository.countByEscapePointSeqps(seqps));
+            for (int i = 0; i < seqps.size(); i++) {
+                dtos.get(i).setHotelCount(hotels.getOrDefault(seqps.get(i), 0));
+                dtos.get(i).setActivityCount(activities.getOrDefault(seqps.get(i), 0));
+            }
+        }
         return dtos;
+    }
+
+    private static Map<Long, Integer> toCountMap(List<Object[]> rows) {
+        Map<Long, Integer> counts = new HashMap<>();
+        for (Object[] row : rows) {
+            counts.put(((Number) row[0]).longValue(), ((Number) row[1]).intValue());
+        }
+        return counts;
     }
 }

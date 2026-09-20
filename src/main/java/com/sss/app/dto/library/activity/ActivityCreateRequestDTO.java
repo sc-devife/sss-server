@@ -30,6 +30,10 @@ public class ActivityCreateRequestDTO {
 
     private String email;
 
+    private String contactNumber;
+
+    private String rulesAndPolicies;
+
     private String accountHolderName;
 
     private String bankName;

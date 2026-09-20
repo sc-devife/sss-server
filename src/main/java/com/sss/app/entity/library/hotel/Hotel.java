@@ -191,6 +191,13 @@ public class Hotel extends Auditable {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
+    @Column(columnDefinition = "TEXT")
+    private String about;
+
+    // HTML from the RichTextEditor on the Add/Edit Hotel form.
+    @Column(name = "rules_and_policies", columnDefinition = "TEXT")
+    private String rulesAndPolicies;
+
     // ----- Account tab: this hotel's own payout details (bank account or
     // UPI), used when the agency settles a booking with the hotel directly —
     // unrelated to the org-wide OrganizationBankDetails, which is the

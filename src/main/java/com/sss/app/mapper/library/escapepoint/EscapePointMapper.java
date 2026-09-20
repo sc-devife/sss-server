@@ -29,6 +29,8 @@ public interface EscapePointMapper {
     // points in a response) — see EscapePointsServiceImpl.
     @Mapping(target = "locations", ignore = true)
     @Mapping(target = "locationLabel", ignore = true)
+    @Mapping(target = "hotelCount", ignore = true)
+    @Mapping(target = "activityCount", ignore = true)
     EscapePointResponseDto toDto(EscapePoint escapePoint);
 
     List<EscapePointResponseDto> toDtoList(List<EscapePoint> entities);

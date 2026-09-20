@@ -74,6 +74,13 @@ public class Activity extends Auditable {
     @Column
     private String email;
 
+    @Column(name = "contact_number")
+    private String contactNumber;
+
+    // HTML from the RichTextEditor on the Add/Edit Activity form.
+    @Column(name = "rules_and_policies", columnDefinition = "TEXT")
+    private String rulesAndPolicies;
+
     // ----- Account tab: this activity vendor's own payout details (bank
     // account or UPI) — same shape/purpose as Hotel's own Account tab. -----
     @Column(name = "account_holder_name")
