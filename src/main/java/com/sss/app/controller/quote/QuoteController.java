@@ -3,6 +3,8 @@ package com.sss.app.controller.quote;
 import com.sss.app.dto.quote.QuoteComputeRequestDTO;
 import com.sss.app.dto.quote.QuoteComputeResponseDTO;
 import com.sss.app.dto.quote.QuoteCreateRequestDTO;
+import com.sss.app.dto.quote.QuoteLineItemDiscountUpdateRequestDTO;
+import com.sss.app.dto.quote.QuoteLineItemsResponseDTO;
 import com.sss.app.dto.quote.QuoteResponseDTO;
 import com.sss.app.dto.quote.QuoteUpdateRequestDTO;
 import com.sss.app.service.quote.QuoteComputationService;
@@ -66,6 +68,23 @@ public class QuoteController {
     @PostMapping("/{uid}/compute")
     public ResponseEntity<QuoteComputeResponseDTO> compute(@PathVariable UUID uid, @RequestBody QuoteComputeRequestDTO request) {
         return ResponseEntity.ok(quoteComputationService.compute(uid, request));
+    }
+
+    // The Quote tab's day-wise, per-item breakdown — synced from the
+    // itinerary's current items on every call (see
+    // QuoteComputationServiceImpl.syncLineItems), so opening the tab always
+    // shows an up-to-date list even if nothing has been edited yet.
+    @PreAuthorize("@permissionService.hasPermission('trips.read')")
+    @GetMapping("/{uid}/line-items")
+    public ResponseEntity<QuoteLineItemsResponseDTO> getLineItems(@PathVariable UUID uid) {
+        return ResponseEntity.ok(quoteComputationService.getLineItems(uid));
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('trips.write')")
+    @PutMapping("/{uid}/line-items/{lineItemUid}")
+    public ResponseEntity<QuoteLineItemsResponseDTO> updateLineItemDiscount(
+            @PathVariable UUID uid, @PathVariable UUID lineItemUid, @RequestBody QuoteLineItemDiscountUpdateRequestDTO request) {
+        return ResponseEntity.ok(quoteComputationService.updateLineItemDiscount(uid, lineItemUid, request));
     }
 
     @PreAuthorize("@permissionService.hasPermission('trips.write')")

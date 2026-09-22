@@ -8,6 +8,10 @@ import java.util.UUID;
 @Data
 public class QuoteComputeRequestDTO {
     private UUID taxProfileUid; // null = no tax applied
+    // When set, wins over taxProfileUid's own stored rate_percent — a
+    // one-off tax % or a tweak to the selected profile's rate. Requires
+    // taxProfileUid (a rate on its own says nothing about which tax TYPE it is).
+    private BigDecimal taxRatePercentOverride;
     private BigDecimal tcsRatePercent; // null/zero = no TCS applied; computed on (subtotal + GST)
     private String discountType; // none / percent / flat
     private BigDecimal discountValue;

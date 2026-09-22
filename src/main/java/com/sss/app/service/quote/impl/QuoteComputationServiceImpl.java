@@ -3,23 +3,29 @@ package com.sss.app.service.quote.impl;
 import com.sss.app.dto.quote.PricingBreakdownDTO;
 import com.sss.app.dto.quote.QuoteComputeRequestDTO;
 import com.sss.app.dto.quote.QuoteComputeResponseDTO;
+import com.sss.app.dto.quote.QuoteLineItemDiscountUpdateRequestDTO;
+import com.sss.app.dto.quote.QuoteLineItemsResponseDTO;
 import com.sss.app.entity.itinerary.BookingStatus;
 import com.sss.app.entity.itinerary.ItineraryItem;
 import com.sss.app.entity.itinerary.ItineraryItemHotelDetail;
 import com.sss.app.entity.itinerary.ItineraryItemHotelInclusion;
 import com.sss.app.entity.itinerary.ItineraryItemTransportDetail;
 import com.sss.app.entity.quote.Quote;
+import com.sss.app.entity.quote.QuoteLineItem;
 import com.sss.app.entity.taxprofile.TaxProfile;
 import com.sss.app.exception.BadRequestException;
+import com.sss.app.exception.NotFoundException;
 import com.sss.app.helper.quote.QuoteHelper;
 import com.sss.app.helper.taxprofile.TaxProfileHelper;
-import com.sss.app.mapper.quote.QuoteMapper;
+import com.sss.app.mapper.quote.QuoteLineItemMapper;
+import com.sss.app.mapper.quote.QuoteResponseAssembler;
 import com.sss.app.repository.itinerary.ItineraryItemHotelDetailRepository;
 import com.sss.app.repository.itinerary.ItineraryItemHotelInclusionRepository;
 import com.sss.app.repository.itinerary.ItineraryItemRepository;
 import com.sss.app.repository.itinerary.ItineraryItemTransportDetailRepository;
 import com.sss.app.repository.library.activity.ActivityRepository;
 import com.sss.app.repository.library.transport.TransportRepository;
+import com.sss.app.repository.quote.QuoteLineItemRepository;
 import com.sss.app.repository.quote.QuoteRepository;
 import com.sss.app.service.quote.QuoteComputationService;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +35,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -44,11 +52,17 @@ import java.util.UUID;
  * total_price wasn't set) plus any add-on services
  * (ItineraryItemHotelInclusion) attached to that stay. A custom (non-library)
  * item has no base_price to fall back to, so it's excluded if its own price
- * was never filled in. Tax comes from a real, org-configurable TaxProfile.
+ * was never filled in. Tax comes from a real, org-configurable TaxProfile
+ * (its rate_percent, or a per-quote override — see taxRatePercentOverride).
  * FX conversion uses a manually-entered, frozen rate rather than a live
  * provider (no FX rate API integration has been requested/authorized yet).
  * Base/storage currency is INR — a display currency other than INR requires
  * an FX rate snapshot.
+ *
+ * Each itinerary item's resolved price is also snapshotted into its own
+ * QuoteLineItem row (see syncLineItems) — the Quote tab's day-wise,
+ * per-item breakdown, each carrying its own optional discount on top of the
+ * quote's single overall discount below.
  */
 @Service
 @RequiredArgsConstructor
@@ -57,7 +71,9 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
 
     private final QuoteHelper quoteHelper;
     private final QuoteRepository quoteRepository;
-    private final QuoteMapper quoteMapper;
+    private final QuoteResponseAssembler quoteResponseAssembler;
+    private final QuoteLineItemRepository quoteLineItemRepository;
+    private final QuoteLineItemMapper quoteLineItemMapper;
     private final TaxProfileHelper taxProfileHelper;
     private final ItineraryItemRepository itineraryItemRepository;
     private final ActivityRepository activityRepository;
@@ -69,50 +85,111 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
     @Override
     public QuoteComputeResponseDTO compute(UUID quoteUid, QuoteComputeRequestDTO request) {
         Quote quote = quoteHelper.getByUid(quoteUid);
-
-        List<ItineraryItem> items = itineraryItemRepository
-                .findAllByItinerary_SeqpOrderByDayNumberAscSortOrderAsc(quote.getItinerary().getSeqp());
-
         List<String> warnings = new ArrayList<>();
-        BigDecimal subtotal = BigDecimal.ZERO;
-        PricingBreakdownDTO breakdown = new PricingBreakdownDTO();
+        List<QuoteLineItem> lineItems = syncLineItems(quote, warnings);
 
-        for (ItineraryItem item : items) {
-            ItemPriceResult result = resolvePrice(item, warnings);
-            if (result != null) {
-                subtotal = subtotal.add(result.amount());
-                if (result.isCancellation()) {
-                    breakdown.setCancellationInr(breakdown.getCancellationInr().add(result.amount()));
-                } else {
-                    switch (item.getItemType()) {
-                        case "hotel" -> breakdown.setHotelsInr(breakdown.getHotelsInr().add(result.amount()));
-                        case "activity" -> breakdown.setActivitiesInr(breakdown.getActivitiesInr().add(result.amount()));
-                        case "transport" -> breakdown.setTransportInr(breakdown.getTransportInr().add(result.amount()));
-                        default -> breakdown.setOtherInr(breakdown.getOtherInr().add(result.amount()));
-                    }
-                }
-            }
-        }
+        BigDecimal subtotal = sumFinal(lineItems);
+        PricingBreakdownDTO breakdown = buildBreakdown(lineItems);
 
+        Totals totals = applyTaxAndTotals(quote, subtotal, request.getTaxProfileUid(), request.getTaxRatePercentOverride(),
+                request.getTcsRatePercent(), request.getDiscountType(), request.getDiscountValue(),
+                request.getDisplayCurrencyCode(), request.getFxRateSnapshot());
+        quote.setCancellationChargesInr(breakdown.getCancellationInr());
+        Quote saved = quoteRepository.save(quote);
+
+        int paxCount = quote.getItinerary().getEscape().getTravellers() != null
+                ? quote.getItinerary().getEscape().getTravellers().size()
+                : 0;
+
+        QuoteComputeResponseDTO response = new QuoteComputeResponseDTO();
+        response.setQuote(quoteResponseAssembler.toResponse(saved));
+        response.setPricingWarnings(warnings);
+        response.setDisplayTotal(totals.displayTotal());
+        response.setBreakdown(breakdown);
+        response.setPaxCount(paxCount);
+        response.setPerPaxInr(paxCount > 0 ? totals.total().divide(BigDecimal.valueOf(paxCount), 2, RoundingMode.HALF_UP) : null);
+        return response;
+    }
+
+    @Override
+    public QuoteLineItemsResponseDTO getLineItems(UUID quoteUid) {
+        Quote quote = quoteHelper.getByUid(quoteUid);
+        List<String> warnings = new ArrayList<>();
+        List<QuoteLineItem> lineItems = syncLineItems(quote, warnings);
+        Quote saved = recomputeFromLineItems(quote, lineItems);
+        return toLineItemsResponse(saved, lineItems, warnings);
+    }
+
+    @Override
+    public QuoteLineItemsResponseDTO updateLineItemDiscount(UUID quoteUid, UUID lineItemUid, QuoteLineItemDiscountUpdateRequestDTO request) {
+        Quote quote = quoteHelper.getByUid(quoteUid);
+        QuoteLineItem lineItem = quoteLineItemRepository.findByUid(lineItemUid)
+                .filter(li -> li.getQuote().getSeqp().equals(quote.getSeqp()))
+                .orElseThrow(() -> new NotFoundException("Quote line item not found"));
+
+        String discountType = request.getDiscountType() != null ? request.getDiscountType() : "none";
+        lineItem.setDiscountType(discountType);
+        lineItem.setDiscountValue(request.getDiscountValue());
+        lineItem.setFinalAmountInr(applyDiscount(lineItem.getBaseAmountInr(), discountType, request.getDiscountValue()));
+        quoteLineItemRepository.save(lineItem);
+
+        List<QuoteLineItem> lineItems = quoteLineItemRepository.findAllByQuote_SeqpOrderByDayNumberAscSortOrderAsc(quote.getSeqp());
+        Quote saved = recomputeFromLineItems(quote, lineItems);
+        return toLineItemsResponse(saved, lineItems, List.of());
+    }
+
+    private QuoteLineItemsResponseDTO toLineItemsResponse(Quote quote, List<QuoteLineItem> lineItems, List<String> warnings) {
+        QuoteLineItemsResponseDTO response = new QuoteLineItemsResponseDTO();
+        response.setQuote(quoteResponseAssembler.toResponse(quote));
+        response.setLineItems(quoteLineItemMapper.toResponseList(lineItems));
+        response.setPricingWarnings(warnings);
+        return response;
+    }
+
+    // Recomputes a quote's subtotal/tax/TCS/discount/total off its current
+    // line items, reusing whatever tax/TCS/overall-discount/currency
+    // settings the quote already has saved (i.e. "the same settings, just
+    // against the new per-item numbers") — the path used whenever a line
+    // item's own discount changes, as opposed to compute()'s explicit
+    // "the caller is choosing new settings" path.
+    private Quote recomputeFromLineItems(Quote quote, List<QuoteLineItem> lineItems) {
+        BigDecimal subtotal = sumFinal(lineItems);
+        PricingBreakdownDTO breakdown = buildBreakdown(lineItems);
+        applyTaxAndTotals(quote, subtotal, quote.getTaxProfileId(), quote.getTaxRatePercentOverride(),
+                quote.getTcsRatePercent(), quote.getDiscountType(), quote.getDiscountValue(),
+                quote.getCurrencyCode(), quote.getFxRateSnapshot());
+        quote.setCancellationChargesInr(breakdown.getCancellationInr());
+        return quoteRepository.save(quote);
+    }
+
+    private record Totals(BigDecimal total, BigDecimal displayTotal) {
+    }
+
+    // Sets subtotal/tax/tcs/discount/total (+ currency/fx) directly on
+    // `quote` (not saved here — every caller saves right after, once it's
+    // also set whatever else it owns, e.g. cancellationChargesInr).
+    private Totals applyTaxAndTotals(Quote quote, BigDecimal subtotal, UUID taxProfileUid, BigDecimal taxRateOverride,
+                                      BigDecimal tcsRatePercent, String discountTypeIn, BigDecimal discountValue,
+                                      String displayCurrencyCode, BigDecimal fxRateSnapshot) {
         BigDecimal taxAmount = BigDecimal.ZERO;
-        UUID taxProfileUid = null;
-        if (request.getTaxProfileUid() != null) {
-            TaxProfile taxProfile = taxProfileHelper.getByUid(request.getTaxProfileUid());
-            taxAmount = subtotal.multiply(taxProfile.getRatePercent())
-                    .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-            taxProfileUid = taxProfile.getUid();
+        UUID resolvedTaxProfileUid = null;
+        BigDecimal resolvedOverride = null;
+        if (taxProfileUid != null) {
+            TaxProfile taxProfile = taxProfileHelper.getByUid(taxProfileUid);
+            BigDecimal ratePercent = taxRateOverride != null ? taxRateOverride : taxProfile.getRatePercent();
+            taxAmount = subtotal.multiply(ratePercent).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+            resolvedTaxProfileUid = taxProfile.getUid();
+            resolvedOverride = taxRateOverride;
         }
 
         // TCS is levied on the customer-facing package price — i.e. subtotal
         // plus GST — not on the pre-tax subtotal alone, matching how
         // outbound-tour-package TCS is actually charged in practice.
-        BigDecimal tcsRatePercent = request.getTcsRatePercent();
         BigDecimal tcsAmount = tcsRatePercent != null
                 ? subtotal.add(taxAmount).multiply(tcsRatePercent).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
 
-        String discountType = request.getDiscountType() != null ? request.getDiscountType() : "none";
-        BigDecimal discountValue = request.getDiscountValue();
+        String discountType = discountTypeIn != null ? discountTypeIn : "none";
         BigDecimal discountAmount = switch (discountType) {
             case "percent" -> discountValue != null
                     ? subtotal.multiply(discountValue).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)
@@ -128,38 +205,125 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
         }
 
         BigDecimal displayTotal = null;
-        if (request.getDisplayCurrencyCode() != null && !"INR".equalsIgnoreCase(request.getDisplayCurrencyCode())) {
-            if (request.getFxRateSnapshot() == null) {
+        if (displayCurrencyCode != null && !"INR".equalsIgnoreCase(displayCurrencyCode)) {
+            if (fxRateSnapshot == null) {
                 throw new BadRequestException("fxRateSnapshot is required when displayCurrencyCode is not INR");
             }
-            displayTotal = total.multiply(request.getFxRateSnapshot()).setScale(2, RoundingMode.HALF_UP);
+            displayTotal = total.multiply(fxRateSnapshot).setScale(2, RoundingMode.HALF_UP);
         }
 
         quote.setSubtotalInr(subtotal.setScale(2, RoundingMode.HALF_UP));
-        quote.setTaxProfileId(taxProfileUid);
+        quote.setTaxProfileId(resolvedTaxProfileUid);
+        quote.setTaxRatePercentOverride(resolvedOverride);
         quote.setTaxAmountInr(taxAmount);
         quote.setTcsRatePercent(tcsRatePercent);
         quote.setTcsAmountInr(tcsAmount);
         quote.setDiscountType(discountType);
         quote.setDiscountValue(discountValue);
         quote.setTotalInr(total.setScale(2, RoundingMode.HALF_UP));
-        quote.setCancellationChargesInr(breakdown.getCancellationInr());
-        quote.setCurrencyCode(request.getDisplayCurrencyCode());
-        quote.setFxRateSnapshot(request.getFxRateSnapshot());
-        Quote saved = quoteRepository.save(quote);
+        quote.setCurrencyCode(displayCurrencyCode);
+        quote.setFxRateSnapshot(fxRateSnapshot);
 
-        int paxCount = quote.getItinerary().getEscape().getTravellers() != null
-                ? quote.getItinerary().getEscape().getTravellers().size()
-                : 0;
+        return new Totals(total, displayTotal);
+    }
 
-        QuoteComputeResponseDTO response = new QuoteComputeResponseDTO();
-        response.setQuote(quoteMapper.toResponse(saved));
-        response.setPricingWarnings(warnings);
-        response.setDisplayTotal(displayTotal);
-        response.setBreakdown(breakdown);
-        response.setPaxCount(paxCount);
-        response.setPerPaxInr(paxCount > 0 ? total.divide(BigDecimal.valueOf(paxCount), 2, RoundingMode.HALF_UP) : null);
-        return response;
+    private BigDecimal sumFinal(List<QuoteLineItem> lineItems) {
+        return lineItems.stream().map(QuoteLineItem::getFinalAmountInr).reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private PricingBreakdownDTO buildBreakdown(List<QuoteLineItem> lineItems) {
+        PricingBreakdownDTO breakdown = new PricingBreakdownDTO();
+        for (QuoteLineItem li : lineItems) {
+            if (Boolean.TRUE.equals(li.getIsCancellation())) {
+                breakdown.setCancellationInr(breakdown.getCancellationInr().add(li.getFinalAmountInr()));
+                continue;
+            }
+            switch (li.getItemType()) {
+                case "hotel" -> breakdown.setHotelsInr(breakdown.getHotelsInr().add(li.getFinalAmountInr()));
+                case "activity" -> breakdown.setActivitiesInr(breakdown.getActivitiesInr().add(li.getFinalAmountInr()));
+                case "transport" -> breakdown.setTransportInr(breakdown.getTransportInr().add(li.getFinalAmountInr()));
+                default -> breakdown.setOtherInr(breakdown.getOtherInr().add(li.getFinalAmountInr()));
+            }
+        }
+        return breakdown;
+    }
+
+    private BigDecimal applyDiscount(BigDecimal base, String discountType, BigDecimal discountValue) {
+        BigDecimal discountAmount = switch (discountType == null ? "none" : discountType) {
+            case "percent" -> discountValue != null
+                    ? base.multiply(discountValue).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)
+                    : BigDecimal.ZERO;
+            case "flat" -> discountValue != null ? discountValue : BigDecimal.ZERO;
+            case "none" -> BigDecimal.ZERO;
+            default -> throw new BadRequestException("discountType must be one of: none, percent, flat");
+        };
+        BigDecimal result = base.subtract(discountAmount);
+        return result.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : result.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    // Rebuilds `quote`'s line items to match the itinerary's current items,
+    // in day/sort order: an item already represented keeps its own
+    // discount (only its label/day/order/base price/cancellation flag
+    // refresh), a newly-priceable item gets a fresh no-discount row, and a
+    // line item whose itinerary item is gone (or no longer resolves to a
+    // price — e.g. its price field was cleared) is deleted. Returns the
+    // synced rows in display order.
+    private List<QuoteLineItem> syncLineItems(Quote quote, List<String> warnings) {
+        List<ItineraryItem> items = itineraryItemRepository
+                .findAllByItinerary_SeqpOrderByDayNumberAscSortOrderAsc(quote.getItinerary().getSeqp());
+
+        Map<Long, QuoteLineItem> existingByItemSeqp = new HashMap<>();
+        for (QuoteLineItem li : quoteLineItemRepository.findAllByQuote_SeqpOrderByDayNumberAscSortOrderAsc(quote.getSeqp())) {
+            existingByItemSeqp.put(li.getItineraryItem().getSeqp(), li);
+        }
+
+        List<QuoteLineItem> ordered = new ArrayList<>();
+        int order = 0;
+        for (ItineraryItem item : items) {
+            ItemPriceResult result = resolvePrice(item, warnings);
+            QuoteLineItem existing = existingByItemSeqp.remove(item.getSeqp());
+            if (result == null) {
+                // No longer priceable (or never was) — drop any stale row for it.
+                if (existing != null) {
+                    quoteLineItemRepository.delete(existing);
+                }
+                continue;
+            }
+
+            String label = item.getTitle() != null && !item.getTitle().isBlank()
+                    ? item.getTitle()
+                    : capitalize(item.getItemType());
+
+            QuoteLineItem lineItem = existing != null ? existing : QuoteLineItem.builder()
+                    .quote(quote)
+                    .itineraryItem(item)
+                    .discountType("none")
+                    .build();
+            lineItem.setOrgId(quote.getOrgId());
+            lineItem.setDayNumber(item.getDayNumber());
+            lineItem.setItemType(item.getItemType());
+            lineItem.setLabel(label);
+            lineItem.setSortOrder(order++);
+            lineItem.setIsCancellation(result.isCancellation());
+            lineItem.setBaseAmountInr(result.amount().setScale(2, RoundingMode.HALF_UP));
+            lineItem.setFinalAmountInr(applyDiscount(lineItem.getBaseAmountInr(), lineItem.getDiscountType(), lineItem.getDiscountValue()));
+            ordered.add(quoteLineItemRepository.save(lineItem));
+        }
+
+        // Whatever's left in the map belongs to items removed from the
+        // itinerary entirely (cascade would eventually handle it too, but
+        // doing it here keeps a stale row from lingering until that item's
+        // own delete happens to be flushed).
+        if (!existingByItemSeqp.isEmpty()) {
+            quoteLineItemRepository.deleteAll(existingByItemSeqp.values());
+        }
+
+        return ordered;
+    }
+
+    private String capitalize(String s) {
+        if (s == null || s.isBlank()) return s;
+        return Character.toUpperCase(s.charAt(0)) + s.substring(1).replace('_', ' ');
     }
 
     // isCancellation flags a Dropped hotel's cancellation charge — the

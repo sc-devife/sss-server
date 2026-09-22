@@ -111,6 +111,7 @@ public class QuoteHelper {
                 .fxRateSnapshot(source.getFxRateSnapshot())
                 .subtotalInr(source.getSubtotalInr())
                 .taxProfileId(source.getTaxProfileId())
+                .taxRatePercentOverride(source.getTaxRatePercentOverride())
                 .taxAmountInr(source.getTaxAmountInr())
                 .totalInr(source.getTotalInr())
                 .discountType(source.getDiscountType())

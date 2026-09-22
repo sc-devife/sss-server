@@ -4,10 +4,8 @@ import com.sss.app.dto.quote.QuoteCreateRequestDTO;
 import com.sss.app.dto.quote.QuoteResponseDTO;
 import com.sss.app.dto.quote.QuoteUpdateRequestDTO;
 import com.sss.app.entity.quote.Quote;
-import com.sss.app.entity.users.User;
 import com.sss.app.helper.quote.QuoteHelper;
-import com.sss.app.mapper.quote.QuoteMapper;
-import com.sss.app.repository.UserRepository;
+import com.sss.app.mapper.quote.QuoteResponseAssembler;
 import com.sss.app.service.quote.QuoteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,8 +18,7 @@ import java.util.UUID;
 public class QuoteServiceImpl implements QuoteService {
 
     private final QuoteHelper quoteHelper;
-    private final QuoteMapper quoteMapper;
-    private final UserRepository userRepository;
+    private final QuoteResponseAssembler quoteResponseAssembler;
 
     @Override
     public QuoteResponseDTO create(QuoteCreateRequestDTO request) {
@@ -63,14 +60,7 @@ public class QuoteServiceImpl implements QuoteService {
         return toResponse(quoteHelper.markRejected(uid));
     }
 
-    // Wraps the MapStruct mapping to resolve createdBy -> a display name —
-    // MapStruct can't do that lookup declaratively, so it's done here once
-    // rather than at every call site.
     private QuoteResponseDTO toResponse(Quote entity) {
-        QuoteResponseDTO dto = quoteMapper.toResponse(entity);
-        if (entity.getCreatedBy() != null) {
-            userRepository.findById(entity.getCreatedBy()).map(User::getName).ifPresent(dto::setCreatedByName);
-        }
-        return dto;
+        return quoteResponseAssembler.toResponse(entity);
     }
 }

@@ -75,6 +75,13 @@ public class Quote extends Auditable {
     @Column(name = "tax_amount_inr", precision = 14, scale = 2)
     private BigDecimal taxAmountInr;
 
+    // Overrides taxProfileId's own ratePercent at compute time when set —
+    // lets a quote use a one-off tax % (or a tweak to the selected profile's
+    // rate) without needing a new library TaxProfile row for it. taxProfileId
+    // is still recorded alongside it, so "which tax TYPE" is never lost.
+    @Column(name = "tax_rate_percent_override", precision = 6, scale = 3)
+    private BigDecimal taxRatePercentOverride;
+
     // TCS (Tax Collected at Source) — a second statutory tax on Indian
     // outbound travel packages, stacked alongside GST rather than replacing
     // it. Computed on (subtotal + GST), matching how TCS is actually levied

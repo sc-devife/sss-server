@@ -19,6 +19,7 @@ public class QuoteResponseDTO {
     private BigDecimal fxRateSnapshot;
     private BigDecimal subtotalInr;
     private UUID taxProfileId;
+    private BigDecimal taxRatePercentOverride;
     private BigDecimal taxAmountInr;
     private BigDecimal tcsRatePercent;
     private BigDecimal tcsAmountInr;
