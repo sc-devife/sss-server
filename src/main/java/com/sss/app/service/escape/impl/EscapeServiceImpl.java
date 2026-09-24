@@ -34,6 +34,11 @@ public class EscapeServiceImpl implements EscapeService {
     }
 
     @Override
+    public com.sss.app.dto.escape.DayReductionImpactDTO getDayReductionImpact(UUID id, int newNumberOfDays) {
+        return escapeHelper.getDayReductionImpact(id, newNumberOfDays);
+    }
+
+    @Override
     public EscapeResponseDTO updateEscape(UUID uid, EscapeUpdateRequestDTO request)
     {
         EscapeResponseDTO response = escapeMapper.toResponse(escapeHelper.updateEscape(uid, request));

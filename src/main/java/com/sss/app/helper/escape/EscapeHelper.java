@@ -12,7 +12,14 @@ import com.sss.app.entity.organizations.OrganizationSettings;
 import com.sss.app.entity.traveller.Traveller;
 import com.sss.app.entity.users.User;
 import com.sss.app.entity.notification.NotificationType;
+import com.sss.app.dto.escape.DayReductionImpactDTO;
+import com.sss.app.entity.itinerary.ItineraryItem;
+import com.sss.app.exception.BadRequestException;
 import com.sss.app.exception.NotFoundException;
+import com.sss.app.helper.itinerary.ItineraryItemHelper;
+import com.sss.app.repository.itinerary.ItineraryItemRepository;
+import com.sss.app.repository.quote.QuoteLineItemRepository;
+import org.springframework.beans.factory.ObjectProvider;
 import com.sss.app.helper.traveller.TravellerHelper;
 import com.sss.app.mapper.escape.EscapeMapper;
 import com.sss.app.repository.OrganizationSettingsRepository;
@@ -48,6 +55,10 @@ public class EscapeHelper {
     private final OrganizationSettingsRepository organizationSettingsRepository;
     private final LeadAssignmentService leadAssignmentService;
     private final NotificationService notificationService;
+    private final ItineraryItemRepository itineraryItemRepository;
+    private final QuoteLineItemRepository quoteLineItemRepository;
+    // Provider: ItineraryItemHelper's dependency chain leads back to this helper (circular).
+    private final ObjectProvider<ItineraryItemHelper> itineraryItemHelperProvider;
 
     private User currentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -149,6 +160,20 @@ public class EscapeHelper {
         // Deliberately not setting status here — Section 8 requires status
         // changes to go through EscapeLifecycleService (validated + audited),
         // same "no freeform edits" pattern as Lead's lifecycle in Phase 3.
+        // Shortening the escape removes the trailing days' planned items from
+        // every itinerary (their quote lines go with them via the FK cascade).
+        if (request.getNumberOfDays() != null) {
+            if (request.getNumberOfDays() < 1) {
+                throw new BadRequestException("An escape needs at least 1 day");
+            }
+            if (escape.getNumberOfDays() != null && request.getNumberOfDays() < escape.getNumberOfDays()) {
+                for (ItineraryItem item : itineraryItemRepository
+                        .findAllByItinerary_Escape_SeqpAndDayNumberGreaterThan(escape.getSeqp(), request.getNumberOfDays())) {
+                    itineraryItemHelperProvider.getObject().delete(item.getUid());
+                }
+            }
+        }
+
         escape.setStartDate(request.getStartDate());
         escape.setNumberOfDays(request.getNumberOfDays());
 
@@ -167,6 +192,18 @@ public class EscapeHelper {
 
         //Save Updated Escape
         return escapeRepository.save(escape);
+    }
+
+    /** What shortening the escape to {@code newNumberOfDays} days would delete — used to decide whether to warn first. */
+    public DayReductionImpactDTO getDayReductionImpact(UUID uid, int newNumberOfDays) {
+        Escape escape = getEscapeById(uid);
+        List<ItineraryItem> doomed = itineraryItemRepository
+                .findAllByItinerary_Escape_SeqpAndDayNumberGreaterThan(escape.getSeqp(), newNumberOfDays);
+        List<Integer> days = doomed.stream().map(ItineraryItem::getDayNumber).distinct().sorted().toList();
+        long quoteLines = doomed.isEmpty()
+                ? 0
+                : quoteLineItemRepository.countByItineraryItem_SeqpIn(doomed.stream().map(ItineraryItem::getSeqp).toList());
+        return new DayReductionImpactDTO(days, doomed.size(), (int) quoteLines);
     }
 
     public Escape getEscapeById(UUID id) {

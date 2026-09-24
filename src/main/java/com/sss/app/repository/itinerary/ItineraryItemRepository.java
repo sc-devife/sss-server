@@ -13,6 +13,9 @@ public interface ItineraryItemRepository extends JpaRepository<ItineraryItem, Lo
 
     Optional<ItineraryItem> findByUid(UUID uid);
 
+    // Every item, across all of an escape's itineraries, planned after the given day.
+    List<ItineraryItem> findAllByItinerary_Escape_SeqpAndDayNumberGreaterThan(Long escapeSeqp, Integer dayNumber);
+
     List<ItineraryItem> findAllByItinerary_SeqpOrderByDayNumberAscSortOrderAsc(Long itinerarySeqp);
 
     @Query("SELECT ii FROM ItineraryItem ii " +

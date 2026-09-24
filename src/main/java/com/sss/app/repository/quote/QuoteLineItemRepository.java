@@ -11,6 +11,8 @@ public interface QuoteLineItemRepository extends JpaRepository<QuoteLineItem, Lo
 
     Optional<QuoteLineItem> findByUid(UUID uid);
 
+    long countByItineraryItem_SeqpIn(java.util.Collection<Long> itineraryItemSeqps);
+
     List<QuoteLineItem> findAllByQuote_SeqpOrderByDayNumberAscSortOrderAsc(Long quoteSeqp);
 
     Optional<QuoteLineItem> findByQuote_SeqpAndItineraryItem_Seqp(Long quoteSeqp, Long itineraryItemSeqp);

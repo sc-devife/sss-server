@@ -14,6 +14,7 @@ public interface EscapeService {
     EscapeResponseDTO updateEscape(UUID uid, EscapeUpdateRequestDTO request);
     EscapeResponseDTO updateSummaryNotes(UUID uid, EscapeSummaryNotesRequestDTO request);
     EscapeResponseDTO getEscapeById(UUID id);
+    com.sss.app.dto.escape.DayReductionImpactDTO getDayReductionImpact(UUID id, int newNumberOfDays);
     List<EscapeResponseDTO> getAllEscapes();
     void deleteEscape(UUID id);
     EscapeResponseDTO addTraveller(UUID escapeUid, TravellerCreateRequestDTO request);

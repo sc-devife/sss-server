@@ -73,6 +73,14 @@ public class EscapeController {
         return ResponseEntity.ok(escapeService.updateSummaryNotes(id, request));
     }
 
+    // How much planned data shortening the escape to N days would delete (the UI only warns when this is non-empty).
+    @PreAuthorize("@permissionService.hasPermission('trips.read')")
+    @GetMapping("/{id}/day-reduction-impact")
+    public ResponseEntity<com.sss.app.dto.escape.DayReductionImpactDTO> getDayReductionImpact(
+            @PathVariable UUID id, @RequestParam int numberOfDays) {
+        return ResponseEntity.ok(escapeService.getDayReductionImpact(id, numberOfDays));
+    }
+
     @PreAuthorize("@permissionService.hasPermission('trips.read')")
     @GetMapping("/{id}")
     public ResponseEntity<EscapeResponseDTO> getEscape(@PathVariable UUID id) {
