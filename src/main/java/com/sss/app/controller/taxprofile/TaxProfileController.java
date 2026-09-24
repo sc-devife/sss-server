@@ -53,4 +53,11 @@ public class TaxProfileController {
         taxProfileService.deactivate(uid);
         return ResponseEntity.noContent().build();
     }
+
+    @PreAuthorize("@permissionService.hasPermission('organizations.write')")
+    @DeleteMapping("/{uid}")
+    public ResponseEntity<Void> delete(@PathVariable UUID uid) {
+        taxProfileService.delete(uid);
+        return ResponseEntity.noContent().build();
+    }
 }

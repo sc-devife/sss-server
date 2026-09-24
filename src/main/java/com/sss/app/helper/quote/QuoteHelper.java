@@ -7,6 +7,7 @@ import com.sss.app.entity.itinerary.Itinerary;
 import com.sss.app.entity.notification.NotificationType;
 import com.sss.app.entity.quote.Quote;
 import com.sss.app.entity.users.User;
+import com.sss.app.exception.BadRequestException;
 import com.sss.app.exception.ConflictException;
 import com.sss.app.exception.NotFoundException;
 import com.sss.app.helper.itinerary.ItineraryHelper;
@@ -46,10 +47,38 @@ public class QuoteHelper {
             quote.setName(buildAutoName(itinerary));
         }
 
+        // Retire the itinerary's earlier open quotes first (so the new one isn't included).
+        closeOpenQuotes(itinerary, request.getPreviousStatus());
+
         Quote saved = quoteRepository.save(quote);
         notifyForQuote(saved, NotificationType.QUOTATION_CREATED, "Quotation Created",
                 "Quotation " + saved.getName() + " has been created.");
         return saved;
+    }
+
+    /**
+     * Sets every draft/sent quote of the itinerary to {@code status} ("rejected"
+     * or "superseded"). Accepted quotes and ones already closed are never touched.
+     * A null status is a no-op.
+     */
+    public void closeOpenQuotes(Itinerary itinerary, String status) {
+        String target = normalizeNegativeStatus(status);
+        if (target == null) return;
+        for (Quote existing : quoteRepository.findAllByOrgIdAndItinerary_Seqp(itinerary.getOrgId(), itinerary.getSeqp())) {
+            if ("draft".equals(existing.getStatus()) || "sent".equals(existing.getStatus())) {
+                existing.setStatus(target);
+                quoteRepository.save(existing);
+            }
+        }
+    }
+
+    public static String normalizeNegativeStatus(String status) {
+        if (status == null || status.isBlank()) return null;
+        String s = status.trim().toLowerCase();
+        if (!s.equals("rejected") && !s.equals("superseded")) {
+            throw new BadRequestException("previousStatus must be 'rejected' or 'superseded'");
+        }
+        return s;
     }
 
     // Escape/Quotation notifications go to the escape's assignee, falling
@@ -95,36 +124,6 @@ public class QuoteHelper {
     public void delete(UUID uid) {
         Quote quote = getByUid(uid);
         quoteRepository.delete(quote);
-    }
-
-    /** Same "new record, mark old superseded" pattern as Itinerary.createNewVersion. */
-    public Quote createRevision(UUID sourceUid) {
-        Quote source = getByUid(sourceUid);
-
-        Quote revision = Quote.builder()
-                .orgId(source.getOrgId())
-                .itinerary(source.getItinerary())
-                .name(source.getName())
-                .version(source.getVersion() + 1)
-                .status("draft")
-                .currencyCode(source.getCurrencyCode())
-                .fxRateSnapshot(source.getFxRateSnapshot())
-                .subtotalInr(source.getSubtotalInr())
-                .taxProfileId(source.getTaxProfileId())
-                .taxRatePercentOverride(source.getTaxRatePercentOverride())
-                .taxAmountInr(source.getTaxAmountInr())
-                .totalInr(source.getTotalInr())
-                .discountType(source.getDiscountType())
-                .discountValue(source.getDiscountValue())
-                .templateId(source.getTemplateId())
-                .validUntil(source.getValidUntil())
-                .build();
-        revision = quoteRepository.save(revision);
-
-        source.setStatus("superseded");
-        quoteRepository.save(source);
-
-        return revision;
     }
 
     /** Draft -> sent: the point at which a quote is shared with the customer. */

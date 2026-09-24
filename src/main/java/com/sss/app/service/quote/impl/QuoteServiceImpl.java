@@ -46,11 +46,6 @@ public class QuoteServiceImpl implements QuoteService {
     }
 
     @Override
-    public QuoteResponseDTO createRevision(UUID sourceUid) {
-        return toResponse(quoteHelper.createRevision(sourceUid));
-    }
-
-    @Override
     public QuoteResponseDTO markSent(UUID uid) {
         return toResponse(quoteHelper.markSent(uid));
     }

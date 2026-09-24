@@ -12,6 +12,9 @@ import com.sss.app.helper.escape.EscapeHelper;
 import com.sss.app.repository.itinerary.ItineraryContentItemRepository;
 import com.sss.app.repository.itinerary.ItineraryItemRepository;
 import com.sss.app.repository.itinerary.ItineraryRepository;
+import com.sss.app.entity.quote.Quote;
+import com.sss.app.exception.BadRequestException;
+import com.sss.app.repository.quote.QuoteRepository;
 import com.sss.app.security.OrgAccessGuard;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -30,6 +33,7 @@ public class ItineraryHelper {
     private final ItineraryContentItemRepository itineraryContentItemRepository;
     private final EscapeHelper escapeHelper;
     private final OrgAccessGuard orgAccessGuard;
+    private final QuoteRepository quoteRepository;
 
     private User currentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -49,6 +53,26 @@ public class ItineraryHelper {
                 .status("draft")
                 .version(1)
                 .build();
+
+        // Retire the escape's earlier itineraries (and their open quotes) first.
+        // An itinerary already accepted ("active") is never touched.
+        String target = request.getPreviousStatus() == null ? null : request.getPreviousStatus().trim().toLowerCase();
+        if (target != null && !target.isEmpty()) {
+            if (!target.equals("rejected") && !target.equals("superseded")) {
+                throw new BadRequestException("previousStatus must be 'rejected' or 'superseded'");
+            }
+            for (Itinerary previous : itineraryRepository.findAllByOrgIdAndEscape_Seqp(trip.getOrgId(), trip.getSeqp())) {
+                if ("active".equals(previous.getStatus()) || target.equals(previous.getStatus())) continue;
+                previous.setStatus(target);
+                itineraryRepository.save(previous);
+                for (Quote q : quoteRepository.findAllByOrgIdAndItinerary_Seqp(previous.getOrgId(), previous.getSeqp())) {
+                    if ("draft".equals(q.getStatus()) || "sent".equals(q.getStatus())) {
+                        q.setStatus(target);
+                        quoteRepository.save(q);
+                    }
+                }
+            }
+        }
 
         return itineraryRepository.save(itinerary);
     }

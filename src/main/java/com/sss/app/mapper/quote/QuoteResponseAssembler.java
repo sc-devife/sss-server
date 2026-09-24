@@ -4,6 +4,7 @@ import com.sss.app.dto.quote.QuoteResponseDTO;
 import com.sss.app.entity.quote.Quote;
 import com.sss.app.entity.users.User;
 import com.sss.app.repository.UserRepository;
+import com.sss.app.service.quote.QuoteFingerprintService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -22,12 +23,15 @@ public class QuoteResponseAssembler {
 
     private final QuoteMapper quoteMapper;
     private final UserRepository userRepository;
+    private final QuoteFingerprintService quoteFingerprintService;
 
     public QuoteResponseDTO toResponse(Quote entity) {
         QuoteResponseDTO dto = quoteMapper.toResponse(entity);
         if (entity.getCreatedBy() != null) {
             userRepository.findById(entity.getCreatedBy()).map(User::getName).ifPresent(dto::setCreatedByName);
         }
+        dto.setChangedSinceGenerated(entity.getGeneratedAt() != null
+                && !quoteFingerprintService.compute(entity).equals(entity.getGeneratedFingerprint()));
         return dto;
     }
 }

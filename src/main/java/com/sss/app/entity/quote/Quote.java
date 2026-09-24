@@ -92,6 +92,13 @@ public class Quote extends Auditable {
     @Column(name = "tcs_amount_inr", precision = 14, scale = 2)
     private BigDecimal tcsAmountInr;
 
+    // When the quotation PDF was last generated, and a fingerprint of its inputs then.
+    @Column(name = "generated_at")
+    private java.time.LocalDateTime generatedAt;
+
+    @Column(name = "generated_fingerprint", length = 64)
+    private String generatedFingerprint;
+
     @Column(name = "total_inr", precision = 14, scale = 2)
     private BigDecimal totalInr;
 

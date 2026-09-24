@@ -32,4 +32,7 @@ public class QuoteResponseDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String createdByName;
+    private LocalDateTime generatedAt;
+    // True when the quote was generated but has changed since (set by QuoteResponseAssembler).
+    private Boolean changedSinceGenerated;
 }

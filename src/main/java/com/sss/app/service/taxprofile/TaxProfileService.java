@@ -13,4 +13,5 @@ public interface TaxProfileService {
     List<TaxProfileResponseDTO> getAllForOrg();
     TaxProfileResponseDTO update(UUID uid, TaxProfileUpdateRequestDTO request);
     void deactivate(UUID uid);
+    void delete(UUID uid);
 }

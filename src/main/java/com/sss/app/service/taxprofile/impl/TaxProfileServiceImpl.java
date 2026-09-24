@@ -43,4 +43,9 @@ public class TaxProfileServiceImpl implements TaxProfileService {
     public void deactivate(UUID uid) {
         taxProfileHelper.deactivate(uid);
     }
+
+    @Override
+    public void delete(UUID uid) {
+        taxProfileHelper.delete(uid);
+    }
 }

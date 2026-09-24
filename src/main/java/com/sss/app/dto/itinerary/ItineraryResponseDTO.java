@@ -14,4 +14,5 @@ public class ItineraryResponseDTO {
     private Integer version;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String createdByName;
 }

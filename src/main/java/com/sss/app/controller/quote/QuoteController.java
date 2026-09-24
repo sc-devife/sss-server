@@ -59,12 +59,6 @@ public class QuoteController {
     }
 
     @PreAuthorize("@permissionService.hasPermission('trips.write')")
-    @PostMapping("/{uid}/revise")
-    public ResponseEntity<QuoteResponseDTO> createRevision(@PathVariable UUID uid) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(quoteService.createRevision(uid));
-    }
-
-    @PreAuthorize("@permissionService.hasPermission('trips.write')")
     @PostMapping("/{uid}/compute")
     public ResponseEntity<QuoteComputeResponseDTO> compute(@PathVariable UUID uid, @RequestBody QuoteComputeRequestDTO request) {
         return ResponseEntity.ok(quoteComputationService.compute(uid, request));
@@ -78,6 +72,12 @@ public class QuoteController {
     @GetMapping("/{uid}/line-items")
     public ResponseEntity<QuoteLineItemsResponseDTO> getLineItems(@PathVariable UUID uid) {
         return ResponseEntity.ok(quoteComputationService.getLineItems(uid));
+    }
+
+    @PreAuthorize("@permissionService.hasPermission('trips.write')")
+    @PostMapping("/{uid}/mark-generated")
+    public ResponseEntity<QuoteLineItemsResponseDTO> markGenerated(@PathVariable UUID uid) {
+        return ResponseEntity.ok(quoteComputationService.markGenerated(uid));
     }
 
     @PreAuthorize("@permissionService.hasPermission('trips.write')")

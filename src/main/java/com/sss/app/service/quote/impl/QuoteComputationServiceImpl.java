@@ -15,6 +15,7 @@ import com.sss.app.entity.quote.QuoteLineItem;
 import com.sss.app.entity.taxprofile.TaxProfile;
 import com.sss.app.exception.BadRequestException;
 import com.sss.app.exception.NotFoundException;
+import com.sss.app.helper.itinerary.ItineraryItemHelper;
 import com.sss.app.helper.quote.QuoteHelper;
 import com.sss.app.helper.taxprofile.TaxProfileHelper;
 import com.sss.app.mapper.quote.QuoteLineItemMapper;
@@ -28,7 +29,9 @@ import com.sss.app.repository.library.transport.TransportRepository;
 import com.sss.app.repository.quote.QuoteLineItemRepository;
 import com.sss.app.repository.quote.QuoteRepository;
 import com.sss.app.service.quote.QuoteComputationService;
+import com.sss.app.service.quote.QuoteFingerprintService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -69,6 +72,9 @@ import java.util.UUID;
 @Transactional
 public class QuoteComputationServiceImpl implements QuoteComputationService {
 
+    // Provider, not a direct field: ItineraryItemHelper itself depends on this service (circular).
+    private final ObjectProvider<ItineraryItemHelper> itineraryItemHelperProvider;
+    private final QuoteFingerprintService quoteFingerprintService;
     private final QuoteHelper quoteHelper;
     private final QuoteRepository quoteRepository;
     private final QuoteResponseAssembler quoteResponseAssembler;
@@ -117,6 +123,18 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
         List<String> warnings = new ArrayList<>();
         List<QuoteLineItem> lineItems = syncLineItems(quote, warnings);
         Quote saved = recomputeFromLineItems(quote, lineItems);
+        return toLineItemsResponse(saved, lineItems, warnings);
+    }
+
+    @Override
+    public QuoteLineItemsResponseDTO markGenerated(UUID quoteUid) {
+        Quote quote = quoteHelper.getByUid(quoteUid);
+        List<String> warnings = new ArrayList<>();
+        List<QuoteLineItem> lineItems = syncLineItems(quote, warnings);
+        Quote saved = recomputeFromLineItems(quote, lineItems);
+        saved.setGeneratedAt(java.time.LocalDateTime.now());
+        saved.setGeneratedFingerprint(quoteFingerprintService.compute(saved));
+        saved = quoteRepository.save(saved);
         return toLineItemsResponse(saved, lineItems, warnings);
     }
 
@@ -277,6 +295,8 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
             existingByItemSeqp.put(li.getItineraryItem().getSeqp(), li);
         }
 
+        // Same library-name resolution the Itinerary tab shows (hotel/activity/transport names).
+        Map<UUID, String> labels = itineraryItemHelperProvider.getObject().resolveLabels(items);
         List<QuoteLineItem> ordered = new ArrayList<>();
         int order = 0;
         for (ItineraryItem item : items) {
@@ -290,7 +310,10 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
                 continue;
             }
 
-            String label = item.getTitle() != null && !item.getTitle().isBlank()
+            String resolved = labels.get(item.getUid());
+            String label = resolved != null && !resolved.isBlank()
+                    ? resolved
+                    : item.getTitle() != null && !item.getTitle().isBlank()
                     ? item.getTitle()
                     : capitalize(item.getItemType());
 

@@ -11,6 +11,8 @@ public interface QuoteRepository extends JpaRepository<Quote, Long> {
 
     Optional<Quote> findByUid(UUID uid);
 
+    boolean existsByTaxProfileId(UUID taxProfileId);
+
     List<Quote> findAllByOrgIdAndItinerary_Seqp(Long orgId, Long itinerarySeqp);
 
     // Dashboard Quote Analytics — quotes/org is low-volume (one row per

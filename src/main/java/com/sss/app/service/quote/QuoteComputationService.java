@@ -14,5 +14,8 @@ public interface QuoteComputationService {
     QuoteLineItemsResponseDTO getLineItems(UUID quoteUid);
 
     /** Updates one line item's discount, recomputes the quote's totals off the line items' new final amounts (using the quote's last-used tax/TCS/overall-discount settings), and returns both. */
+    /** Records that the quotation was just generated: re-syncs the line items, then stores the time and a fingerprint of what it was generated from. */
+    QuoteLineItemsResponseDTO markGenerated(UUID quoteUid);
+
     QuoteLineItemsResponseDTO updateLineItemDiscount(UUID quoteUid, UUID lineItemUid, QuoteLineItemDiscountUpdateRequestDTO request);
 }

@@ -27,4 +27,8 @@ public class QuoteCreateRequestDTO {
     private BigDecimal discountValue;
     private UUID templateId;
     private LocalDate validUntil;
+
+    // Optional: what to do with the earlier ones when this one is created —
+    // "rejected" or "superseded". Omitted/null leaves them untouched.
+    private String previousStatus;
 }

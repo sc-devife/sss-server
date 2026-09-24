@@ -14,4 +14,8 @@ public class ItineraryCreateRequestDTO {
     // Optional — a blank/omitted name is auto-generated server-side from the
     // escape's lead name, itinerary count, and trip length.
     private String name;
+
+    // Optional: what to do with the earlier itineraries (and their open quotes) when this one is created —
+    // "rejected" or "superseded". Omitted/null leaves them untouched.
+    private String previousStatus;
 }
