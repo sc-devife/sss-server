@@ -8,6 +8,10 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class OrganizationMapper {
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.sss.app.repository.quote.QuoteRepository quoteRepository;
+
     public OrganizationsDto toDto(Organizations orgs) {
         return toDto(orgs, null);
     }
@@ -47,6 +51,9 @@ public class OrganizationMapper {
         OrganizationSettingsDto dto = new OrganizationSettingsDto();
         dto.setAuto_assign_enabled(settings.getAutoAssignEnabled());
         dto.setDefault_currency_code(settings.getDefaultCurrencyCode());
+        dto.setRounding_mode(settings.getRoundingMode());
+        dto.setPayment_gateway_enabled(Boolean.TRUE.equals(settings.getPaymentGatewayEnabled()));
+        dto.setBase_currency_locked(quoteRepository.existsByOrgId(settings.getOrgId()));
         dto.setQuote_template_id(settings.getQuoteTemplateId());
         dto.setInvoice_template_id(settings.getInvoiceTemplateId());
         dto.setDefault_quotation_template_id(settings.getDefaultQuotationTemplateId());

@@ -66,14 +66,25 @@ public class Quote extends Auditable {
     @Column(name = "fx_rate_snapshot", precision = 18, scale = 6)
     private BigDecimal fxRateSnapshot;
 
-    @Column(name = "subtotal_inr", precision = 14, scale = 2)
-    private BigDecimal subtotalInr;
+    // How the snapshot was obtained (see V132): pinned on this quote, and where it came from.
+    @Column(name = "fx_rate_custom", nullable = false)
+    @Builder.Default
+    private Boolean fxRateCustom = false;
+
+    @Column(name = "fx_rate_source")
+    private String fxRateSource;
+
+    @Column(name = "fx_rate_as_of")
+    private java.time.LocalDate fxRateAsOf;
+
+    @Column(name = "subtotal_base", precision = 16, scale = 4)
+    private BigDecimal subtotalBase;
 
     @Column(name = "tax_profile_id")
     private UUID taxProfileId;
 
-    @Column(name = "tax_amount_inr", precision = 14, scale = 2)
-    private BigDecimal taxAmountInr;
+    @Column(name = "tax_amount_base", precision = 16, scale = 4)
+    private BigDecimal taxAmountBase;
 
     // Overrides taxProfileId's own ratePercent at compute time when set —
     // lets a quote use a one-off tax % (or a tweak to the selected profile's
@@ -86,11 +97,11 @@ public class Quote extends Auditable {
     // outbound travel packages, stacked alongside GST rather than replacing
     // it. Computed on (subtotal + GST), matching how TCS is actually levied
     // on the customer-facing package price.
-    @Column(name = "tcs_rate_percent", precision = 5, scale = 2)
+    @Column(name = "tcs_rate_percent", precision = 7, scale = 4)
     private BigDecimal tcsRatePercent;
 
-    @Column(name = "tcs_amount_inr", precision = 14, scale = 2)
-    private BigDecimal tcsAmountInr;
+    @Column(name = "tcs_amount_base", precision = 16, scale = 4)
+    private BigDecimal tcsAmountBase;
 
     // When the quotation PDF was last generated, and a fingerprint of its inputs then.
     @Column(name = "generated_at")
@@ -99,22 +110,22 @@ public class Quote extends Auditable {
     @Column(name = "generated_fingerprint", length = 64)
     private String generatedFingerprint;
 
-    @Column(name = "total_inr", precision = 14, scale = 2)
-    private BigDecimal totalInr;
+    @Column(name = "total_base", precision = 16, scale = 4)
+    private BigDecimal totalBase;
 
     // Sum of dropped hotels' cancellation charges across this itinerary —
-    // already folded into subtotalInr/totalInr above (see
+    // already folded into subtotalBase/totalBase above (see
     // QuoteComputationServiceImpl's resolvePrice), kept as its own column
     // purely so it can be shown as a distinct line (Quotation, billing)
     // rather than hidden inside the general hotel total.
-    @Column(name = "cancellation_charges_inr", precision = 14, scale = 2)
-    private BigDecimal cancellationChargesInr;
+    @Column(name = "cancellation_charges_base", precision = 16, scale = 4)
+    private BigDecimal cancellationChargesBase;
 
     // none / percent / flat
     @Column(name = "discount_type", nullable = false)
     private String discountType;
 
-    @Column(name = "discount_value", precision = 14, scale = 2)
+    @Column(name = "discount_value", precision = 16, scale = 4)
     private BigDecimal discountValue;
 
     @Column(name = "template_id")

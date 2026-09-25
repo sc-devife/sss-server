@@ -47,6 +47,7 @@ public class HotelCreateRequestDTO {
     private String childAgeForExtraBed;
 
     private java.math.BigDecimal basePrice;
+    private String priceCurrency; // null = base currency
 
     private java.time.LocalDate rateValidFrom;
 

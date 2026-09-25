@@ -43,6 +43,6 @@ public class HotelRoomType {
     @JoinColumn(name = "room_type_id", nullable = false)
     private RoomType roomType;
 
-    @Column(precision = 12, scale = 2)
+    @Column(precision = 14, scale = 4)
     private BigDecimal price;
 }

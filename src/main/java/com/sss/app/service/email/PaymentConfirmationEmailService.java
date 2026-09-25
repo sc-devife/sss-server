@@ -49,6 +49,8 @@ public class PaymentConfirmationEmailService {
     private final OrganizationRepository organizationRepository;
     private final QuotationRenderingService quotationRenderingService;
     private final EmailService emailService;
+    private final com.sss.app.service.exchangerate.CurrencyDisplayService currencyDisplayService;
+    private final com.sss.app.service.exchangerate.MoneyFormatter moneyFormatter;
 
     @Async
     @Transactional(readOnly = true)
@@ -68,14 +70,14 @@ public class PaymentConfirmationEmailService {
                 return;
             }
 
-            BigDecimal totalInr = deal.getAcceptedQuote() != null && deal.getAcceptedQuote().getTotalInr() != null
-                    ? deal.getAcceptedQuote().getTotalInr() : BigDecimal.ZERO;
+            BigDecimal totalBase = deal.getAcceptedQuote() != null && deal.getAcceptedQuote().getTotalBase() != null
+                    ? deal.getAcceptedQuote().getTotalBase() : BigDecimal.ZERO;
             List<PaymentMilestone> allMilestones = paymentMilestoneRepository.findAllByDeal_Seqp(deal.getSeqp());
             BigDecimal totalPaid = allMilestones.stream()
-                    .map(PaymentMilestone::getAmountPaidInr)
+                    .map(PaymentMilestone::getAmountPaidBase)
                     .filter(java.util.Objects::nonNull)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
-            BigDecimal pendingAmount = totalInr.subtract(totalPaid).max(BigDecimal.ZERO);
+            BigDecimal pendingAmount = totalBase.subtract(totalPaid).max(BigDecimal.ZERO);
 
             Organizations org = organizationRepository.findById(milestone.getOrgId()).orElse(null);
             String orgName = org != null
@@ -85,16 +87,19 @@ public class PaymentConfirmationEmailService {
             EscapePoint destination = escape.getEscapePoints() == null ? null
                     : escape.getEscapePoints().stream().findFirst().orElse(null);
 
-            NumberFormat inrFormat = inrWholeFormat();
+            NumberFormat moneyFormat = moneyFormat(milestone.getOrgId());
             Map<String, Object> data = new HashMap<>();
             data.put("recipientName", recipient.name());
             data.put("organizationName", orgName);
             data.put("tripCode", escape.getTripCode());
             data.put("destinationName", destination != null ? destination.getName() : null);
             data.put("milestoneLabel", milestone.getLabel());
-            data.put("paidAmountFormatted", inrFormat.format(milestone.getAmountPaidInr()));
-            data.put("pendingAmountFormatted", inrFormat.format(pendingAmount));
+            data.put("paidAmountFormatted", moneyFormat.format(milestone.getAmountPaidBase()));
+            data.put("pendingAmountFormatted", moneyFormat.format(pendingAmount));
             data.put("isFullyPaid", pendingAmount.compareTo(BigDecimal.ZERO) <= 0);
+            String baseCode = currencyDisplayService.baseCurrencyCode(milestone.getOrgId());
+            data.put("currencyCode", baseCode);
+            data.put("currencySymbol", currencyDisplayService.symbol(baseCode));
 
             String subject = quotationRenderingService.renderInline(EMAIL_SUBJECT_TEMPLATE, data);
             String body = quotationRenderingService.renderClasspathTemplate(EMAIL_BODY_TEMPLATE, data);
@@ -137,10 +142,7 @@ public class PaymentConfirmationEmailService {
         return name.isBlank() ? "Guest" : name;
     }
 
-    private NumberFormat inrWholeFormat() {
-        NumberFormat format = NumberFormat.getInstance(new Locale("en", "IN"));
-        format.setMaximumFractionDigits(0);
-        format.setMinimumFractionDigits(0);
-        return format;
+    private java.text.NumberFormat moneyFormat(Long orgId) {
+        return moneyFormatter.forOrg(orgId, null);
     }
 }

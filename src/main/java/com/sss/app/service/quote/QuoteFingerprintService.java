@@ -30,14 +30,14 @@ public class QuoteFingerprintService {
     public String compute(Quote quote) {
         StringBuilder sb = new StringBuilder();
         sb.append(quote.getTemplateId()).append('|')
-                .append(quote.getSubtotalInr()).append('|')
+                .append(quote.getSubtotalBase()).append('|')
                 .append(quote.getTaxProfileId()).append('|')
                 .append(quote.getTaxRatePercentOverride()).append('|')
-                .append(quote.getTaxAmountInr()).append('|')
-                .append(quote.getTcsAmountInr()).append('|')
+                .append(quote.getTaxAmountBase()).append('|')
+                .append(quote.getTcsAmountBase()).append('|')
                 .append(quote.getDiscountType()).append('|')
                 .append(quote.getDiscountValue()).append('|')
-                .append(quote.getTotalInr()).append('|')
+                .append(quote.getTotalBase()).append('|')
                 .append(quote.getCurrencyCode()).append('|')
                 .append(quote.getFxRateSnapshot()).append('|')
                 .append(quote.getValidUntil()).append('\n');
@@ -47,10 +47,10 @@ public class QuoteFingerprintService {
         for (QuoteLineItem li : lineItems) {
             sb.append(li.getItineraryItem().getUid()).append('|')
                     .append(li.getLabel()).append('|')
-                    .append(li.getBaseAmountInr()).append('|')
+                    .append(li.getGrossAmountBase()).append('|')
                     .append(li.getDiscountType()).append('|')
                     .append(li.getDiscountValue()).append('|')
-                    .append(li.getFinalAmountInr()).append('\n');
+                    .append(li.getNetAmountBase()).append('\n');
         }
 
         List<ItineraryItem> items = itineraryItemRepository

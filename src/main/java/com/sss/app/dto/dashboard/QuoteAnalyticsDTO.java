@@ -14,7 +14,7 @@ public class QuoteAnalyticsDTO {
     private long rejectedQuotes;
     /** accepted / totalQuotes — never computed against draft/superseded. */
     private double acceptanceRatePercent;
-    private BigDecimal averageQuoteValueInr;
-    private BigDecimal totalQuoteValueInr;
+    private BigDecimal averageQuoteValueBase;
+    private BigDecimal totalQuoteValueBase;
     private List<StatusCountDTO> statusBreakdown;
 }

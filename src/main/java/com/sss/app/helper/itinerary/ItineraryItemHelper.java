@@ -213,7 +213,7 @@ public class ItineraryItemHelper {
 
         // Item-level Drop (Activity and Transport — Hotel has its own
         // separate Drop path on HotelDetailDTO/saveHotelDetail). Mirrors
-        // that same rule: only status/droppingReason/cancellationChargeInr
+        // that same rule: only status/droppingReason/cancellationChargeBase
         // are written, every other field (title, price, notes, etc.) is
         // left exactly as it was.
         boolean droppingItemNow = ("activity".equals(item.getItemType()) || "transport".equals(item.getItemType()))
@@ -226,7 +226,7 @@ public class ItineraryItemHelper {
             }
             item.setStatus(BookingStatus.DROP);
             item.setDroppingReason(request.getDroppingReason());
-            item.setCancellationChargeInr(request.getCancellationCharge());
+            item.setCancellationChargeBase(request.getCancellationCharge());
         } else {
             if (request.getItemType() != null || request.getReferenceId() != null || request.getTitle() != null) {
                 String newType = request.getItemType() != null ? request.getItemType() : item.getItemType();
@@ -286,7 +286,7 @@ public class ItineraryItemHelper {
                 ? Map.of(
                         "status", item.getStatus(),
                         "reason", item.getDroppingReason() != null ? item.getDroppingReason() : "",
-                        "cancellationCharge", item.getCancellationChargeInr() != null ? item.getCancellationChargeInr() : BigDecimal.ZERO)
+                        "cancellationCharge", item.getCancellationChargeBase() != null ? item.getCancellationChargeBase() : BigDecimal.ZERO)
                 : item.getStatus();
         auditLogService.record("Escape", item.getItinerary().getEscape().getSeqp(),
                 prefix + (BookingStatus.DROP.equals(item.getStatus()) ? "_DROPPED" : "_STATUS_CHANGED"),
@@ -390,7 +390,7 @@ public class ItineraryItemHelper {
      *   A brand-new booking always lands on Initialize regardless of what
      *   the client sent, so status can never be picked at creation time.</li>
      *   <li><b>Drop</b> — an existing booking whose status is being set to
-     *   Drop. Only status/droppingReason/cancellationChargeInr are written;
+     *   Drop. Only status/droppingReason/cancellationChargeBase are written;
      *   every normal booking field (room type, occupancy, price, inclusions)
      *   is left exactly as it was.</li>
      * </ul>
@@ -414,7 +414,7 @@ public class ItineraryItemHelper {
             }
             detail.setStatus(BookingStatus.DROP);
             detail.setDroppingReason(dto.getDroppingReason());
-            detail.setCancellationChargeInr(dto.getCancellationCharge());
+            detail.setCancellationChargeBase(dto.getCancellationCharge());
             hotelDetailRepository.save(detail);
         } else {
             if (isNew) {
@@ -468,7 +468,7 @@ public class ItineraryItemHelper {
                 ? Map.of(
                         "status", detail.getStatus(),
                         "reason", detail.getDroppingReason() != null ? detail.getDroppingReason() : "",
-                        "cancellationCharge", detail.getCancellationChargeInr() != null ? detail.getCancellationChargeInr() : BigDecimal.ZERO)
+                        "cancellationCharge", detail.getCancellationChargeBase() != null ? detail.getCancellationChargeBase() : BigDecimal.ZERO)
                 : detail.getStatus();
         auditLogService.record("Escape", item.getItinerary().getEscape().getSeqp(),
                 BookingStatus.DROP.equals(detail.getStatus()) ? "HOTEL_DROPPED" : "HOTEL_STATUS_CHANGED",
@@ -538,7 +538,7 @@ public class ItineraryItemHelper {
     // caller already supplies one) and minus touching any of the normal
     // booking fields (room type, occupancy, price, inclusions) — those stay
     // exactly as they were, same as a manual Drop. Existing
-    // cancellationChargeInr (if the booking already had one recorded) is
+    // cancellationChargeBase (if the booking already had one recorded) is
     // preserved as-is; a cascade drop never invents a new charge.
     private boolean dropHotelForCascade(ItineraryItem item, String droppingReason) {
         ItineraryItemHotelDetail detail = hotelDetailRepository.findByItineraryItem_Seqp(item.getSeqp()).orElse(null);
@@ -554,7 +554,7 @@ public class ItineraryItemHelper {
     }
 
     // Same shape for Activity/Transport, which share the base ItineraryItem
-    // status/droppingReason/cancellationChargeInr fields instead of a
+    // status/droppingReason/cancellationChargeBase fields instead of a
     // dedicated detail table.
     private boolean dropItemForCascade(ItineraryItem item, String droppingReason) {
         if (BookingStatus.DROP.equals(item.getStatus())) {
@@ -631,7 +631,7 @@ public class ItineraryItemHelper {
                             .stream().map(this::toInclusionDto).toList());
                     dto.setStatus(detail.getStatus());
                     dto.setDroppingReason(detail.getDroppingReason());
-                    dto.setCancellationCharge(detail.getCancellationChargeInr());
+                    dto.setCancellationCharge(detail.getCancellationChargeBase());
                     return dto;
                 })
                 .orElse(null);

@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import com.sss.app.service.exchangerate.MoneyScale;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
@@ -46,6 +47,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ReportServiceImpl implements ReportService {
+
+    private final com.sss.app.service.exchangerate.MoneyScale moneyScale;
 
     private static final List<String> REPORT_STATUSES =
             List.of(EscapeStatus.COMPLETED, EscapeStatus.HOLD, EscapeStatus.CANCELLED);
@@ -167,7 +170,7 @@ public class ReportServiceImpl implements ReportService {
             printer.printRecord(header);
             for (SalesReportRowDTO r : report.getRows()) {
                 List<Object> record = new ArrayList<>(List.of(r.getLabel(), r.getLeads(), r.getCompleted(), r.getHold(), r.getCancelled()));
-                if (report.isHasRevenue()) record.add(r.getRevenue().setScale(2, RoundingMode.HALF_UP).toPlainString());
+                if (report.isHasRevenue()) record.add(r.getRevenue().setScale(moneyScale.forOrg(MoneyScale.callerOrgId()), RoundingMode.HALF_UP).toPlainString());
                 printer.printRecord(record);
             }
             printer.flush();

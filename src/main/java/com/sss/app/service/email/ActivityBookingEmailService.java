@@ -44,6 +44,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ActivityBookingEmailService {
 
+    private final com.sss.app.service.exchangerate.MoneyFormatter moneyFormatter;
+
     private static final String EMAIL_BODY_TEMPLATE = "email-templates/activity-booking-request-email.mustache";
     // Triple-stache: this subject is plain text, not HTML, so tripCode/activityName
     // must not be HTML-entity-escaped the way Mustache's default {{}} would.
@@ -125,7 +127,7 @@ public class ActivityBookingEmailService {
         data.put("notes", item.getNotes());
 
         BigDecimal totalAmount = bookingTotalAmount(item);
-        data.put("totalAmountFormatted", totalAmount != null ? inrWholeFormat().format(totalAmount) : null);
+        data.put("totalAmountFormatted", totalAmount != null ? moneyFormat().format(totalAmount) : null);
 
         return data;
     }
@@ -135,7 +137,7 @@ public class ActivityBookingEmailService {
     // only its cancellation charge; otherwise price × travelersCount.
     private BigDecimal bookingTotalAmount(ItineraryItem item) {
         if (BookingStatus.DROP.equals(item.getStatus())) {
-            return item.getCancellationChargeInr() != null ? item.getCancellationChargeInr() : BigDecimal.ZERO;
+            return item.getCancellationChargeBase() != null ? item.getCancellationChargeBase() : BigDecimal.ZERO;
         }
         if (item.getPrice() == null) {
             return null;
@@ -167,10 +169,7 @@ public class ActivityBookingEmailService {
         return date != null ? date.format(DATE_FORMAT) : null;
     }
 
-    private NumberFormat inrWholeFormat() {
-        NumberFormat format = NumberFormat.getInstance(new Locale("en", "IN"));
-        format.setMaximumFractionDigits(0);
-        format.setMinimumFractionDigits(0);
-        return format;
+    private java.text.NumberFormat moneyFormat() {
+        return moneyFormatter.forCaller();
     }
 }

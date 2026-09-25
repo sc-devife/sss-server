@@ -28,6 +28,9 @@ import com.sss.app.repository.library.activity.ActivityRepository;
 import com.sss.app.repository.library.transport.TransportRepository;
 import com.sss.app.repository.quote.QuoteLineItemRepository;
 import com.sss.app.repository.quote.QuoteRepository;
+import com.sss.app.dto.exchangerate.ExchangeRateResponseDTO;
+import com.sss.app.repository.OrganizationSettingsRepository;
+import com.sss.app.service.exchangerate.ExchangeRateService;
 import com.sss.app.service.quote.QuoteComputationService;
 import com.sss.app.service.quote.QuoteFingerprintService;
 import lombok.RequiredArgsConstructor;
@@ -75,6 +78,10 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
     // Provider, not a direct field: ItineraryItemHelper itself depends on this service (circular).
     private final ObjectProvider<ItineraryItemHelper> itineraryItemHelperProvider;
     private final QuoteFingerprintService quoteFingerprintService;
+    private final ExchangeRateService exchangeRateService;
+    private final com.sss.app.service.exchangerate.CurrencyDisplayService currencyDisplayService;
+    private final com.sss.app.service.exchangerate.MoneyScale moneyScale;
+    private final OrganizationSettingsRepository organizationSettingsRepository;
     private final QuoteHelper quoteHelper;
     private final QuoteRepository quoteRepository;
     private final QuoteResponseAssembler quoteResponseAssembler;
@@ -98,9 +105,9 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
         PricingBreakdownDTO breakdown = buildBreakdown(lineItems);
 
         Totals totals = applyTaxAndTotals(quote, subtotal, request.getTaxProfileUid(), request.getTaxRatePercentOverride(),
-                request.getTcsRatePercent(), request.getDiscountType(), request.getDiscountValue(),
-                request.getDisplayCurrencyCode(), request.getFxRateSnapshot());
-        quote.setCancellationChargesInr(breakdown.getCancellationInr());
+                request.getTcsRatePercent(), request.getDiscountType(), request.getDiscountValue());
+        applyQuoteCurrency(quote, request.getDisplayCurrencyCode(), request.getFxRateSnapshot());
+        quote.setCancellationChargesBase(breakdown.getCancellationBase());
         Quote saved = quoteRepository.save(quote);
 
         int paxCount = quote.getItinerary().getEscape().getTravellers() != null
@@ -110,10 +117,12 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
         QuoteComputeResponseDTO response = new QuoteComputeResponseDTO();
         response.setQuote(quoteResponseAssembler.toResponse(saved));
         response.setPricingWarnings(warnings);
-        response.setDisplayTotal(totals.displayTotal());
+        response.setDisplayTotal(isForeignCurrency(saved)
+                ? totals.total().multiply(saved.getFxRateSnapshot()).setScale(moneyScale.customerScale(saved.getOrgId(), saved.getCurrencyCode()), RoundingMode.HALF_UP)
+                : null);
         response.setBreakdown(breakdown);
         response.setPaxCount(paxCount);
-        response.setPerPaxInr(paxCount > 0 ? totals.total().divide(BigDecimal.valueOf(paxCount), 2, RoundingMode.HALF_UP) : null);
+        response.setPerPaxBase(paxCount > 0 ? totals.total().divide(BigDecimal.valueOf(paxCount), moneyScale.customerScaleForOrg(quote.getOrgId()), RoundingMode.HALF_UP) : null);
         return response;
     }
 
@@ -148,7 +157,7 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
         String discountType = request.getDiscountType() != null ? request.getDiscountType() : "none";
         lineItem.setDiscountType(discountType);
         lineItem.setDiscountValue(request.getDiscountValue());
-        lineItem.setFinalAmountInr(applyDiscount(lineItem.getBaseAmountInr(), discountType, request.getDiscountValue()));
+        lineItem.setNetAmountBase(applyDiscount(lineItem.getGrossAmountBase(), discountType, request.getDiscountValue(), moneyScale.customerScaleForOrg(quote.getOrgId())));
         quoteLineItemRepository.save(lineItem);
 
         List<QuoteLineItem> lineItems = quoteLineItemRepository.findAllByQuote_SeqpOrderByDayNumberAscSortOrderAsc(quote.getSeqp());
@@ -173,29 +182,29 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
     private Quote recomputeFromLineItems(Quote quote, List<QuoteLineItem> lineItems) {
         BigDecimal subtotal = sumFinal(lineItems);
         PricingBreakdownDTO breakdown = buildBreakdown(lineItems);
+        refreshFxRateIfFollowing(quote);
         applyTaxAndTotals(quote, subtotal, quote.getTaxProfileId(), quote.getTaxRatePercentOverride(),
-                quote.getTcsRatePercent(), quote.getDiscountType(), quote.getDiscountValue(),
-                quote.getCurrencyCode(), quote.getFxRateSnapshot());
-        quote.setCancellationChargesInr(breakdown.getCancellationInr());
+                quote.getTcsRatePercent(), quote.getDiscountType(), quote.getDiscountValue());
+        quote.setCancellationChargesBase(breakdown.getCancellationBase());
         return quoteRepository.save(quote);
     }
 
     private record Totals(BigDecimal total, BigDecimal displayTotal) {
     }
 
-    // Sets subtotal/tax/tcs/discount/total (+ currency/fx) directly on
+    // Sets subtotal/tax/tcs/discount/total directly on
     // `quote` (not saved here — every caller saves right after, once it's
-    // also set whatever else it owns, e.g. cancellationChargesInr).
+    // also set whatever else it owns, e.g. cancellationChargesBase).
     private Totals applyTaxAndTotals(Quote quote, BigDecimal subtotal, UUID taxProfileUid, BigDecimal taxRateOverride,
-                                      BigDecimal tcsRatePercent, String discountTypeIn, BigDecimal discountValue,
-                                      String displayCurrencyCode, BigDecimal fxRateSnapshot) {
+                                      BigDecimal tcsRatePercent, String discountTypeIn, BigDecimal discountValue) {
+        int scale = moneyScale.customerScaleForOrg(quote.getOrgId());
         BigDecimal taxAmount = BigDecimal.ZERO;
         UUID resolvedTaxProfileUid = null;
         BigDecimal resolvedOverride = null;
         if (taxProfileUid != null) {
             TaxProfile taxProfile = taxProfileHelper.getByUid(taxProfileUid);
             BigDecimal ratePercent = taxRateOverride != null ? taxRateOverride : taxProfile.getRatePercent();
-            taxAmount = subtotal.multiply(ratePercent).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+            taxAmount = subtotal.multiply(ratePercent).divide(BigDecimal.valueOf(100), scale, RoundingMode.HALF_UP);
             resolvedTaxProfileUid = taxProfile.getUid();
             resolvedOverride = taxRateOverride;
         }
@@ -204,13 +213,13 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
         // plus GST — not on the pre-tax subtotal alone, matching how
         // outbound-tour-package TCS is actually charged in practice.
         BigDecimal tcsAmount = tcsRatePercent != null
-                ? subtotal.add(taxAmount).multiply(tcsRatePercent).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)
+                ? subtotal.add(taxAmount).multiply(tcsRatePercent).divide(BigDecimal.valueOf(100), scale, RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
 
         String discountType = discountTypeIn != null ? discountTypeIn : "none";
         BigDecimal discountAmount = switch (discountType) {
             case "percent" -> discountValue != null
-                    ? subtotal.multiply(discountValue).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)
+                    ? subtotal.multiply(discountValue).divide(BigDecimal.valueOf(100), scale, RoundingMode.HALF_UP)
                     : BigDecimal.ZERO;
             case "flat" -> discountValue != null ? discountValue : BigDecimal.ZERO;
             case "none" -> BigDecimal.ZERO;
@@ -222,61 +231,128 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
             total = BigDecimal.ZERO;
         }
 
-        BigDecimal displayTotal = null;
-        if (displayCurrencyCode != null && !"INR".equalsIgnoreCase(displayCurrencyCode)) {
-            if (fxRateSnapshot == null) {
-                throw new BadRequestException("fxRateSnapshot is required when displayCurrencyCode is not INR");
-            }
-            displayTotal = total.multiply(fxRateSnapshot).setScale(2, RoundingMode.HALF_UP);
-        }
-
-        quote.setSubtotalInr(subtotal.setScale(2, RoundingMode.HALF_UP));
+        quote.setSubtotalBase(subtotal.setScale(scale, RoundingMode.HALF_UP));
         quote.setTaxProfileId(resolvedTaxProfileUid);
         quote.setTaxRatePercentOverride(resolvedOverride);
-        quote.setTaxAmountInr(taxAmount);
+        quote.setTaxAmountBase(taxAmount);
         quote.setTcsRatePercent(tcsRatePercent);
-        quote.setTcsAmountInr(tcsAmount);
+        quote.setTcsAmountBase(tcsAmount);
         quote.setDiscountType(discountType);
         quote.setDiscountValue(discountValue);
-        quote.setTotalInr(total.setScale(2, RoundingMode.HALF_UP));
-        quote.setCurrencyCode(displayCurrencyCode);
-        quote.setFxRateSnapshot(fxRateSnapshot);
+        quote.setTotalBase(total.setScale(scale, RoundingMode.HALF_UP));
 
-        return new Totals(total, displayTotal);
+        return new Totals(total, null);
+    }
+
+    // A library price in the supplier's own currency, in the vendor's base currency.
+    private BigDecimal toBase(Long orgId, BigDecimal amount, String priceCurrency) {
+        if (amount == null || priceCurrency == null || priceCurrency.isBlank()) return amount;
+        String base = currencyDisplayService.baseCurrencyCode(orgId);
+        if (priceCurrency.equalsIgnoreCase(base)) return amount;
+        BigDecimal rate = exchangeRateService.resolve(priceCurrency, base).getRate();
+        return amount.multiply(rate).setScale(moneyScale.forCurrency(base), RoundingMode.HALF_UP);
+    }
+
+    private Long quoteOrgId(ItineraryItem item) {
+        return item.getOrgId();
+    }
+
+    // ---- quote currency ------------------------------------------------
+    // Amounts are always stored in the vendor's base currency. A quote issued
+    // in another (traveller) currency keeps that currency + the rate
+    // "1 base = rate <currency>" it converts at. While the quote is a draft and
+    // its rate isn't pinned, the rate follows the daily rate; it freezes once
+    // the quote leaves draft (marked sent / accepted).
+
+    private String baseCurrency(Quote quote) {
+        return organizationSettingsRepository.findById(quote.getOrgId())
+                .map(s -> s.getDefaultCurrencyCode())
+                .filter(c -> c != null && !c.isBlank())
+                .orElse("INR");
+    }
+
+    private boolean isForeignCurrency(Quote quote) {
+        return quote.getCurrencyCode() != null && quote.getFxRateSnapshot() != null
+                && !quote.getCurrencyCode().equalsIgnoreCase(baseCurrency(quote));
+    }
+
+    // requestedCode blank/base = a quote in the vendor's own currency. Otherwise
+    // customRate (typed by the user) pins the rate on this quote; without it the
+    // rate is resolved (vendor's manual rate, else market) and keeps following it.
+    private void applyQuoteCurrency(Quote quote, String requestedCode, BigDecimal customRate) {
+        String base = baseCurrency(quote);
+        if (requestedCode == null || requestedCode.isBlank() || requestedCode.equalsIgnoreCase(base)) {
+            quote.setCurrencyCode(base);
+            quote.setFxRateSnapshot(null);
+            quote.setFxRateCustom(false);
+            quote.setFxRateSource(null);
+            quote.setFxRateAsOf(null);
+            return;
+        }
+        String code = requestedCode.toUpperCase();
+        if (customRate != null) {
+            if (customRate.signum() <= 0) throw new BadRequestException("The exchange rate must be greater than 0");
+            quote.setCurrencyCode(code);
+            quote.setFxRateSnapshot(customRate);
+            quote.setFxRateCustom(true);
+            quote.setFxRateSource("custom");
+            quote.setFxRateAsOf(null);
+            return;
+        }
+        ExchangeRateResponseDTO resolved = exchangeRateService.resolve(base, code);
+        quote.setCurrencyCode(code);
+        quote.setFxRateSnapshot(resolved.getRate());
+        quote.setFxRateCustom(false);
+        quote.setFxRateSource(resolved.isManual() ? "vendor" : "market");
+        quote.setFxRateAsOf(resolved.getAsOf());
+    }
+
+    private void refreshFxRateIfFollowing(Quote quote) {
+        if (!"draft".equals(quote.getStatus()) || Boolean.TRUE.equals(quote.getFxRateCustom())) return;
+        String base = baseCurrency(quote);
+        if (quote.getCurrencyCode() == null || quote.getCurrencyCode().equalsIgnoreCase(base)) return;
+        try {
+            ExchangeRateResponseDTO resolved = exchangeRateService.resolve(base, quote.getCurrencyCode());
+            quote.setFxRateSnapshot(resolved.getRate());
+            quote.setFxRateSource(resolved.isManual() ? "vendor" : "market");
+            quote.setFxRateAsOf(resolved.getAsOf());
+        } catch (BadRequestException e) {
+            // No rate available right now - keep the one the quote already has.
+        }
     }
 
     private BigDecimal sumFinal(List<QuoteLineItem> lineItems) {
-        return lineItems.stream().map(QuoteLineItem::getFinalAmountInr).reduce(BigDecimal.ZERO, BigDecimal::add);
+        return lineItems.stream().map(QuoteLineItem::getNetAmountBase).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     private PricingBreakdownDTO buildBreakdown(List<QuoteLineItem> lineItems) {
         PricingBreakdownDTO breakdown = new PricingBreakdownDTO();
         for (QuoteLineItem li : lineItems) {
             if (Boolean.TRUE.equals(li.getIsCancellation())) {
-                breakdown.setCancellationInr(breakdown.getCancellationInr().add(li.getFinalAmountInr()));
+                breakdown.setCancellationBase(breakdown.getCancellationBase().add(li.getNetAmountBase()));
                 continue;
             }
             switch (li.getItemType()) {
-                case "hotel" -> breakdown.setHotelsInr(breakdown.getHotelsInr().add(li.getFinalAmountInr()));
-                case "activity" -> breakdown.setActivitiesInr(breakdown.getActivitiesInr().add(li.getFinalAmountInr()));
-                case "transport" -> breakdown.setTransportInr(breakdown.getTransportInr().add(li.getFinalAmountInr()));
-                default -> breakdown.setOtherInr(breakdown.getOtherInr().add(li.getFinalAmountInr()));
+                case "hotel" -> breakdown.setHotelsBase(breakdown.getHotelsBase().add(li.getNetAmountBase()));
+                case "activity" -> breakdown.setActivitiesBase(breakdown.getActivitiesBase().add(li.getNetAmountBase()));
+                case "transport" -> breakdown.setTransportBase(breakdown.getTransportBase().add(li.getNetAmountBase()));
+                default -> breakdown.setOtherBase(breakdown.getOtherBase().add(li.getNetAmountBase()));
             }
         }
         return breakdown;
     }
 
-    private BigDecimal applyDiscount(BigDecimal base, String discountType, BigDecimal discountValue) {
+    private BigDecimal applyDiscount(BigDecimal base, String discountType, BigDecimal discountValue, int scale) {
         BigDecimal discountAmount = switch (discountType == null ? "none" : discountType) {
             case "percent" -> discountValue != null
-                    ? base.multiply(discountValue).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)
+                    ? base.multiply(discountValue).divide(BigDecimal.valueOf(100), scale, RoundingMode.HALF_UP)
                     : BigDecimal.ZERO;
             case "flat" -> discountValue != null ? discountValue : BigDecimal.ZERO;
             case "none" -> BigDecimal.ZERO;
             default -> throw new BadRequestException("discountType must be one of: none, percent, flat");
         };
         BigDecimal result = base.subtract(discountAmount);
-        return result.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : result.setScale(2, RoundingMode.HALF_UP);
+        return result.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : result.setScale(scale, RoundingMode.HALF_UP);
     }
 
     // Rebuilds `quote`'s line items to match the itinerary's current items,
@@ -328,8 +404,9 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
             lineItem.setLabel(label);
             lineItem.setSortOrder(order++);
             lineItem.setIsCancellation(result.isCancellation());
-            lineItem.setBaseAmountInr(result.amount().setScale(2, RoundingMode.HALF_UP));
-            lineItem.setFinalAmountInr(applyDiscount(lineItem.getBaseAmountInr(), lineItem.getDiscountType(), lineItem.getDiscountValue()));
+            int lineScale = moneyScale.customerScaleForOrg(quote.getOrgId());
+            lineItem.setGrossAmountBase(result.amount().setScale(lineScale, RoundingMode.HALF_UP));
+            lineItem.setNetAmountBase(applyDiscount(lineItem.getGrossAmountBase(), lineItem.getDiscountType(), lineItem.getDiscountValue(), lineScale));
             ordered.add(quoteLineItemRepository.save(lineItem));
         }
 
@@ -350,8 +427,8 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
     }
 
     // isCancellation flags a Dropped hotel's cancellation charge — the
-    // caller buckets these into PricingBreakdownDTO.cancellationInr instead
-    // of hotelsInr, so an active-hotel total and a cancellation total never
+    // caller buckets these into PricingBreakdownDTO.cancellationBase instead
+    // of hotelsBase, so an active-hotel total and a cancellation total never
     // get mixed together.
     private record ItemPriceResult(BigDecimal amount, boolean isCancellation) {
         private static ItemPriceResult of(BigDecimal amount) {
@@ -368,8 +445,8 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
                 // cancellation charge was actually levied (zero if none was
                 // entered), regardless of the original price.
                 if (BookingStatus.DROP.equals(item.getStatus())) {
-                    BigDecimal charge = item.getCancellationChargeInr() != null
-                            ? item.getCancellationChargeInr()
+                    BigDecimal charge = item.getCancellationChargeBase() != null
+                            ? item.getCancellationChargeBase()
                             : BigDecimal.ZERO;
                     return new ItemPriceResult(charge, true);
                 }
@@ -397,7 +474,7 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
                     warnings.add("Activity \"" + activity.getName() + "\" (day " + item.getDayNumber() + ") has no price set — excluded");
                     return null;
                 }
-                return ItemPriceResult.of(activity.getBasePrice().multiply(travellersMultiplier));
+                return ItemPriceResult.of(toBase(quoteOrgId(item), activity.getBasePrice(), activity.getPriceCurrency()).multiply(travellersMultiplier));
             }
             case "transport" -> {
                 // Same rule as a dropped hotel/activity (see those branches
@@ -407,11 +484,11 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
                 // entered), regardless of the original transport price.
                 // Transport has no dedicated detail-level status column (see
                 // ItineraryItemTransportDetail) — it uses the same base
-                // ItineraryItem.status/cancellationChargeInr fields Activity
+                // ItineraryItem.status/cancellationChargeBase fields Activity
                 // already relies on for the same reason.
                 if (BookingStatus.DROP.equals(item.getStatus())) {
-                    BigDecimal charge = item.getCancellationChargeInr() != null
-                            ? item.getCancellationChargeInr()
+                    BigDecimal charge = item.getCancellationChargeBase() != null
+                            ? item.getCancellationChargeBase()
                             : BigDecimal.ZERO;
                     return new ItemPriceResult(charge, true);
                 }
@@ -433,7 +510,7 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
                     warnings.add("Transport on day " + item.getDayNumber() + " has no price set — excluded");
                     return null;
                 }
-                return ItemPriceResult.of(transport.getBasePrice());
+                return ItemPriceResult.of(toBase(quoteOrgId(item), transport.getBasePrice(), transport.getPriceCurrency()));
             }
             case "hotel" -> {
                 ItineraryItemHotelDetail detail = hotelDetailRepository.findByItineraryItem_Seqp(item.getSeqp()).orElse(null);
@@ -446,8 +523,8 @@ public class QuoteComputationServiceImpl implements QuoteComputationService {
                 // charge the hotel actually levied (zero if none was
                 // entered), regardless of what the original room price was.
                 if (BookingStatus.DROP.equals(detail.getStatus())) {
-                    BigDecimal charge = detail.getCancellationChargeInr() != null
-                            ? detail.getCancellationChargeInr()
+                    BigDecimal charge = detail.getCancellationChargeBase() != null
+                            ? detail.getCancellationChargeBase()
                             : BigDecimal.ZERO;
                     return new ItemPriceResult(charge, true);
                 }

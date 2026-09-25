@@ -56,8 +56,18 @@ public class ActivityPayment extends Auditable {
     @Column(name = "payment_method", nullable = false)
     private String paymentMethod;
 
-    @Column(nullable = false, precision = 14, scale = 2)
+    @Column(nullable = false, precision = 16, scale = 4)
     private BigDecimal amount;
+
+    // Set only when the payment was made in a currency other than the vendor's base (V134).
+    @Column(name = "paid_amount", precision = 16, scale = 4)
+    private BigDecimal paidAmount;
+
+    @Column(name = "paid_currency")
+    private String paidCurrency;
+
+    @Column(name = "fx_rate", precision = 24, scale = 10)
+    private BigDecimal fxRate;
 
     @Column(name = "paid_by")
     private String paidBy;

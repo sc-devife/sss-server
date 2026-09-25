@@ -83,7 +83,7 @@ public class ItineraryItem extends Auditable {
     // basePrice for the library default) — kept on the base item rather
     // than a dedicated detail table since it's a single scalar field, not a
     // whole booking-detail shape like Transport/Hotel's.
-    @Column(precision = 12, scale = 2)
+    @Column(precision = 14, scale = 4)
     private BigDecimal price;
 
     // Currently populated for Activity items only, alongside price — the
@@ -108,8 +108,8 @@ public class ItineraryItem extends Auditable {
     @Column(name = "dropping_reason", columnDefinition = "TEXT")
     private String droppingReason;
 
-    @Column(name = "cancellation_charge_inr", precision = 12, scale = 2)
-    private BigDecimal cancellationChargeInr;
+    @Column(name = "cancellation_charge_base", precision = 14, scale = 4)
+    private BigDecimal cancellationChargeBase;
 
     // Set on the NEW hotel item created by the Change/Replace Hotel flow,
     // pointing back at the (now Dropped) hotel it replaces — see

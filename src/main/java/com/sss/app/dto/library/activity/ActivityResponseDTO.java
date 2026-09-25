@@ -26,6 +26,7 @@ public class ActivityResponseDTO {
     private List<String> images;
 
     private BigDecimal basePrice;
+    private String priceCurrency; // null = base currency
 
     private String status;
 

@@ -19,9 +19,12 @@ public class IncomingTransactionResponseDTO {
     private String customerEmail;
     private String customerPhone;
     private String label;
-    private BigDecimal amountInr;
-    private BigDecimal amountPaidInr;
+    private BigDecimal amountBase;
+    private BigDecimal amountPaidBase;
     private String status;
+    // Every payment received against this milestone (with its currency/rate) and the net FX gain/loss.
+    private java.util.List<com.sss.app.dto.payment.PaymentRecordResponseDTO> payments;
+    private BigDecimal fxDifferenceBase;
     private String paymentMethod;
     private String paymentReference;
     private LocalDateTime markedPaidAt;

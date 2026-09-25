@@ -42,6 +42,7 @@ public class TransportImportSchema implements BulkImportSchema {
     private final TransportService transportService;
     private final ServiceProviderRepository serviceProviderRepository;
     private final EscapePointRepository escapePointRepository;
+    private final ImportCurrencySupport importCurrencySupport;
 
     @Override
     public String entityType() {
@@ -50,7 +51,7 @@ public class TransportImportSchema implements BulkImportSchema {
 
     @Override
     public List<String> columns() {
-        return List.of("modeCode", "vehicleTypeCode", "capacity", "providerName", "basePrice",
+        return List.of("modeCode", "vehicleTypeCode", "capacity", "providerName", "basePrice", "priceCurrency",
                 "pickupLocation", "dropLocation", "escapePointCode", "status");
     }
 
@@ -74,6 +75,7 @@ public class TransportImportSchema implements BulkImportSchema {
         if (escapePointCode != null && !escapePointCode.isBlank() && escapePointRepository.findById(escapePointCode.trim()).isEmpty()) {
             errors.add("No escape point found with code \"" + escapePointCode + "\"");
         }
+        importCurrencySupport.validate(row.get("priceCurrency")).ifPresent(errors::add);
         return errors;
     }
 
@@ -84,6 +86,7 @@ public class TransportImportSchema implements BulkImportSchema {
         dto.setVehicleTypeCode(blankToNull(row.get("vehicleTypeCode")));
         dto.setCapacity(parseIntOrNull(row.get("capacity")));
         dto.setBasePrice(parseDecimalOrNull(row.get("basePrice")));
+        dto.setPriceCurrency(importCurrencySupport.normalize(row.get("priceCurrency")));
         dto.setStatus(blankToNull(row.get("status")));
         dto.setPickupLocation(blankToNull(row.get("pickupLocation")));
         dto.setDropLocation(blankToNull(row.get("dropLocation")));

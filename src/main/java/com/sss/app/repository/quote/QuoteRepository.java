@@ -13,10 +13,12 @@ public interface QuoteRepository extends JpaRepository<Quote, Long> {
 
     boolean existsByTaxProfileId(UUID taxProfileId);
 
+    boolean existsByOrgId(Long orgId);
+
     List<Quote> findAllByOrgIdAndItinerary_Seqp(Long orgId, Long itinerarySeqp);
 
     // Dashboard Quote Analytics — quotes/org is low-volume (one row per
     // itinerary version), so aggregating in Java is fine, consistent with
-    // the existing revenuePipelineInr calculation's style.
+    // the existing revenuePipelineBase calculation's style.
     List<Quote> findAllByOrgId(Long orgId);
 }

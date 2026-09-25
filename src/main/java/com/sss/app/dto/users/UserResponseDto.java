@@ -30,6 +30,9 @@ public class UserResponseDto extends UserDto {
     private String organizationName;
     private String organizationLogo;
     private String organizationLogoShape;
+    // The vendor's base currency and rounding preference, so the UI can format every amount correctly.
+    private String organizationCurrencyCode;
+    private String organizationRoundingMode;
 
     // Section 5 assignment-engine settings — see UserAssignmentSettingsUpdateRequestDto.
     private Boolean isSpecialist;

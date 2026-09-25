@@ -24,6 +24,7 @@ public class PaymentMilestoneServiceImpl implements PaymentMilestoneService {
     private final PaymentMilestoneMapper paymentMilestoneMapper;
     private final UserRepository userRepository;
     private final PaymentConfirmationEmailService paymentConfirmationEmailService;
+    private final com.sss.app.service.payment.PaymentRecordAssembler paymentRecordAssembler;
 
     @Override
     public PaymentMilestoneResponseDTO create(PaymentMilestoneCreateRequestDTO request) {
@@ -36,8 +37,8 @@ public class PaymentMilestoneServiceImpl implements PaymentMilestoneService {
     }
 
     @Override
-    public PaymentMilestoneResponseDTO recordPayment(UUID uid, BigDecimal amount, String paymentMethod, String paymentReference) {
-        return toResponse(paymentMilestoneHelper.recordPayment(uid, amount, paymentMethod, paymentReference));
+    public PaymentMilestoneResponseDTO recordPayment(UUID uid, com.sss.app.dto.payment.PaymentRecordRequestDTO request) {
+        return toResponse(paymentMilestoneHelper.recordPayment(uid, request));
     }
 
     @Override
@@ -63,6 +64,10 @@ public class PaymentMilestoneServiceImpl implements PaymentMilestoneService {
         if (entity.getMarkedPaidBy() != null) {
             userRepository.findById(entity.getMarkedPaidBy()).map(User::getName).ifPresent(dto::setMarkedPaidByName);
         }
+        java.util.List<com.sss.app.dto.payment.PaymentRecordResponseDTO> payments = paymentRecordAssembler.forMilestone(entity.getSeqp());
+        dto.setPayments(payments);
+        dto.setFxDifferenceBase(payments.stream().map(com.sss.app.dto.payment.PaymentRecordResponseDTO::getFxDifferenceBase)
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
         return dto;
     }
 }

@@ -65,7 +65,9 @@ public class BillingTemplateServiceImpl implements BillingTemplateService {
                 .previewImageUrl(previewImageUrl)
                 .isActive(true)
                 .build();
-        return toResponse(billingTemplateRepository.save(template));
+        BillingTemplateResponseDTO created = toResponse(billingTemplateRepository.save(template));
+        created.setWarnings(com.sss.app.service.quotationtemplate.TemplateCurrencyScanner.scan(htmlFile));
+        return created;
     }
 
     @Override

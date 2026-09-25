@@ -42,6 +42,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class TransportCancellationEmailService {
 
+    private final com.sss.app.service.exchangerate.MoneyFormatter moneyFormatter;
+
     private static final String EMAIL_BODY_TEMPLATE = "email-templates/transport-cancellation-email.mustache";
     private static final String SUBJECT_TEMPLATE = "Booking Cancelled – Escape ID: {{{tripCode}}} – {{{transportName}}}";
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd MMM yyyy");
@@ -116,8 +118,8 @@ public class TransportCancellationEmailService {
 
         // Mirrors QuoteComputationServiceImpl's transport-item pricing
         // branch — a Dropped booking bills only its cancellation charge.
-        BigDecimal charge = item.getCancellationChargeInr() != null ? item.getCancellationChargeInr() : BigDecimal.ZERO;
-        data.put("totalAmountFormatted", inrWholeFormat().format(charge));
+        BigDecimal charge = item.getCancellationChargeBase() != null ? item.getCancellationChargeBase() : BigDecimal.ZERO;
+        data.put("totalAmountFormatted", moneyFormat().format(charge));
 
         return data;
     }
@@ -126,10 +128,7 @@ public class TransportCancellationEmailService {
         return date != null ? date.format(DATE_FORMAT) : null;
     }
 
-    private NumberFormat inrWholeFormat() {
-        NumberFormat format = NumberFormat.getInstance(new Locale("en", "IN"));
-        format.setMaximumFractionDigits(0);
-        format.setMinimumFractionDigits(0);
-        return format;
+    private java.text.NumberFormat moneyFormat() {
+        return moneyFormatter.forCaller();
     }
 }

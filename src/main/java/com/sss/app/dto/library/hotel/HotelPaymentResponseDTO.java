@@ -39,4 +39,11 @@ public class HotelPaymentResponseDTO {
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;
+
+    // Present only for a payment made in a non-base currency.
+    private BigDecimal paidAmount;
+
+    private String paidCurrency;
+
+    private BigDecimal fxRate;
 }

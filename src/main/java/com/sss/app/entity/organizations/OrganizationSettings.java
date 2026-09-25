@@ -31,7 +31,16 @@ public class OrganizationSettings {
     @Builder.Default
     private Boolean autoAssignEnabled = true;
 
+    // The vendor's base currency (books, margins, reports) - see V130.
     private String defaultCurrencyCode;
+
+    // Plan feature (V133): online payment gateway. Set by the platform, never through update().
+    @Builder.Default
+    private Boolean paymentGatewayEnabled = false;
+
+    // 'decimals' or 'whole' - how customer-facing amounts are rounded for display.
+    @Builder.Default
+    private String roundingMode = "decimals";
 
     // Templates don't exist as their own tables yet (Phase 5/6) — these are
     // forward-looking columns only, no FK until that table is built.
@@ -79,6 +88,12 @@ public class OrganizationSettings {
         }
         if (dto.getDefault_currency_code() != null && CompareUtil.hasChanged(dto.getDefault_currency_code(), this.defaultCurrencyCode)) {
             this.defaultCurrencyCode = dto.getDefault_currency_code();
+        }
+        if (dto.getRounding_mode() != null && CompareUtil.hasChanged(dto.getRounding_mode(), this.roundingMode)) {
+            if (!dto.getRounding_mode().equals("decimals") && !dto.getRounding_mode().equals("whole")) {
+                throw new com.sss.app.exception.BadRequestException("rounding_mode must be 'decimals' or 'whole'");
+            }
+            this.roundingMode = dto.getRounding_mode();
         }
         if (dto.getQuote_template_id() != null && CompareUtil.hasChanged(dto.getQuote_template_id(), this.quoteTemplateId)) {
             this.quoteTemplateId = dto.getQuote_template_id();

@@ -301,11 +301,11 @@
     <div class="payment-pair">
       <div class="payment-stat">
         <div class="label">Total Price (incl. tax)</div>
-        <div class="value">₹{{paymentSchedule.totalFormatted}}</div>
+        <div class="value">{{currencySymbol}}{{paymentSchedule.totalFormatted}}</div>
       </div>
       <div class="payment-stat">
         <div class="label">Per Person</div>
-        <div class="value">₹{{paymentSchedule.perPaxFormatted}}</div>
+        <div class="value">{{currencySymbol}}{{paymentSchedule.perPaxFormatted}}</div>
       </div>
     </div>
 
@@ -313,13 +313,13 @@
 
     <div class="payment-received">
       <div class="label">Amount Received:</div>
-      <div class="value">₹{{paymentSchedule.amountReceivedFormatted}}</div>
+      <div class="value">{{currencySymbol}}{{paymentSchedule.amountReceivedFormatted}}</div>
     </div>
 
     <div class="payment-pair">
       <div class="payment-stat">
         <div class="label">Due Amount</div>
-        <div class="value">₹{{paymentSchedule.dueAmountFormatted}}</div>
+        <div class="value">{{currencySymbol}}{{paymentSchedule.dueAmountFormatted}}</div>
       </div>
       <div class="payment-stat">
         <div class="label">Due Date (Time Limit)</div>

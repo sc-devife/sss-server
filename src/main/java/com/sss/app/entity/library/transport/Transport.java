@@ -62,8 +62,12 @@ public class Transport extends Auditable {
     @JoinColumn(name = "provider_id")
     private ServiceProvider provider;
 
-    @Column(name = "base_price", precision = 12, scale = 2)
+    @Column(name = "base_price", precision = 14, scale = 4)
     private BigDecimal basePrice;
+
+    // Currency of this item's prices; null = the vendor's base currency (V136).
+    @Column(name = "price_currency")
+    private String priceCurrency;
 
     @Column(name = "pickup_location")
     private String pickupLocation;

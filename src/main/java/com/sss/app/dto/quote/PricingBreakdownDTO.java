@@ -13,12 +13,12 @@ import java.math.BigDecimal;
  */
 @Data
 public class PricingBreakdownDTO {
-    private BigDecimal hotelsInr = BigDecimal.ZERO;
-    private BigDecimal activitiesInr = BigDecimal.ZERO;
-    private BigDecimal transportInr = BigDecimal.ZERO;
-    private BigDecimal otherInr = BigDecimal.ZERO;
+    private BigDecimal hotelsBase = BigDecimal.ZERO;
+    private BigDecimal activitiesBase = BigDecimal.ZERO;
+    private BigDecimal transportBase = BigDecimal.ZERO;
+    private BigDecimal otherBase = BigDecimal.ZERO;
 
     // Cancellation charges from Dropped hotel bookings — kept separate from
-    // hotelsInr so that bucket stays an accurate "active hotel cost" figure.
-    private BigDecimal cancellationInr = BigDecimal.ZERO;
+    // hotelsBase so that bucket stays an accurate "active hotel cost" figure.
+    private BigDecimal cancellationBase = BigDecimal.ZERO;
 }

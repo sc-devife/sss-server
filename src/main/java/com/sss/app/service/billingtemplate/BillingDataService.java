@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import com.sss.app.service.exchangerate.MoneyScale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -31,6 +32,9 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class BillingDataService {
+
+    private final com.sss.app.service.exchangerate.MoneyFormatter moneyFormatter;
+    private final com.sss.app.service.exchangerate.MoneyScale moneyScale;
 
     private final QuotationDataService quotationDataService;
     private final DealService dealService;
@@ -70,14 +74,14 @@ public class BillingDataService {
         BigDecimal discountAmount = subtotal.add(taxTotal).subtract(total).max(BigDecimal.ZERO);
 
         List<Map<String, Object>> milestones = (List<Map<String, Object>>) ((Map<String, Object>) data.get("payment")).get("milestones");
-        NumberFormat inrFormat = inrWholeFormat();
+        NumberFormat moneyFormat = moneyFormat();
         // QuotationDataService leaves milestone amounts as raw BigDecimal
         // (Mustache can't format numbers) — mutated in place here (this map
         // instance belongs only to this invoice render) so the Payment
         // Schedule section shows "83,200" instead of "83200.00".
         for (Map<String, Object> milestone : milestones) {
-            milestone.put("amountFormatted", inrFormat.format(asDecimal(milestone.get("amount"))));
-            milestone.put("amountPaidFormatted", inrFormat.format(asDecimal(milestone.get("amountPaid"))));
+            milestone.put("amountFormatted", moneyFormat.format(asDecimal(milestone.get("amount"))));
+            milestone.put("amountPaidFormatted", moneyFormat.format(asDecimal(milestone.get("amountPaid"))));
         }
         BigDecimal amountPaid = milestones.stream()
                 .map(m -> asDecimal(m.get("amountPaid")))
@@ -95,8 +99,8 @@ public class BillingDataService {
         // pricing.subtotal/total only come pre-formatted for total/perPax in
         // QuotationDataService — added here too since the invoice summary
         // block shows every one of these lines.
-        pricing.put("subtotalFormatted", inrFormat.format(subtotal));
-        pricing.put("taxTotalFormatted", inrFormat.format(taxTotal));
+        pricing.put("subtotalFormatted", moneyFormat.format(subtotal));
+        pricing.put("taxTotalFormatted", moneyFormat.format(taxTotal));
 
         // One summary line per invoice (destination/qty/pricing), not a
         // day-by-day cost breakdown — the customer-facing invoice shouldn't
@@ -110,20 +114,20 @@ public class BillingDataService {
                 : destinationName;
 
         int paxCount = ((Number) pricing.getOrDefault("paxCount", 0)).intValue();
-        BigDecimal perPax = paxCount > 0 ? total.divide(BigDecimal.valueOf(paxCount), 2, RoundingMode.HALF_UP) : total;
+        BigDecimal perPax = paxCount > 0 ? total.divide(BigDecimal.valueOf(paxCount), moneyScale.customerScaleForOrg(MoneyScale.callerOrgId()), RoundingMode.HALF_UP) : total;
 
         Map<String, Object> line = new LinkedHashMap<>();
         line.put("sNo", 1);
         line.put("description", destination);
         line.put("quantity", paxCount);
         line.put("unitPrice", perPax);
-        line.put("unitPriceFormatted", inrFormat.format(perPax));
+        line.put("unitPriceFormatted", moneyFormat.format(perPax));
         line.put("tax", taxTotal);
-        line.put("taxFormatted", inrFormat.format(taxTotal));
+        line.put("taxFormatted", moneyFormat.format(taxTotal));
         line.put("discount", discountAmount);
-        line.put("discountFormatted", inrFormat.format(discountAmount));
+        line.put("discountFormatted", moneyFormat.format(discountAmount));
         line.put("amount", total);
-        line.put("amountFormatted", inrFormat.format(total));
+        line.put("amountFormatted", moneyFormat.format(total));
         List<Map<String, Object>> invoiceItems = List.of(line);
 
         String tripCode = (String) data.get("tripCode");
@@ -137,12 +141,12 @@ public class BillingDataService {
         invoice.put("isPartiallyPaid", "Partially Paid".equals(invoiceStatus));
         invoice.put("isUnpaid", "Unpaid".equals(invoiceStatus));
         invoice.put("discountAmount", discountAmount);
-        invoice.put("discountAmountFormatted", inrFormat.format(discountAmount));
+        invoice.put("discountAmountFormatted", moneyFormat.format(discountAmount));
         invoice.put("hasDiscount", discountAmount.compareTo(BigDecimal.ZERO) > 0);
         invoice.put("amountPaid", amountPaid);
-        invoice.put("amountPaidFormatted", inrFormat.format(amountPaid));
+        invoice.put("amountPaidFormatted", moneyFormat.format(amountPaid));
         invoice.put("balanceDue", balanceDue);
-        invoice.put("balanceDueFormatted", inrFormat.format(balanceDue));
+        invoice.put("balanceDueFormatted", moneyFormat.format(balanceDue));
         invoice.put("items", invoiceItems);
         // Neither Lead nor Traveller stores a postal address today — an
         // honest placeholder for when that data exists, not a fabricated one.
@@ -179,10 +183,7 @@ public class BillingDataService {
         return value instanceof BigDecimal ? (BigDecimal) value : BigDecimal.ZERO;
     }
 
-    private NumberFormat inrWholeFormat() {
-        NumberFormat format = NumberFormat.getInstance(new Locale("en", "IN"));
-        format.setMaximumFractionDigits(0);
-        format.setMinimumFractionDigits(0);
-        return format;
+    private java.text.NumberFormat moneyFormat() {
+        return moneyFormatter.forCaller();
     }
 }

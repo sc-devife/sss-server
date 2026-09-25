@@ -68,18 +68,18 @@ public class QuoteLineItem extends Auditable {
     @Builder.Default
     private Boolean isCancellation = false;
 
-    @Column(name = "base_amount_inr", nullable = false, precision = 12, scale = 2)
-    private BigDecimal baseAmountInr;
+    @Column(name = "gross_amount_base", nullable = false, precision = 14, scale = 4)
+    private BigDecimal grossAmountBase;
 
     // none / percent / flat
     @Column(name = "discount_type", nullable = false)
     private String discountType;
 
-    @Column(name = "discount_value", precision = 12, scale = 2)
+    @Column(name = "discount_value", precision = 14, scale = 4)
     private BigDecimal discountValue;
 
-    @Column(name = "final_amount_inr", nullable = false, precision = 12, scale = 2)
-    private BigDecimal finalAmountInr;
+    @Column(name = "net_amount_base", nullable = false, precision = 14, scale = 4)
+    private BigDecimal netAmountBase;
 
     @PrePersist
     protected void onCreate() {

@@ -21,14 +21,14 @@
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;border:1px solid #e5e8ec;border-radius:6px;">
                 <tr>
                   <td style="padding:14px 18px;font-size:13px;color:#4a5666;">Amount paid</td>
-                  <td style="padding:14px 18px;font-size:15px;text-align:right;font-weight:800;color:#1f8a4c;">&#8377;{{paidAmountFormatted}}</td>
+                  <td style="padding:14px 18px;font-size:15px;text-align:right;font-weight:800;color:#1f8a4c;">{{currencySymbol}}{{paidAmountFormatted}}</td>
                 </tr>
                 <tr>
                   <td style="padding:0 18px 16px;font-size:13px;color:#4a5666;border-top:1px dashed #e5e8ec;padding-top:12px;">
                     {{#isFullyPaid}}Balance due{{/isFullyPaid}}{{^isFullyPaid}}Pending amount{{/isFullyPaid}}
                   </td>
                   <td style="padding:0 18px 16px;font-size:15px;text-align:right;font-weight:800;padding-top:12px;border-top:1px dashed #e5e8ec;color:{{#isFullyPaid}}#1f8a4c{{/isFullyPaid}}{{^isFullyPaid}}#b13c31{{/isFullyPaid}};">
-                    &#8377;{{pendingAmountFormatted}}
+                    {{currencySymbol}}{{pendingAmountFormatted}}
                   </td>
                 </tr>
               </table>

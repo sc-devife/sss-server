@@ -49,7 +49,7 @@ public class Service {
 
     private String description;
 
-    @Column(precision = 12, scale = 2)
+    @Column(precision = 14, scale = 4)
     private BigDecimal price;
 
     @Builder.Default

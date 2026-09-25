@@ -71,6 +71,7 @@ public class HotelServiceImpl implements HotelService {
     private final HotelPaymentRepository hotelPaymentRepository;
     private final EscapeRepository escapeRepository;
     private final AuditLogService auditLogService;
+    private final com.sss.app.service.exchangerate.SupplierPaymentCurrencyResolver supplierPaymentCurrencyResolver;
 
     private User currentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -307,7 +308,7 @@ public class HotelServiceImpl implements HotelService {
             return inclusionsTotal;
         }
         if (BookingStatus.DROP.equals(detail.getStatus())) {
-            return detail.getCancellationChargeInr() != null ? detail.getCancellationChargeInr() : BigDecimal.ZERO;
+            return detail.getCancellationChargeBase() != null ? detail.getCancellationChargeBase() : BigDecimal.ZERO;
         }
         BigDecimal stayPrice = detail.getTotalPrice() != null
                 ? detail.getTotalPrice()
@@ -341,13 +342,18 @@ public class HotelServiceImpl implements HotelService {
                 .orElseThrow(() -> new ResourceNotFoundException("Escape", dto.getEscapeUid()));
         orgAccessGuard.requireAccessToOrg(escape.getOrgId());
 
+        com.sss.app.service.exchangerate.SupplierPaymentCurrencyResolver.Converted converted =
+                supplierPaymentCurrencyResolver.convert(hotel.getOrgId(), dto.getAmount(), dto.getCurrencyCode(), dto.getExchangeRate());
         HotelPayment payment = HotelPayment.builder()
                 .orgId(hotel.getOrgId())
                 .hotel(hotel)
                 .escape(escape)
                 .transactionId(dto.getTransactionId())
                 .paymentMethod(dto.getPaymentMethod())
-                .amount(dto.getAmount())
+                .amount(converted.baseAmount())
+                .paidAmount(converted.paidAmount())
+                .paidCurrency(converted.paidCurrency())
+                .fxRate(converted.fxRate())
                 .paidBy(dto.getPaidBy())
                 .paymentDate(dto.getPaymentDate())
                 .notes(dto.getNotes())
@@ -355,7 +361,7 @@ public class HotelServiceImpl implements HotelService {
         HotelPayment saved = hotelPaymentRepository.save(payment);
 
         auditLogService.record("Hotel", hotel.getSeqp(), "HOTEL_PAYMENT_RECORDED", null,
-                dto.getAmount() + " via " + dto.getPaymentMethod() + " for " + escape.getTripCode());
+                dto.getAmount() + (converted.paidCurrency() != null ? " " + converted.paidCurrency() : "") + " via " + dto.getPaymentMethod() + " for " + escape.getTripCode());
 
         return toPaymentResponse(saved);
     }
@@ -372,7 +378,10 @@ public class HotelServiceImpl implements HotelService {
                 payment.getPaymentDate(),
                 payment.getNotes(),
                 payment.getStatus(),
-                payment.getCreatedAt()
+                payment.getCreatedAt(),
+                payment.getPaidAmount(),
+                payment.getPaidCurrency(),
+                payment.getFxRate()
         );
     }
 }

@@ -19,10 +19,10 @@ public class QuoteCreateRequestDTO {
 
     private String currencyCode;
     private BigDecimal fxRateSnapshot;
-    private BigDecimal subtotalInr;
+    private BigDecimal subtotalBase;
     private UUID taxProfileId;
-    private BigDecimal taxAmountInr;
-    private BigDecimal totalInr;
+    private BigDecimal taxAmountBase;
+    private BigDecimal totalBase;
     private String discountType; // none / percent / flat
     private BigDecimal discountValue;
     private UUID templateId;

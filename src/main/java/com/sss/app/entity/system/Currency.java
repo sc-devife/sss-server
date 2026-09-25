@@ -33,4 +33,8 @@ public class Currency {
 
     @Column
     private Boolean is_active;
+
+    // ISO 4217 minor-unit digits (2 for INR/AED, 0 for JPY, 3 for KWD).
+    @Column
+    private Integer minor_units;
 }

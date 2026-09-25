@@ -17,14 +17,17 @@ public class QuoteResponseDTO {
     private String status;
     private String currencyCode;
     private BigDecimal fxRateSnapshot;
-    private BigDecimal subtotalInr;
+    private Boolean fxRateCustom;
+    private String fxRateSource; // market / vendor / custom
+    private java.time.LocalDate fxRateAsOf;
+    private BigDecimal subtotalBase;
     private UUID taxProfileId;
     private BigDecimal taxRatePercentOverride;
-    private BigDecimal taxAmountInr;
+    private BigDecimal taxAmountBase;
     private BigDecimal tcsRatePercent;
-    private BigDecimal tcsAmountInr;
-    private BigDecimal totalInr;
-    private BigDecimal cancellationChargesInr;
+    private BigDecimal tcsAmountBase;
+    private BigDecimal totalBase;
+    private BigDecimal cancellationChargesBase;
     private String discountType;
     private BigDecimal discountValue;
     private UUID templateId;

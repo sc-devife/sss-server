@@ -46,20 +46,20 @@ public class ItineraryItemTransportDetail {
     private String vehicleTypeCode;
 
     // Simple flat price — used by every non-flight mode.
-    @Column(precision = 12, scale = 2)
+    @Column(precision = 14, scale = 4)
     private BigDecimal price;
 
     // one_way / round_trip / multi_city — flight only.
     @Column(name = "trip_type")
     private String tripType;
 
-    @Column(name = "cost_price", precision = 12, scale = 2)
+    @Column(name = "cost_price", precision = 14, scale = 4)
     private BigDecimal costPrice;
 
     @Column(name = "cost_price_per_person")
     private Boolean costPricePerPerson;
 
-    @Column(name = "selling_price", precision = 12, scale = 2)
+    @Column(name = "selling_price", precision = 14, scale = 4)
     private BigDecimal sellingPrice;
 
     @Column(name = "selling_price_per_person")

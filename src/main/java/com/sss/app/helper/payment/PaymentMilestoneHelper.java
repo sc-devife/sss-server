@@ -11,7 +11,14 @@ import com.sss.app.exception.BadRequestException;
 import com.sss.app.exception.ConflictException;
 import com.sss.app.exception.NotFoundException;
 import com.sss.app.helper.deal.DealHelper;
+import com.sss.app.dto.exchangerate.ExchangeRateResponseDTO;
+import com.sss.app.dto.payment.PaymentRecordRequestDTO;
+import com.sss.app.entity.payment.PaymentRecord;
+import com.sss.app.entity.quote.Quote;
+import com.sss.app.repository.OrganizationSettingsRepository;
 import com.sss.app.repository.payment.PaymentMilestoneRepository;
+import com.sss.app.repository.payment.PaymentRecordRepository;
+import com.sss.app.service.exchangerate.ExchangeRateService;
 import com.sss.app.security.OrgAccessGuard;
 import com.sss.app.service.audit.AuditLogService;
 import com.sss.app.service.escape.EscapeLifecycleService;
@@ -23,6 +30,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -37,6 +45,11 @@ public class PaymentMilestoneHelper {
     private final AuditLogService auditLogService;
     private final EscapeLifecycleService escapeLifecycleService;
     private final NotificationService notificationService;
+    private final PaymentRecordRepository paymentRecordRepository;
+    private final OrganizationSettingsRepository organizationSettingsRepository;
+    private final ExchangeRateService exchangeRateService;
+    private final com.sss.app.service.exchangerate.MoneyScale moneyScale;
+    private final com.sss.app.service.exchangerate.CurrencyDisplayService currencyDisplayService;
 
     private User currentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -53,8 +66,8 @@ public class PaymentMilestoneHelper {
                 .deal(deal)
                 .label(request.getLabel())
                 .dueDate(request.getDueDate())
-                .amountInr(request.getAmountInr())
-                .amountPaidInr(BigDecimal.ZERO)
+                .amountBase(request.getAmountBase())
+                .amountPaidBase(BigDecimal.ZERO)
                 .status("pending")
                 .build();
 
@@ -85,7 +98,10 @@ public class PaymentMilestoneHelper {
      * is the second step that actually advances the trip's payment stage.
      */
     @Transactional
-    public PaymentMilestone recordPayment(UUID uid, BigDecimal amount, String paymentMethod, String paymentReference) {
+    public PaymentMilestone recordPayment(UUID uid, PaymentRecordRequestDTO request) {
+        BigDecimal amount = request.getAmount();
+        String paymentMethod = request.getPaymentMethod();
+        String paymentReference = request.getPaymentReference();
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new BadRequestException("Payment amount must be greater than zero");
         }
@@ -94,8 +110,46 @@ public class PaymentMilestoneHelper {
             throw new ConflictException("This deal is cancelled; payments can no longer be recorded");
         }
 
-        BigDecimal newPaid = milestone.getAmountPaidInr().add(amount);
-        milestone.setAmountPaidInr(newPaid);
+        // ---- currency handling -------------------------------------------
+        // Milestone amounts are in the vendor's base currency. A payment may
+        // arrive in another currency; work out how much of the milestone it
+        // covers ("applied") and what it is actually worth in base at the
+        // rate on the day it arrived, so the difference is visible as FX
+        // gain/loss (see V133).
+        String base = organizationSettingsRepository.findById(milestone.getOrgId())
+                .map(s -> s.getDefaultCurrencyCode())
+                .filter(c -> c != null && !c.isBlank())
+                .orElse("INR");
+        String currency = request.getCurrencyCode() == null || request.getCurrencyCode().isBlank()
+                ? base : request.getCurrencyCode().toUpperCase();
+
+        BigDecimal fxRate = BigDecimal.ONE;
+        int baseScale = moneyScale.forCurrency(base);
+        BigDecimal applied = amount.setScale(baseScale, RoundingMode.HALF_UP);
+        BigDecimal baseValueReceived = applied;
+        if (!currency.equals(base)) {
+            if (request.getExchangeRate() != null) {
+                if (request.getExchangeRate().signum() <= 0) throw new BadRequestException("The exchange rate must be greater than 0");
+                fxRate = request.getExchangeRate();
+            } else {
+                ExchangeRateResponseDTO resolved = exchangeRateService.resolve(base, currency);
+                fxRate = resolved.getRate();
+            }
+            baseValueReceived = amount.divide(fxRate, baseScale, RoundingMode.HALF_UP);
+            applied = baseValueReceived;
+            // Paid in the very currency the accepted quote was issued in: it settles at the
+            // quote's locked rate (the customer owes what was quoted); the gap to today's
+            // rate is the FX difference.
+            Quote acceptedQuote = milestone.getDeal().getAcceptedQuote();
+            if (acceptedQuote != null && acceptedQuote.getFxRateSnapshot() != null
+                    && currency.equalsIgnoreCase(acceptedQuote.getCurrencyCode())) {
+                applied = amount.divide(acceptedQuote.getFxRateSnapshot(), baseScale, RoundingMode.HALF_UP);
+            }
+        }
+        BigDecimal fxDifference = baseValueReceived.subtract(applied);
+
+        BigDecimal newPaid = milestone.getAmountPaidBase().add(applied);
+        milestone.setAmountPaidBase(newPaid);
         milestone.setStatus("unverified");
         milestone.setMarkedPaidBy(currentUser().getSeqp());
         milestone.setMarkedPaidAt(LocalDateTime.now());
@@ -103,15 +157,30 @@ public class PaymentMilestoneHelper {
         milestone.setPaymentReference(paymentReference);
         PaymentMilestone saved = paymentMilestoneRepository.save(milestone);
 
+        paymentRecordRepository.save(PaymentRecord.builder()
+                .orgId(milestone.getOrgId())
+                .milestone(saved)
+                .receivedAmount(amount.setScale(moneyScale.forCurrency(currency), RoundingMode.HALF_UP))
+                .receivedCurrency(currency)
+                .fxRate(fxRate)
+                .appliedAmountBase(applied)
+                .baseValueReceived(baseValueReceived)
+                .fxDifferenceBase(fxDifference)
+                .paymentMethod(paymentMethod)
+                .paymentReference(paymentReference)
+                .recordedBy(currentUser().getSeqp())
+                .recordedAt(LocalDateTime.now())
+                .build());
+
         auditLogService.record("Escape", milestone.getDeal().getEscape().getSeqp(), "PAYMENT_RECORDED",
-                milestone.getLabel(), amount + " via " + paymentMethod + " (ref: " + paymentReference + ")");
+                milestone.getLabel(), amount + " " + currency + " via " + paymentMethod + " (ref: " + paymentReference + ")");
 
         // Goes to org managers, not the assignee — the agent recorded it;
         // accounting/admin is the audience that needs to verify it.
         Escape trip = milestone.getDeal().getEscape();
         notificationService.notifyUsers(notificationService.resolveOrgManagers(trip.getOrgId()), trip.getOrgId(),
                 NotificationType.PAYMENT_RECORDED, "Payment Recorded",
-                CurrencyFormat.inrWhole(amount) + " payment recorded for " + safeTripCode(trip) + ".",
+                CurrencyFormat.whole(currencyDisplayService.symbol(base), applied) + " payment recorded for " + safeTripCode(trip) + ".",
                 NotificationType.RelatedEntityType.PAYMENT_MILESTONE, saved.getUid());
 
         return saved;
@@ -134,7 +203,17 @@ public class PaymentMilestoneHelper {
             throw new BadRequestException("Only an unverified payment can be verified");
         }
 
-        milestone.setStatus(milestone.getAmountPaidInr().compareTo(milestone.getAmountInr()) >= 0 ? "paid" : "partially_paid");
+        // Every payment on this milestone still awaiting verification is now confirmed.
+        LocalDateTime verifiedNow = LocalDateTime.now();
+        for (PaymentRecord record : paymentRecordRepository.findAllByMilestone_SeqpOrderByRecordedAtAsc(milestone.getSeqp())) {
+            if (record.getVerifiedAt() == null) {
+                record.setVerifiedAt(verifiedNow);
+                record.setVerifiedBy(currentUser().getSeqp());
+                paymentRecordRepository.save(record);
+            }
+        }
+
+        milestone.setStatus(milestone.getAmountPaidBase().compareTo(milestone.getAmountBase()) >= 0 ? "paid" : "partially_paid");
         PaymentMilestone saved = paymentMilestoneRepository.save(milestone);
 
         auditLogService.record("Escape", milestone.getDeal().getEscape().getSeqp(), "PAYMENT_VERIFIED",
@@ -142,7 +221,7 @@ public class PaymentMilestoneHelper {
 
         Escape verifiedTrip = milestone.getDeal().getEscape();
         Long verifiedRecipient = notificationService.resolveEscapeRecipient(verifiedTrip);
-        String verifiedAmount = CurrencyFormat.inrWhole(saved.getAmountPaidInr());
+        String verifiedAmount = CurrencyFormat.whole(currencyDisplayService.baseSymbol(saved.getOrgId()), saved.getAmountPaidBase());
         if (verifiedRecipient != null) {
             notificationService.notify(verifiedRecipient, verifiedTrip.getOrgId(),
                     NotificationType.PAYMENT_VERIFIED, "Payment Verified",
@@ -167,7 +246,7 @@ public class PaymentMilestoneHelper {
         if (allMilestones.isEmpty()) return;
 
         boolean allPaid = allMilestones.stream().allMatch(m -> "paid".equals(m.getStatus()));
-        boolean anyPayment = allMilestones.stream().anyMatch(m -> m.getAmountPaidInr().compareTo(BigDecimal.ZERO) > 0);
+        boolean anyPayment = allMilestones.stream().anyMatch(m -> m.getAmountPaidBase().compareTo(BigDecimal.ZERO) > 0);
 
         String target = allPaid ? EscapeStatus.FULLY_PAID : anyPayment ? EscapeStatus.PARTIALLY_PAID : null;
         if (target == null) return;

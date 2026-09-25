@@ -136,6 +136,7 @@ public class SampleQuotationDataService {
                 "hasUsefulLinks", true,
                 "pricing", map(
                         "currencyCode", "INR",
+                        "currencySymbol", "₹",
                         "subtotal", "95000.00",
                         "tax", "4750.00",
                         "tcsRate", "5.00",

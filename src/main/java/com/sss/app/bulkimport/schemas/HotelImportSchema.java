@@ -45,6 +45,7 @@ public class HotelImportSchema implements BulkImportSchema {
     private final MealPlanRepository mealPlanRepository;
     private final RoomTypeRepository roomTypeRepository;
     private final ServiceRepository serviceRepository;
+    private final ImportCurrencySupport importCurrencySupport;
 
     @Override
     public String entityType() {
@@ -57,7 +58,7 @@ public class HotelImportSchema implements BulkImportSchema {
                 "name", "locationDisplayName", "escapePointCode", "stars", "address", "contactInfo",
                 "mealPlanCodes", "roomTypeNames", "serviceNames",
                 "checkInTime", "checkOutTime", "childAgeForExtraBed",
-                "rateValidFrom", "rateValidTo", "amenities", "notes", "status");
+                "rateValidFrom", "rateValidTo", "amenities", "notes", "priceCurrency", "status");
     }
 
     @Override
@@ -115,6 +116,7 @@ public class HotelImportSchema implements BulkImportSchema {
         if (toRaw != null && !toRaw.isBlank() && parseLocalDateOrNull(toRaw) == null) {
             errors.add("\"rateValidTo\" must be in YYYY-MM-DD format");
         }
+        importCurrencySupport.validate(row.get("priceCurrency")).ifPresent(errors::add);
         return errors;
     }
 
@@ -132,6 +134,7 @@ public class HotelImportSchema implements BulkImportSchema {
         dto.setRateValidFrom(parseLocalDateOrNull(row.get("rateValidFrom")));
         dto.setRateValidTo(parseLocalDateOrNull(row.get("rateValidTo")));
         dto.setNotes(blankToNull(row.get("notes")));
+        dto.setPriceCurrency(importCurrencySupport.normalize(row.get("priceCurrency")));
 
         List<String> amenities = splitList(row.get("amenities"));
         if (!amenities.isEmpty()) {

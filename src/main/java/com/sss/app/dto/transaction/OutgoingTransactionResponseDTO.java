@@ -25,6 +25,10 @@ public class OutgoingTransactionResponseDTO {
     private String transactionId;
     private String paymentMethod;
     private BigDecimal amount;
+    // Present only when the supplier was paid in a non-base currency (amount above is the base value).
+    private BigDecimal paidAmount;
+    private String paidCurrency;
+    private BigDecimal fxRate;
     private String paidBy;
     private LocalDate paymentDate;
     private String notes;

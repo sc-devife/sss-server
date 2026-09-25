@@ -24,6 +24,12 @@ public class ActivityPaymentCreateRequestDTO {
     @DecimalMin(value = "0.01", message = "Amount must be greater than zero")
     private BigDecimal amount;
 
+    // Optional: the currency the supplier was actually paid in (amount above is in it). Blank = base currency.
+    private String currencyCode;
+
+    // Optional: "1 base = exchangeRate <currencyCode>"; blank = today's rate.
+    private java.math.BigDecimal exchangeRate;
+
     private String paidBy;
 
     @NotNull(message = "Payment date is required")

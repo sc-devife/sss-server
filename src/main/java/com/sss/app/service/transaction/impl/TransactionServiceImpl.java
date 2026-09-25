@@ -31,6 +31,7 @@ public class TransactionServiceImpl implements TransactionService {
     private final ActivityPaymentRepository activityPaymentRepository;
     private final UserRepository userRepository;
     private final EscapeHelper escapeHelper;
+    private final com.sss.app.service.payment.PaymentRecordAssembler paymentRecordAssembler;
 
     private User currentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -53,12 +54,16 @@ public class TransactionServiceImpl implements TransactionService {
         dto.setCustomerEmail(milestone.getDeal().getEscape().getLead().getEmail());
         dto.setCustomerPhone(milestone.getDeal().getEscape().getLead().getPhone());
         dto.setLabel(milestone.getLabel());
-        dto.setAmountInr(milestone.getAmountInr());
-        dto.setAmountPaidInr(milestone.getAmountPaidInr());
+        dto.setAmountBase(milestone.getAmountBase());
+        dto.setAmountPaidBase(milestone.getAmountPaidBase());
         dto.setStatus(milestone.getStatus());
         dto.setPaymentMethod(milestone.getPaymentMethod());
         dto.setPaymentReference(milestone.getPaymentReference());
         dto.setMarkedPaidAt(milestone.getMarkedPaidAt());
+        java.util.List<com.sss.app.dto.payment.PaymentRecordResponseDTO> payments = paymentRecordAssembler.forMilestone(milestone.getSeqp());
+        dto.setPayments(payments);
+        dto.setFxDifferenceBase(payments.stream().map(com.sss.app.dto.payment.PaymentRecordResponseDTO::getFxDifferenceBase)
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add));
         if (milestone.getMarkedPaidBy() != null) {
             userRepository.findById(milestone.getMarkedPaidBy()).map(User::getName).ifPresent(dto::setMarkedPaidByName);
         }
@@ -100,6 +105,9 @@ public class TransactionServiceImpl implements TransactionService {
         dto.setTransactionId(payment.getTransactionId());
         dto.setPaymentMethod(payment.getPaymentMethod());
         dto.setAmount(payment.getAmount());
+        dto.setPaidAmount(payment.getPaidAmount());
+        dto.setPaidCurrency(payment.getPaidCurrency());
+        dto.setFxRate(payment.getFxRate());
         dto.setPaidBy(payment.getPaidBy());
         dto.setPaymentDate(payment.getPaymentDate());
         dto.setNotes(payment.getNotes());
@@ -119,6 +127,9 @@ public class TransactionServiceImpl implements TransactionService {
         dto.setTransactionId(payment.getTransactionId());
         dto.setPaymentMethod(payment.getPaymentMethod());
         dto.setAmount(payment.getAmount());
+        dto.setPaidAmount(payment.getPaidAmount());
+        dto.setPaidCurrency(payment.getPaidCurrency());
+        dto.setFxRate(payment.getFxRate());
         dto.setPaidBy(payment.getPaidBy());
         dto.setPaymentDate(payment.getPaymentDate());
         dto.setNotes(payment.getNotes());

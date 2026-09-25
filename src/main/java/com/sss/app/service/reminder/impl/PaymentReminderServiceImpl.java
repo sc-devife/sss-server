@@ -142,7 +142,7 @@ public class PaymentReminderServiceImpl implements PaymentReminderService {
                 : "Upcoming payment due: " + milestone.getLabel();
 
         String body = "Hi,\n\nThis is a reminder for your payment \"" + milestone.getLabel() + "\" of ₹"
-                + milestone.getAmountInr().subtract(milestone.getAmountPaidInr()) + " INR remaining, due " + milestone.getDueDate() + ".\n\n"
+                + milestone.getAmountBase().subtract(milestone.getAmountPaidBase()) + " INR remaining, due " + milestone.getDueDate() + ".\n\n"
                 + "Please get in touch if you have any questions.";
 
         try {

@@ -22,6 +22,7 @@ public class TransportUpdateRequestDTO {
     private UUID providerId;
 
     private BigDecimal basePrice;
+    private String priceCurrency; // null = base currency
 
     private String pickupLocation;
 

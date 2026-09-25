@@ -77,11 +77,11 @@ public class SalesReportRepository {
 
     /**
      * Revenue per group — the same definition the Dashboard uses for
-     * totalRevenueInr: the sum of accepted quotes' totalInr.
+     * totalRevenueBase: the sum of accepted quotes' totalBase.
      */
     public Map<Object, BigDecimal> sumAcceptedQuoteRevenue(Grouping g, Long orgId, LocalDateTime start, LocalDateTime end) {
         List<Object[]> rows = em.createQuery(
-                        "SELECT " + g.expr + ", COALESCE(SUM(q.totalInr), 0) FROM Quote q JOIN q.itinerary i JOIN i.escape e"
+                        "SELECT " + g.expr + ", COALESCE(SUM(q.totalBase), 0) FROM Quote q JOIN q.itinerary i JOIN i.escape e"
                                 + " JOIN e.lead l " + g.join
                                 + " WHERE " + COHORT + " AND q.orgId = :orgId AND q.status = 'accepted'"
                                 + " GROUP BY " + g.expr, Object[].class)

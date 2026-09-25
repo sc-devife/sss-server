@@ -24,18 +24,54 @@ import java.util.Map;
  */
 @Service
 @Slf4j
+@lombok.RequiredArgsConstructor
 public class QuotationRenderingService {
+
+    private final com.sss.app.service.exchangerate.CurrencyDisplayService currencyDisplayService;
 
     private static final MustacheFactory MUSTACHE_FACTORY = new DefaultMustacheFactory();
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
             .build();
 
+    // Adds the vendor's base-currency symbol/code to every template's data
+    // (unless the caller already set them), so templates print `{{currencySymbol}}`
+    // instead of a hard-coded rupee sign. Async callers with no logged-in user
+    // set these themselves from the record's org.
+    private Map<String, Object> withCurrency(Map<String, Object> data) {
+        if (data != null && data.containsKey("currencySymbol")) return data;
+        Long orgId = null;
+        try {
+            var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getPrincipal() instanceof com.sss.app.entity.users.User user) orgId = user.getOrgId();
+        } catch (Exception ignored) {
+            // no security context (async/scheduled) - fall through to the default currency
+        }
+        Map<String, Object> copy = new java.util.HashMap<>(data == null ? Map.of() : data);
+        String code = currencyDisplayService.baseCurrencyCode(orgId);
+        copy.put("currencyCode", copy.getOrDefault("currencyCode", code));
+        copy.put("currencySymbol", currencyDisplayService.symbol(code));
+        return copy;
+    }
+
+    // A rupee sign typed straight into an uploaded template would print on every
+    // vendor/currency. Swap it for the placeholder that fits what follows: the quote's
+    // currency before a pricing amount, the vendor's base currency anywhere else.
+    private static final java.util.regex.Pattern RUPEE_BEFORE_PRICING =
+            java.util.regex.Pattern.compile("(?:₹|&#8377;|&#[xX]20[bB]9;)(?=(?:\\s|<[^>]*>)*\\{\\{\\{?\\s*pricing\\.)");
+    private static final java.util.regex.Pattern RUPEE_ANY =
+            java.util.regex.Pattern.compile("₹|&#8377;|&#[xX]20[bB]9;");
+
+    static String neutralizeHardcodedRupee(String html) {
+        String withPricing = RUPEE_BEFORE_PRICING.matcher(html).replaceAll(java.util.regex.Matcher.quoteReplacement("{{pricing.currencySymbol}}"));
+        return RUPEE_ANY.matcher(withPricing).replaceAll(java.util.regex.Matcher.quoteReplacement("{{currencySymbol}}"));
+    }
+
     public String render(String cloudinaryUrl, Map<String, Object> data) {
-        String templateHtml = fetchTemplateHtml(cloudinaryUrl);
+        String templateHtml = neutralizeHardcodedRupee(fetchTemplateHtml(cloudinaryUrl));
         Mustache mustache = MUSTACHE_FACTORY.compile(new StringReader(templateHtml), "quotation-template");
         StringWriter writer = new StringWriter();
-        mustache.execute(writer, data);
+        mustache.execute(writer, withCurrency(data));
         return writer.toString();
     }
 
@@ -46,7 +82,7 @@ public class QuotationRenderingService {
     public String renderClasspathTemplate(String classpathResource, Map<String, Object> data) {
         Mustache mustache = MUSTACHE_FACTORY.compile(classpathResource);
         StringWriter writer = new StringWriter();
-        mustache.execute(writer, data);
+        mustache.execute(writer, withCurrency(data));
         return writer.toString();
     }
 
@@ -55,7 +91,7 @@ public class QuotationRenderingService {
     public String renderInline(String template, Map<String, Object> data) {
         Mustache mustache = MUSTACHE_FACTORY.compile(new StringReader(template), "inline-template");
         StringWriter writer = new StringWriter();
-        mustache.execute(writer, data);
+        mustache.execute(writer, withCurrency(data));
         return writer.toString();
     }
 

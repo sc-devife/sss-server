@@ -11,6 +11,7 @@ import com.sss.app.entity.users.User;
 import com.sss.app.helper.UsersHelper;
 import com.sss.app.mapper.UserMapper;
 import com.sss.app.repository.OrganizationRepository;
+import com.sss.app.repository.OrganizationSettingsRepository;
 import com.sss.app.repository.UserRepository;
 import com.sss.app.repository.UserSessionRepository;
 import com.sss.app.repository.team.UserTeamLinkRepository;
@@ -32,16 +33,19 @@ public class UsersServiceImpl implements UsersService {
     UserSessionRepository userSessionRepository;
     UserRepository userRepository;
     UserTeamLinkRepository userTeamLinkRepository;
+    OrganizationSettingsRepository organizationSettingsRepository;
 
     public UsersServiceImpl(UsersHelper usersHelper, UserMapper userMapper, OrganizationRepository organizationRepository,
                              UserSessionRepository userSessionRepository, UserRepository userRepository,
-                             UserTeamLinkRepository userTeamLinkRepository) {
+                             UserTeamLinkRepository userTeamLinkRepository,
+                             OrganizationSettingsRepository organizationSettingsRepository) {
         this.usersHelper = usersHelper;
         this.userMapper = userMapper;
         this.organizationRepository = organizationRepository;
         this.userSessionRepository = userSessionRepository;
         this.userRepository = userRepository;
         this.userTeamLinkRepository = userTeamLinkRepository;
+        this.organizationSettingsRepository = organizationSettingsRepository;
     }
 
     @Override
@@ -75,6 +79,15 @@ public class UsersServiceImpl implements UsersService {
                 );
                 dto.setOrganizationLogo(organization.getLogoFile());
                 dto.setOrganizationLogoShape(organization.getLogoShape());
+            });
+            // Base currency defaults to INR (what every vendor used before V130).
+            organizationSettingsRepository.findById(user.getOrgId()).ifPresentOrElse(settings -> {
+                String code = settings.getDefaultCurrencyCode();
+                dto.setOrganizationCurrencyCode(code != null && !code.isBlank() ? code : "INR");
+                dto.setOrganizationRoundingMode(settings.getRoundingMode() != null ? settings.getRoundingMode() : "decimals");
+            }, () -> {
+                dto.setOrganizationCurrencyCode("INR");
+                dto.setOrganizationRoundingMode("decimals");
             });
         }
         dto.setTeams(userTeamLinkRepository.findAllByUser_Seqp(user.getSeqp()).stream()

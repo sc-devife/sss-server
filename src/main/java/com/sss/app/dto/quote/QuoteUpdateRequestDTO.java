@@ -11,10 +11,10 @@ public class QuoteUpdateRequestDTO {
     private String name;
     private String currencyCode;
     private BigDecimal fxRateSnapshot;
-    private BigDecimal subtotalInr;
+    private BigDecimal subtotalBase;
     private UUID taxProfileId;
-    private BigDecimal taxAmountInr;
-    private BigDecimal totalInr;
+    private BigDecimal taxAmountBase;
+    private BigDecimal totalBase;
     private String discountType;
     private BigDecimal discountValue;
     private UUID templateId;

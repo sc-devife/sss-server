@@ -141,8 +141,12 @@ public class Hotel extends Auditable {
     // ItineraryItemHotelDetail.price, entered per-stay); this is the
     // library-level "from" rate, same role Transport.basePrice/
     // Activity.basePrice play for their own suggestion dropdowns.
-    @Column(name = "base_price", precision = 12, scale = 2)
+    @Column(name = "base_price", precision = 14, scale = 4)
     private java.math.BigDecimal basePrice;
+
+    // Currency of this item's prices (room prices, services, base price); null = the vendor's base currency (V136).
+    @Column(name = "price_currency")
+    private String priceCurrency;
 
     // Validity window for the currently-quoted rate above.
     @Column(name = "rate_valid_from")

@@ -36,7 +36,7 @@ public class PaymentMilestoneController {
     @PreAuthorize("@permissionService.hasPermission('trips.write')")
     @PostMapping("/{uid}/record-payment")
     public ResponseEntity<PaymentMilestoneResponseDTO> recordPayment(@PathVariable UUID uid, @Valid @RequestBody PaymentRecordRequestDTO request) {
-        return ResponseEntity.ok(paymentMilestoneService.recordPayment(uid, request.getAmount(), request.getPaymentMethod(), request.getPaymentReference()));
+        return ResponseEntity.ok(paymentMilestoneService.recordPayment(uid, request));
     }
 
     // Second step after recordPayment — finance confirming the money

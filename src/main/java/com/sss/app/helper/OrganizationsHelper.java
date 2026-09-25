@@ -24,17 +24,20 @@ public class OrganizationsHelper {
     private final OrganizationSettingsRepository organizationSettingsRepository;
     private final CloudinaryService cloudinaryService;
     private final OrgAccessGuard orgAccessGuard;
+    private final com.sss.app.repository.quote.QuoteRepository quoteRepository;
     @PersistenceContext
     private EntityManager entityManager;
 
     public OrganizationsHelper(OrganizationRepository organizationRepository,
                                 OrganizationSettingsRepository organizationSettingsRepository,
                                 CloudinaryService cloudinaryService,
-                                OrgAccessGuard orgAccessGuard) {
+                                OrgAccessGuard orgAccessGuard,
+                                com.sss.app.repository.quote.QuoteRepository quoteRepository) {
         this.organizationRepository = organizationRepository;
         this.organizationSettingsRepository = organizationSettingsRepository;
         this.cloudinaryService = cloudinaryService;
         this.orgAccessGuard = orgAccessGuard;
+        this.quoteRepository = quoteRepository;
     }
 
     public OrganizationSettings getSettings(Long orgId) {
@@ -119,6 +122,16 @@ public class OrganizationsHelper {
     @Transactional
     public OrganizationSettings updateSettings(Long orgId, OrganizationSettingsDto request) {
         OrganizationSettings settings = getSettings(orgId);
+        // The base currency is what every stored amount is denominated in, so it
+        // can't change once the vendor has quotes - old amounts would silently
+        // be reinterpreted in the new currency.
+        String requested = request.getDefault_currency_code();
+        if (requested != null && !requested.isBlank()
+                && !requested.equalsIgnoreCase(settings.getDefaultCurrencyCode() == null ? "" : settings.getDefaultCurrencyCode())
+                && quoteRepository.existsByOrgId(orgId)) {
+            throw new com.sss.app.exception.ConflictException(
+                    "The base currency can't be changed once quotes exist, because existing amounts are stored in it. Contact support to migrate.");
+        }
         settings.update(request);
         return organizationSettingsRepository.save(settings);
     }

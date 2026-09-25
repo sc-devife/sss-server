@@ -48,6 +48,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class HotelBookingEmailService {
 
+    private final com.sss.app.service.exchangerate.MoneyFormatter moneyFormatter;
+
     private static final String EMAIL_BODY_TEMPLATE = "email-templates/hotel-booking-request-email.mustache";
     // Triple-stache: this subject is plain text, not HTML, so tripCode/hotelName
     // must not be HTML-entity-escaped the way Mustache's default {{}} would.
@@ -144,7 +146,7 @@ public class HotelBookingEmailService {
         data.put("notes", item.getNotes());
 
         BigDecimal totalAmount = bookingTotalAmount(detail, inclusions);
-        data.put("totalAmountFormatted", totalAmount != null ? inrWholeFormat().format(totalAmount) : null);
+        data.put("totalAmountFormatted", totalAmount != null ? moneyFormat().format(totalAmount) : null);
 
         return data;
     }
@@ -162,7 +164,7 @@ public class HotelBookingEmailService {
             return inclusionsTotal;
         }
         if (BookingStatus.DROP.equals(detail.getStatus())) {
-            return detail.getCancellationChargeInr() != null ? detail.getCancellationChargeInr() : BigDecimal.ZERO;
+            return detail.getCancellationChargeBase() != null ? detail.getCancellationChargeBase() : BigDecimal.ZERO;
         }
         BigDecimal stayPrice = detail.getTotalPrice() != null
                 ? detail.getTotalPrice()
@@ -195,10 +197,7 @@ public class HotelBookingEmailService {
         return date != null ? date.format(DATE_FORMAT) : null;
     }
 
-    private NumberFormat inrWholeFormat() {
-        NumberFormat format = NumberFormat.getInstance(new Locale("en", "IN"));
-        format.setMaximumFractionDigits(0);
-        format.setMinimumFractionDigits(0);
-        return format;
+    private java.text.NumberFormat moneyFormat() {
+        return moneyFormatter.forCaller();
     }
 }

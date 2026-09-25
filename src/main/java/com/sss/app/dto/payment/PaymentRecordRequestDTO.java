@@ -11,6 +11,12 @@ public class PaymentRecordRequestDTO {
     @NotNull(message = "amount is required")
     private BigDecimal amount;
 
+    // Optional: the currency the money actually arrived in. Blank = the vendor's base currency.
+    private String currencyCode;
+
+    // Optional: "1 base = exchangeRate <currencyCode>". Blank = today's rate (the vendor's manual rate, else market).
+    private BigDecimal exchangeRate;
+
     @NotBlank(message = "paymentMethod is required")
     private String paymentMethod;
 

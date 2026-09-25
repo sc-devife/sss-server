@@ -68,6 +68,15 @@ public class QuotationDataService {
     private final RoomTypeRepository roomTypeRepository;
     private final HotelRepository hotelRepository;
     private final ActivityRepository activityRepository;
+    private final com.sss.app.service.exchangerate.CurrencyDisplayService currencyDisplayService;
+    private final com.sss.app.service.exchangerate.MoneyFormatter moneyFormatter;
+    private final com.sss.app.service.exchangerate.MoneyScale moneyScale;
+
+    // The vendor whose quotation this is - the logged-in user's org (this service only runs in a request).
+    private Long callerOrgId() {
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.getPrincipal() instanceof com.sss.app.entity.users.User user ? user.getOrgId() : null;
+    }
 
     public Map<String, Object> buildData(UUID escapeUid) {
         EscapeResponseDTO escape = escapeService.getEscapeById(escapeUid);
@@ -183,41 +192,56 @@ public class QuotationDataService {
                     .orElse(null);
             if (latestQuote != null) {
                 int paxCount = escape.getTravellers() != null ? escape.getTravellers().size() : 0;
-                java.math.BigDecimal perPaxValue = paxCount > 0 && latestQuote.getTotalInr() != null
-                        ? latestQuote.getTotalInr().divide(java.math.BigDecimal.valueOf(paxCount), 2, java.math.RoundingMode.HALF_UP)
+                java.math.BigDecimal perPaxValue = paxCount > 0 && latestQuote.getTotalBase() != null
+                        ? latestQuote.getTotalBase().multiply(latestQuote.getCurrencyCode() != null && latestQuote.getFxRateSnapshot() != null
+                                && !latestQuote.getCurrencyCode().equalsIgnoreCase(currencyDisplayService.baseCurrencyCode(callerOrgId()))
+                                ? latestQuote.getFxRateSnapshot() : java.math.BigDecimal.ONE)
+                                .divide(java.math.BigDecimal.valueOf(paxCount), moneyScale.customerScale(callerOrgId(), currencyDisplayService.baseCurrencyCode(callerOrgId())), java.math.RoundingMode.HALF_UP)
                         : null;
                 // Mustache can't format numbers (comma grouping, dropping
                 // decimals) — pre-formatted here so the Quote Price section
                 // can print "83,200" instead of a raw "83200.00".
-                java.text.NumberFormat inrFormat = inrWholeFormat();
+                                // A quote issued in a traveller currency prints in that currency: every
+                // stored (base-currency) amount is converted at the quote's rate.
+                String baseCode = currencyDisplayService.baseCurrencyCode(callerOrgId());
+                boolean foreign = latestQuote.getCurrencyCode() != null && latestQuote.getFxRateSnapshot() != null
+                        && !latestQuote.getCurrencyCode().equalsIgnoreCase(baseCode);
+                java.math.BigDecimal fx = foreign ? latestQuote.getFxRateSnapshot() : java.math.BigDecimal.ONE;
+                String quoteCode = foreign ? latestQuote.getCurrencyCode().toUpperCase() : baseCode;
+                java.text.NumberFormat moneyFormat = moneyFormat(quoteCode);
+                int docScale = moneyScale.customerScale(callerOrgId(), quoteCode);
+                java.util.function.UnaryOperator<java.math.BigDecimal> cv =
+                        v -> v == null ? null : v.multiply(fx).setScale(docScale, java.math.RoundingMode.HALF_UP);
                 pricing = map(
                         "quoteCode", latestQuote.getQuoteCode(),
                         // Same name shown in the Quotes section on the Escape
                         // page (see DocumentsCard.tsx) — reused as-is for the
                         // PDF download filename, never a separately generated value.
                         "quoteName", latestQuote.getName() != null ? latestQuote.getName() : "Quote " + latestQuote.getVersion(),
-                        "currencyCode", latestQuote.getCurrencyCode(),
-                        "subtotal", latestQuote.getSubtotalInr(),
-                        "tax", latestQuote.getTaxAmountInr(),
+                        "currencyCode", quoteCode,
+                        "currencySymbol", currencyDisplayService.symbol(quoteCode),
+                        "baseCurrencyCode", baseCode,
+                        "subtotal", cv.apply(latestQuote.getSubtotalBase()),
+                        "tax", cv.apply(latestQuote.getTaxAmountBase()),
                         "tcsRate", latestQuote.getTcsRatePercent(),
-                        "tcs", latestQuote.getTcsAmountInr(),
-                        "total", latestQuote.getTotalInr(),
-                        "totalFormatted", latestQuote.getTotalInr() != null ? inrFormat.format(latestQuote.getTotalInr()) : null,
+                        "tcs", cv.apply(latestQuote.getTcsAmountBase()),
+                        "total", cv.apply(latestQuote.getTotalBase()),
+                        "totalFormatted", latestQuote.getTotalBase() != null ? moneyFormat.format(cv.apply(latestQuote.getTotalBase())) : null,
                         // Sum of dropped hotels' cancellation charges on this
                         // itinerary — already folded into subtotal/total
                         // above, exposed separately so a template can show
                         // it as its own line (see BookingStatus).
-                        "cancellationCharges", latestQuote.getCancellationChargesInr(),
-                        "cancellationChargesFormatted", isPositive(latestQuote.getCancellationChargesInr())
-                                ? inrFormat.format(latestQuote.getCancellationChargesInr()) : null,
+                        "cancellationCharges", cv.apply(latestQuote.getCancellationChargesBase()),
+                        "cancellationChargesFormatted", isPositive(latestQuote.getCancellationChargesBase())
+                                ? moneyFormat.format(cv.apply(latestQuote.getCancellationChargesBase())) : null,
                         "discountType", latestQuote.getDiscountType(),
                         "discountValue", latestQuote.getDiscountValue(),
                         "paxCount", paxCount,
                         "perPax", perPaxValue,
-                        "perPaxFormatted", perPaxValue != null ? inrFormat.format(perPaxValue) : null,
+                        "perPaxFormatted", perPaxValue != null ? moneyFormat.format(perPaxValue) : null,
                         // Drives the PDF's combined "including GST & TCS" note —
                         // true whenever either tax is actually non-zero.
-                        "hasTaxOrTcs", isPositive(latestQuote.getTaxAmountInr()) || isPositive(latestQuote.getTcsAmountInr())
+                        "hasTaxOrTcs", isPositive(latestQuote.getTaxAmountBase()) || isPositive(latestQuote.getTcsAmountBase())
                 );
             }
         }
@@ -357,11 +381,8 @@ public class QuotationDataService {
         return null;
     }
 
-    private java.text.NumberFormat inrWholeFormat() {
-        java.text.NumberFormat format = java.text.NumberFormat.getInstance(new java.util.Locale("en", "IN"));
-        format.setMaximumFractionDigits(0);
-        format.setMinimumFractionDigits(0);
-        return format;
+    private java.text.NumberFormat moneyFormat(String currencyCode) {
+        return moneyFormatter.forOrg(callerOrgId(), currencyCode);
     }
 
     // Org logos are uploaded via CloudinaryService (always an absolute
@@ -651,8 +672,8 @@ public class QuotationDataService {
         return map(
                 "label", p.getLabel(),
                 "dueDate", p.getDueDate(),
-                "amount", p.getAmountInr(),
-                "amountPaid", p.getAmountPaidInr(),
+                "amount", p.getAmountBase(),
+                "amountPaid", p.getAmountPaidBase(),
                 "status", p.getStatus(),
                 "method", p.getPaymentMethod(),
                 "reference", p.getPaymentReference()

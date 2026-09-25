@@ -43,7 +43,7 @@ public class ItineraryItemHotelInclusion {
     @Column(name = "duration_minutes")
     private Integer durationMinutes;
 
-    @Column(name = "total_price", precision = 12, scale = 2)
+    @Column(name = "total_price", precision = 14, scale = 4)
     private BigDecimal totalPrice;
 
     @Column

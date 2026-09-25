@@ -28,6 +28,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class EscapeDocsDataService {
 
+    private final com.sss.app.service.exchangerate.MoneyFormatter moneyFormatter;
+
     private static final DateTimeFormatter DAY_DATE = DateTimeFormatter.ofPattern("d MMM yyyy");
     // "11/09/2026 (Friday)" — the Payment Schedule's own due-date format,
     // distinct from every other date in this document.
@@ -205,12 +207,12 @@ public class EscapeDocsDataService {
                 .min(LocalDate::compareTo)
                 .orElse(null);
 
-        java.text.NumberFormat inrFormat = inrWholeFormat();
+        java.text.NumberFormat moneyFormat = moneyFormat();
         Map<String, Object> schedule = new LinkedHashMap<>();
         schedule.put("totalFormatted", pricing != null ? pricing.get("totalFormatted") : null);
         schedule.put("perPaxFormatted", pricing != null ? pricing.get("perPaxFormatted") : null);
-        schedule.put("amountReceivedFormatted", inrFormat.format(amountReceived));
-        schedule.put("dueAmountFormatted", inrFormat.format(dueAmount));
+        schedule.put("amountReceivedFormatted", moneyFormat.format(amountReceived));
+        schedule.put("dueAmountFormatted", moneyFormat.format(dueAmount));
         schedule.put("dueDateFormatted", dueDate != null ? dueDate.format(DUE_DATE) : null);
         schedule.put("hasDueDate", dueDate != null);
         return schedule;
@@ -220,11 +222,8 @@ public class EscapeDocsDataService {
         return value instanceof java.math.BigDecimal d ? d : java.math.BigDecimal.ZERO;
     }
 
-    private java.text.NumberFormat inrWholeFormat() {
-        java.text.NumberFormat format = java.text.NumberFormat.getInstance(new java.util.Locale("en", "IN"));
-        format.setMaximumFractionDigits(0);
-        format.setMinimumFractionDigits(0);
-        return format;
+    private java.text.NumberFormat moneyFormat() {
+        return moneyFormatter.forCaller();
     }
 
     private String formatDate(Object value) {

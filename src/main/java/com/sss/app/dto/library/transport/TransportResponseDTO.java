@@ -26,6 +26,7 @@ public class TransportResponseDTO {
     private ServiceProviderResponseDTO provider;
 
     private BigDecimal basePrice;
+    private String priceCurrency; // null = base currency
 
     private String pickupLocation;
 

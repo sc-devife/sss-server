@@ -11,6 +11,6 @@ import java.math.BigDecimal;
 public class PaymentStatusBreakdownDTO {
     private String status;
     private long count;
-    private BigDecimal totalInr;
-    private BigDecimal paidInr;
+    private BigDecimal totalBase;
+    private BigDecimal paidBase;
 }

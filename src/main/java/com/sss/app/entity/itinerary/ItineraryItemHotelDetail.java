@@ -78,10 +78,10 @@ public class ItineraryItemHotelDetail {
     @Column(name = "complimentary_child_count")
     private Integer complimentaryChildCount;
 
-    @Column(precision = 12, scale = 2)
+    @Column(precision = 14, scale = 4)
     private BigDecimal price;
 
-    @Column(name = "total_price", precision = 12, scale = 2)
+    @Column(name = "total_price", precision = 14, scale = 4)
     private BigDecimal totalPrice;
 
     // Initialize / Booked / Drop (see BookingStatus) — defaults to
@@ -94,6 +94,6 @@ public class ItineraryItemHotelDetail {
     @Column(name = "dropping_reason", columnDefinition = "TEXT")
     private String droppingReason;
 
-    @Column(name = "cancellation_charge_inr", precision = 12, scale = 2)
-    private BigDecimal cancellationChargeInr;
+    @Column(name = "cancellation_charge_base", precision = 14, scale = 4)
+    private BigDecimal cancellationChargeBase;
 }

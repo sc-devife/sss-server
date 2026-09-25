@@ -67,7 +67,9 @@ public class QuotationTemplateServiceImpl implements QuotationTemplateService {
                 .previewImageUrl(previewImageUrl)
                 .isActive(true)
                 .build();
-        return toResponse(quotationTemplateRepository.save(template));
+        QuotationTemplateResponseDTO created = toResponse(quotationTemplateRepository.save(template));
+        created.setWarnings(com.sss.app.service.quotationtemplate.TemplateCurrencyScanner.scan(htmlFile));
+        return created;
     }
 
     @Override
@@ -104,7 +106,9 @@ public class QuotationTemplateServiceImpl implements QuotationTemplateService {
             template.setPreviewImageUrl(cloudinaryService.upload(previewImage, CLOUDINARY_FOLDER).secureUrl());
             cloudinaryService.deleteByUrl(previousPreview);
         }
-        return toResponse(quotationTemplateRepository.save(template));
+        QuotationTemplateResponseDTO updated = toResponse(quotationTemplateRepository.save(template));
+        updated.setWarnings(com.sss.app.service.quotationtemplate.TemplateCurrencyScanner.scan(htmlFile));
+        return updated;
     }
 
     @Override

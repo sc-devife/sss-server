@@ -13,8 +13,8 @@ public class QuoteLineItemResponseDTO {
     private String itemType;
     private String label;
     private boolean cancellation;
-    private BigDecimal baseAmountInr;
+    private BigDecimal grossAmountBase;
     private String discountType;
     private BigDecimal discountValue;
-    private BigDecimal finalAmountInr;
+    private BigDecimal netAmountBase;
 }

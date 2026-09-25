@@ -13,6 +13,9 @@ import java.util.UUID;
 public class OrganizationSettingsDto {
     private Boolean auto_assign_enabled;
     private String default_currency_code;
+    private String rounding_mode; // decimals / whole
+    private Boolean payment_gateway_enabled; // read-only plan feature
+    private Boolean base_currency_locked; // read-only: true once the vendor has quotes
     private UUID quote_template_id;
     private UUID invoice_template_id;
     private UUID default_quotation_template_id;

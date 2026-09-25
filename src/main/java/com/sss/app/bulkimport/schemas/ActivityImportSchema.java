@@ -23,6 +23,7 @@ public class ActivityImportSchema implements BulkImportSchema {
 
     private final ActivityService activityService;
     private final EscapePointRepository escapePointRepository;
+    private final ImportCurrencySupport importCurrencySupport;
 
     @Override
     public String entityType() {
@@ -31,7 +32,7 @@ public class ActivityImportSchema implements BulkImportSchema {
 
     @Override
     public List<String> columns() {
-        return List.of("name", "escapePointCode", "categoryCode", "durationMinutes", "basePrice", "description", "status");
+        return List.of("name", "escapePointCode", "categoryCode", "durationMinutes", "basePrice", "priceCurrency", "description", "status");
     }
 
     @Override
@@ -46,6 +47,7 @@ public class ActivityImportSchema implements BulkImportSchema {
         if (escapePointCode != null && !escapePointCode.isBlank() && findEscapePoint(escapePointCode).isEmpty()) {
             errors.add("No escape point found with code \"" + escapePointCode + "\"");
         }
+        importCurrencySupport.validate(row.get("priceCurrency")).ifPresent(errors::add);
         return errors;
     }
 
@@ -56,6 +58,7 @@ public class ActivityImportSchema implements BulkImportSchema {
         dto.setCategoryCode(blankToNull(row.get("categoryCode")));
         dto.setDurationMinutes(parseIntOrNull(row.get("durationMinutes")));
         dto.setBasePrice(parseDecimalOrNull(row.get("basePrice")));
+        dto.setPriceCurrency(importCurrencySupport.normalize(row.get("priceCurrency")));
         dto.setDescription(blankToNull(row.get("description")));
         dto.setStatus(blankToNull(row.get("status")));
 

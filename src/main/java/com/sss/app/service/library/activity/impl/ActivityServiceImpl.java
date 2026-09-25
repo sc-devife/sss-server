@@ -58,6 +58,7 @@ public class ActivityServiceImpl implements ActivityService {
     private final ActivityPaymentRepository activityPaymentRepository;
     private final EscapeRepository escapeRepository;
     private final AuditLogService auditLogService;
+    private final com.sss.app.service.exchangerate.SupplierPaymentCurrencyResolver supplierPaymentCurrencyResolver;
 
     private User currentUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -205,7 +206,7 @@ public class ActivityServiceImpl implements ActivityService {
     // Mirrors QuoteComputationServiceImpl's activity-item pricing branch.
     private BigDecimal bookingTotalAmount(ItineraryItem item) {
         if (BookingStatus.DROP.equals(item.getStatus())) {
-            return item.getCancellationChargeInr() != null ? item.getCancellationChargeInr() : BigDecimal.ZERO;
+            return item.getCancellationChargeBase() != null ? item.getCancellationChargeBase() : BigDecimal.ZERO;
         }
         if (item.getPrice() == null) {
             return null;
@@ -231,13 +232,18 @@ public class ActivityServiceImpl implements ActivityService {
                 .orElseThrow(() -> new ResourceNotFoundException("Escape", dto.getEscapeUid()));
         orgAccessGuard.requireAccessToOrg(escape.getOrgId());
 
+        com.sss.app.service.exchangerate.SupplierPaymentCurrencyResolver.Converted converted =
+                supplierPaymentCurrencyResolver.convert(activity.getOrgId(), dto.getAmount(), dto.getCurrencyCode(), dto.getExchangeRate());
         ActivityPayment payment = ActivityPayment.builder()
                 .orgId(activity.getOrgId())
                 .activity(activity)
                 .escape(escape)
                 .transactionId(dto.getTransactionId())
                 .paymentMethod(dto.getPaymentMethod())
-                .amount(dto.getAmount())
+                .amount(converted.baseAmount())
+                .paidAmount(converted.paidAmount())
+                .paidCurrency(converted.paidCurrency())
+                .fxRate(converted.fxRate())
                 .paidBy(dto.getPaidBy())
                 .paymentDate(dto.getPaymentDate())
                 .notes(dto.getNotes())
@@ -245,7 +251,7 @@ public class ActivityServiceImpl implements ActivityService {
         ActivityPayment saved = activityPaymentRepository.save(payment);
 
         auditLogService.record("Activity", activity.getSeqp(), "ACTIVITY_PAYMENT_RECORDED", null,
-                dto.getAmount() + " via " + dto.getPaymentMethod() + " for " + escape.getTripCode());
+                dto.getAmount() + (converted.paidCurrency() != null ? " " + converted.paidCurrency() : "") + " via " + dto.getPaymentMethod() + " for " + escape.getTripCode());
 
         return toPaymentResponse(saved);
     }
@@ -262,7 +268,10 @@ public class ActivityServiceImpl implements ActivityService {
                 payment.getPaymentDate(),
                 payment.getNotes(),
                 payment.getStatus(),
-                payment.getCreatedAt()
+                payment.getCreatedAt(),
+                payment.getPaidAmount(),
+                payment.getPaidCurrency(),
+                payment.getFxRate()
         );
     }
 

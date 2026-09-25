@@ -23,4 +23,6 @@ public class BillingTemplateResponseDTO {
     private Boolean isDefault;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    // Set only on upload/replace: problems found in the uploaded HTML (e.g. a hard-coded currency symbol).
+    private java.util.List<String> warnings;
 }
