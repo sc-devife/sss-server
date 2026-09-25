@@ -34,7 +34,7 @@ public class MealPlan {
     @Column(nullable = false, unique = true, updatable = false)
     private UUID uid;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String code; // e.g. "CP", "MAP", "AP", "EP"
 
     @Column(nullable = false)
@@ -51,6 +51,14 @@ public class MealPlan {
     @EqualsAndHashCode.Exclude
     @ManyToMany(mappedBy = "mealPlans")
     private List<Hotel> hotels;
+
+    // Scope marker: null = global library meal plan; set = a custom plan created for
+    // (and only visible to) that one hotel. Mirrors Service.hotel.
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "hotel_id")
+    private Hotel hotel;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

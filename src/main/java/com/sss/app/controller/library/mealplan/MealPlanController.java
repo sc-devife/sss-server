@@ -35,8 +35,8 @@ public class MealPlanController {
 
     @PreAuthorize("@permissionService.hasPermission('library.read')")
     @GetMapping
-    public ResponseEntity<List<MealPlanResponseDTO>> getAll() {
-        return ResponseEntity.ok(mealPlanService.getAll());
+    public ResponseEntity<List<MealPlanResponseDTO>> getAll(@RequestParam(required = false) UUID hotelId) {
+        return ResponseEntity.ok(mealPlanService.getAll(hotelId));
     }
 
     @PreAuthorize("@permissionService.hasPermission('library.write')")

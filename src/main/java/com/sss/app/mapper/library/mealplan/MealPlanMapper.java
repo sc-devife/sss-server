@@ -6,6 +6,7 @@ import com.sss.app.dto.library.mealplan.MealPlanUpdateRequestDTO;
 import com.sss.app.entity.library.mealplan.MealPlan;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 
@@ -17,5 +18,6 @@ public interface MealPlanMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateEntityFromDto(MealPlanUpdateRequestDTO dto, @MappingTarget MealPlan entity);
 
+    @Mapping(target = "custom", expression = "java(entity.getHotel() != null)")
     MealPlanResponseDTO toResponse(MealPlan entity);
 }

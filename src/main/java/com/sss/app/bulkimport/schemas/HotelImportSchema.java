@@ -80,7 +80,7 @@ public class HotelImportSchema implements BulkImportSchema {
         }
 
         for (String code : splitList(row.get("mealPlanCodes"))) {
-            if (mealPlanRepository.findByCodeIgnoreCase(code).isEmpty()) {
+            if (mealPlanRepository.findByCodeIgnoreCaseAndHotelIsNull(code).isEmpty()) {
                 errors.add("No meal plan found with code \"" + code + "\"");
             }
         }
@@ -151,7 +151,7 @@ public class HotelImportSchema implements BulkImportSchema {
 
         Set<UUID> mealPlanIds = new HashSet<>();
         for (String code : splitList(row.get("mealPlanCodes"))) {
-            mealPlanRepository.findByCodeIgnoreCase(code).ifPresent(m -> mealPlanIds.add(m.getUid()));
+            mealPlanRepository.findByCodeIgnoreCaseAndHotelIsNull(code).ifPresent(m -> mealPlanIds.add(m.getUid()));
         }
         if (!mealPlanIds.isEmpty()) dto.setMealPlanIds(mealPlanIds);
 

@@ -16,4 +16,7 @@ public class MealPlanResponseDTO {
     private String description;
 
     private Boolean isActive;
+
+    // true = a custom plan that belongs to one hotel only (not in the library).
+    private Boolean custom;
 }

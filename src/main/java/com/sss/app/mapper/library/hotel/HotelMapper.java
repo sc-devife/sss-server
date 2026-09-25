@@ -15,7 +15,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
  * MapStruct can't resolve IDs to entities without a DB lookup, so those associations
  * are wired manually in HotelHelper before/after this mapper runs.
  */
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = com.sss.app.mapper.library.mealplan.MealPlanMapper.class)
 public interface HotelMapper {
 
     @Mapping(target = "location", ignore = true)

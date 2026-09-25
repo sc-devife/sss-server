@@ -3,7 +3,9 @@ package com.sss.app.service.library.mealplan.impl;
 import com.sss.app.dto.library.mealplan.MealPlanCreateRequestDTO;
 import com.sss.app.dto.library.mealplan.MealPlanResponseDTO;
 import com.sss.app.dto.library.mealplan.MealPlanUpdateRequestDTO;
+import com.sss.app.entity.library.hotel.Hotel;
 import com.sss.app.entity.library.mealplan.MealPlan;
+import com.sss.app.repository.library.hotel.HotelRepository;
 import com.sss.app.exception.ResourceNotFoundException;
 import com.sss.app.mapper.library.mealplan.MealPlanMapper;
 import com.sss.app.repository.library.mealplan.MealPlanRepository;
@@ -23,13 +25,22 @@ public class MealPlanServiceImpl implements MealPlanService {
 
     private final MealPlanRepository mealPlanRepository;
     private final MealPlanMapper mealPlanMapper;
+    private final HotelRepository hotelRepository;
 
     @Override
     public MealPlanResponseDTO create(MealPlanCreateRequestDTO dto) {
-        if (mealPlanRepository.existsByCodeIgnoreCase(dto.getCode())) {
+        Hotel scopeHotel = null;
+        if (dto.getHotelId() != null) {
+            scopeHotel = hotelRepository.findByUid(dto.getHotelId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Hotel", dto.getHotelId()));
+            if (mealPlanRepository.existsByCodeIgnoreCaseVisibleToHotel(dto.getCode(), dto.getHotelId())) {
+                throw new EntityExistsException("MealPlan already exists with code: " + dto.getCode());
+            }
+        } else if (mealPlanRepository.existsByCodeIgnoreCaseAndHotelIsNull(dto.getCode())) {
             throw new EntityExistsException("MealPlan already exists with code: " + dto.getCode());
         }
         MealPlan mealPlan = mealPlanMapper.toEntityCreate(dto);
+        mealPlan.setHotel(scopeHotel);
         MealPlan saved = mealPlanRepository.save(mealPlan);
         return mealPlanMapper.toResponse(saved);
     }
@@ -42,9 +53,11 @@ public class MealPlanServiceImpl implements MealPlanService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<MealPlanResponseDTO> getAll() {
-        return mealPlanRepository.findAll()
-                .stream()
+    public List<MealPlanResponseDTO> getAll(UUID hotelId) {
+        List<MealPlan> results = hotelId != null
+                ? mealPlanRepository.findAllVisibleToHotel(hotelId)
+                : mealPlanRepository.findAllByHotelIsNull();
+        return results.stream()
                 .map(mealPlanMapper::toResponse)
                 .toList();
     }

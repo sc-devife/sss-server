@@ -13,7 +13,8 @@ public interface MealPlanService {
 
     MealPlanResponseDTO getById(UUID id);
 
-    List<MealPlanResponseDTO> getAll();
+    // hotelId null -> library (global) plans; set -> library plans plus that hotel's own custom plans.
+    List<MealPlanResponseDTO> getAll(UUID hotelId);
 
     MealPlanResponseDTO update(UUID id, MealPlanUpdateRequestDTO dto);
 
